@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
+use App\Models\Guru;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use Inertia\Inertia;
@@ -24,9 +25,9 @@ class NilaiController extends Controller
             ->unique()
             ->values();
 
-        $guruMap = \App\Models\Guru::whereHas('nilai', fn ($q) => $q->where('nis', $siswa->nis))
+        $guruMap = Guru::whereHas('nilai', fn ($q) => $q->where('nis', $siswa->nis))
             ->get()
-            ->groupBy('id');
+            ->keyBy('id');
 
         return Inertia::render('siswa/nilai/index', [
             'siswa' => $siswa,

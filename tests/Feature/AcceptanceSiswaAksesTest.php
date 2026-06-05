@@ -60,6 +60,29 @@ test('Siswa nonaktif tidak bisa login', function () {
     $this->assertTrue($response->isRedirection() || $response->isRedirect() || $response->getStatusCode() === 302);
 });
 
+test('Siswa nilai page menampilkan nama guru pengajar (guru_map adalah flat keyBy, bukan groupBy)', function () {
+    $userSiswa = User::factory()->siswa()->create();
+    $userGuru = User::factory()->guru()->create();
+
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari Wahyuni']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+
+    \App\Models\Nilai::create([
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+    ]);
+
+    $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('siswa/nilai/index')
+        ->where("guru_map.{$guru->id}.nama_guru", 'Ibu Sari Wahyuni')
+        ->where("guru_map.{$guru->id}.id", $guru->id)
+    );
+});
+
 test('Siswa tidak bisa akses endpoint nilai guru (POST save)', function () {
     $userSiswa = User::factory()->siswa()->create();
     Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
