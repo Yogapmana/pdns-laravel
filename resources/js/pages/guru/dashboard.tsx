@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Users, FileEdit, CheckCircle, XCircle, BookOpen, AlertCircle, ChevronRight, TrendingUp, AlertTriangle, Edit3, Lock } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { PageHeader, Container } from '@/components/ui/shared';
