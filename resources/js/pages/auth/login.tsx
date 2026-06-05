@@ -21,7 +21,7 @@ export default function Login({ status }: Props) {
                     <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-xl mb-3">
                         <GraduationCap className="h-7 w-7 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-navy">NilaiSiswa</h1>
+                    <h1 className="text-2xl font-bold text-navy">SMAN 7 Solo</h1>
                     <p className="text-sm text-muted-foreground mt-1">Sistem Manajemen Akademik</p>
                 </div>
 
@@ -91,7 +91,7 @@ export default function Login({ status }: Props) {
                 </Form>
 
                 <p className="text-center text-xs text-muted-foreground mt-6">
-                    &copy; {new Date().getFullYear()} NilaiSiswa. Sistem Informasi Akademik.
+                    &copy; {new Date().getFullYear()} SMAN 7 Solo. Sistem Informasi Akademik.
                 </p>
             </div>
         </>

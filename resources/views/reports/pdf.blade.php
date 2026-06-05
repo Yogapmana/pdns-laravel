@@ -24,7 +24,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>LAPORAN REKAPITULASI NILAI SISWA</h1>
+        <h1>SMAN 7 SOLO</h1>
+        <p style="font-size: 13px; font-weight: bold; margin-top: 6px;">LAPORAN REKAPITULASI NILAI SISWA</p>
         <p>Kelas: <strong>{{ $kelas }}</strong> &mdash; Tanggal Cetak: {{ $tanggal_cetak }}</p>
     </div>
 
@@ -81,7 +82,7 @@
     </table>
 
     <div class="footer">
-        <p>Dokumen ini dicetak otomatis oleh sistem NilaiSiswa pada {{ now()->format('d F Y H:i') }}</p>
+        <p>Dokumen ini dicetak otomatis oleh sistem SMAN 7 Solo pada {{ now()->format('d F Y H:i') }}</p>
     </div>
 </body>
 </html>

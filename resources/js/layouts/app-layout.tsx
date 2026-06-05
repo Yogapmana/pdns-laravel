@@ -119,7 +119,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                     <div className="px-6 py-5 border-b border-navy-light">
                         <p className="text-lg font-bold tracking-tight flex items-center gap-2">
                             <BookOpen className="h-5 w-5" />
-                            NilaiSiswa
+                            SMAN 7 Solo
                         </p>
                         <p className="text-xs text-navy-300 mt-0.5">Sistem Akademik</p>
                     </div>

@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
-import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Edit, Trash2, Search, X, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,15 +37,61 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [kelas, setKelas] = useState(filters.kelas ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Siswa | null>(null);
+    const [loading, setLoading] = useState(false);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    function applyFilters() {
-        router.get('/admin/siswa', { search, kelas }, { preserveState: true });
+    function triggerSearch(nextSearch: string, nextKelas: string) {
+        if (debounceRef.current) {
+clearTimeout(debounceRef.current);
+}
+
+        debounceRef.current = setTimeout(() => {
+            const params: Record<string, string> = {};
+
+            if (nextSearch) {
+params.search = nextSearch;
+}
+
+            if (nextKelas) {
+params.kelas = nextKelas;
+}
+
+            setLoading(true);
+            router.get('/admin/siswa', params, {
+                preserveState: true,
+                replace: true,
+                only: ['siswa', 'filters'],
+                preserveScroll: true,
+                onFinish: () => setLoading(false),
+            });
+        }, 300);
+    }
+
+    function onSearchChange(value: string) {
+        setSearch(value);
+        triggerSearch(value, kelas);
+    }
+
+    function onKelasChange(value: string) {
+        setKelas(value);
+        triggerSearch(search, value);
     }
 
     function clearFilters() {
+        if (debounceRef.current) {
+clearTimeout(debounceRef.current);
+}
+
         setSearch('');
         setKelas('');
-        router.get('/admin/siswa', {}, { preserveState: true });
+        setLoading(true);
+        router.get('/admin/siswa', {}, {
+            preserveState: true,
+            replace: true,
+            only: ['siswa', 'filters'],
+            preserveScroll: true,
+            onFinish: () => setLoading(false),
+        });
     }
 
     function doDelete() {
@@ -57,6 +103,8 @@ return;
             onSuccess: () => setDeleteTarget(null),
         });
     }
+
+    const hasFilter = !!search || !!kelas;
 
     return (
         <div>
@@ -81,21 +129,29 @@ return;
                             type="search"
                             placeholder="Cari NIS atau nama..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                            className="pl-9"
+                            onChange={(e) => onSearchChange(e.target.value)}
+                            className="pl-9 pr-9"
                         />
+                        {loading ? (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                        ) : hasFilter ? (
+                            <button
+                                type="button"
+                                onClick={() => onSearchChange('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                aria-label="Bersihkan pencarian"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        ) : null}
                     </div>
-                    <Select value={kelas} onChange={(e) => {
- setKelas(e.target.value); 
-}} className="md:w-48">
+                    <Select value={kelas} onChange={(e) => onKelasChange(e.target.value)} className="md:w-48">
                         <option value="">Semua Kelas</option>
                         {daftar_kelas.map((k) => (
                             <option key={k} value={k}>{k}</option>
                         ))}
                     </Select>
-                    <Button onClick={applyFilters} variant="primary">Cari</Button>
-                    {(search || kelas) && (
+                    {hasFilter && (
                         <Button onClick={clearFilters} variant="outline">
                             <X className="h-4 w-4" />
                             Reset
@@ -114,7 +170,7 @@ return;
                                 <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className={`divide-y divide-slate-100 transition-opacity ${loading ? 'opacity-50' : ''}`}>
                             {siswa.data.length === 0 ? (
                                 <TableEmpty message="Tidak ada data siswa." colSpan={5} />
                             ) : (

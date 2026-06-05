@@ -12,7 +12,8 @@
     </style>
 </head>
 <body>
-    <h1>Laporan Rekapitulasi Nilai - Kelas {{ $kelas }}</h1>
+    <h1 style="margin: 0;">SMAN 7 SOLO</h1>
+    <h2 style="margin: 6px 0 0 0; color: #1E3A5F; font-size: 18px;">Laporan Rekapitulasi Nilai - Kelas {{ $kelas }}</h2>
     <p>Tanggal: {{ $tanggal_cetak }}</p>
     <p>Total: {{ $stats['jumlah_siswa'] }} siswa | Lulus: {{ $stats['jumlah_lulus'] }} | Tidak Lulus: {{ $stats['jumlah_tidak_lulus'] }}</p>
 

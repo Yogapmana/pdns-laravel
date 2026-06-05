@@ -13,14 +13,35 @@ type PaginationProps = {
     className?: string;
 };
 
-function parseLabel(label: string): string {
-    return label
-        .replace(/&laquo;/g, '«')
-        .replace(/&raquo;/g, '»')
-        .replace(/&lsaquo;/g, '‹')
-        .replace(/&rsaquo;/g, '›')
-        .replace(/Previous/g, 'Sebelumnya')
-        .replace(/Next/g, 'Selanjutnya');
+function isPreviousLink(label: string): boolean {
+    return /pagination\.previous|&lsaquo;|&laquo;|Previous/i.test(label);
+}
+
+function isNextLink(label: string): boolean {
+    return /pagination\.next|&rsaquo;|&raquo;|Next/i.test(label);
+}
+
+function PaginationArrow({ direction, disabled }: { direction: 'prev' | 'next'; disabled?: boolean }) {
+    const Icon = direction === 'prev' ? ChevronLeft : ChevronRight;
+    const label = direction === 'prev' ? 'Sebelumnya' : 'Selanjutnya';
+
+    return (
+        <span className="inline-flex items-center gap-1">
+            {direction === 'prev' && <Icon className="h-4 w-4" />}
+            <span>{label}</span>
+            {direction === 'next' && <Icon className="h-4 w-4" />}
+        </span>
+    );
+}
+
+function renderLabel(label: string) {
+    if (isPreviousLink(label)) {
+        return <PaginationArrow direction="prev" />;
+    }
+    if (isNextLink(label)) {
+        return <PaginationArrow direction="next" />;
+    }
+    return label.replace(/&[lr]saquo;|&[lr]quo;/g, '').trim();
 }
 
 export function Pagination({ links, className }: PaginationProps) {
@@ -29,13 +50,21 @@ export function Pagination({ links, className }: PaginationProps) {
     return (
         <nav className={cn('flex items-center gap-1', className)}>
             {links.map((link, i) => {
+                const isPrevious = isPreviousLink(link.label);
+                const isNext = isNextLink(link.label);
+
                 if (link.url === null) {
                     return (
                         <span
                             key={i}
-                            className="px-3 py-1.5 text-sm rounded-md text-muted-foreground cursor-not-allowed opacity-50"
-                            dangerouslySetInnerHTML={{ __html: parseLabel(link.label) }}
-                        />
+                            className={cn(
+                                'px-3 py-1.5 text-sm rounded-md text-muted-foreground cursor-not-allowed opacity-50 inline-flex items-center',
+                                (isPrevious || isNext) && 'gap-1',
+                            )}
+                            aria-label={isPrevious ? 'Halaman sebelumnya' : isNext ? 'Halaman selanjutnya' : undefined}
+                        >
+                            {renderLabel(link.label)}
+                        </span>
                     );
                 }
                 return (
@@ -44,13 +73,16 @@ export function Pagination({ links, className }: PaginationProps) {
                         href={link.url}
                         preserveScroll
                         className={cn(
-                            'px-3 py-1.5 text-sm rounded-md transition',
+                            'px-3 py-1.5 text-sm rounded-md transition inline-flex items-center',
+                            (isPrevious || isNext) && 'gap-1',
                             link.active
                                 ? 'bg-primary text-white font-semibold'
                                 : 'text-secondary hover:bg-surface border border-border',
                         )}
-                        dangerouslySetInnerHTML={{ __html: parseLabel(link.label) }}
-                    />
+                        aria-label={isPrevious ? 'Halaman sebelumnya' : isNext ? 'Halaman selanjutnya' : undefined}
+                    >
+                        {renderLabel(link.label)}
+                    </Link>
                 );
             })}
         </nav>
