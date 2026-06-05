@@ -64,6 +64,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::match(['get', 'post'], '/laporan/export/html', [ReportController::class, 'exportHtml'])->name('reports.export.html');
     Route::match(['get', 'post'], '/laporan/export/csv', [ReportController::class, 'exportCsv'])->name('reports.export.csv');
     Route::match(['get', 'post'], '/laporan/export/xlsx', [ReportController::class, 'exportXlsx'])->name('reports.export.xlsx');
+
+    Route::get('/nilai', [App\Http\Controllers\Admin\NilaiController::class, 'index'])->name('nilai.index');
+    Route::post('/nilai/unlock', [App\Http\Controllers\Admin\NilaiController::class, 'unlock'])->name('nilai.unlock');
 });
 
 Route::prefix('guru')->middleware(['auth', 'role:guru'])->name('guru.')->group(function () {

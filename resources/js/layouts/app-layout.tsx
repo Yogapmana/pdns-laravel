@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library } from 'lucide-react';
+import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck } from 'lucide-react';
 import {  useEffect, useState } from 'react';
 import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
@@ -31,6 +31,7 @@ const NAV_ADMIN: NavItem[] = [
     { label: 'Manajemen Kelas', href: '/admin/kelas', icon: <School className="h-4 w-4" /> },
     { label: 'Mata Pelajaran', href: '/admin/mata-pelajaran', icon: <Library className="h-4 w-4" /> },
     { label: 'Manajemen Akun', href: '/admin/akun', icon: <UserCog className="h-4 w-4" /> },
+    { label: 'Manajemen Nilai', href: '/admin/nilai', icon: <ClipboardCheck className="h-4 w-4" /> },
     { label: 'Laporan', href: '/admin/laporan', icon: <FileText className="h-4 w-4" /> },
 ];
 
@@ -75,6 +76,10 @@ return 'Manajemen Akun';
 
         if (path.includes('/admin/laporan')) {
 return 'Laporan Nilai';
+}
+
+        if (path.includes('/admin/nilai')) {
+return 'Manajemen Nilai';
 }
 
         return 'Dashboard';
