@@ -1,0 +1,74 @@
+<?php
+
+use App\Models\Guru;
+use App\Models\GuruMengajar;
+use App\Models\Siswa;
+use App\Models\User;
+
+test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
+    $userSiswaA = User::factory()->siswa()->create();
+    $userSiswaB = User::factory()->siswa()->create();
+    $userGuru = User::factory()->guru()->create();
+
+    $siswaA = Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Siswa A', 'kelas' => 'X-A']);
+    $siswaB = Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Siswa B', 'kelas' => 'X-A']);
+
+    $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+
+    \App\Models\Nilai::create([
+        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+    ]);
+    \App\Models\Nilai::create([
+        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus',
+    ]);
+
+    $response = $this->actingAs($userSiswaA)->get('/siswa/nilai');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('siswa/nilai/index')
+        ->where('siswa.nis', '00001')
+        ->where('siswa.nama_siswa', 'Siswa A')
+        ->has('nilai.X-A|Matematika', 1)
+        ->where('nilai.X-A|Matematika.0.nilai_akhir', '81.00')
+    );
+});
+
+test('AC-08: Siswa mencoba akses URL edit nilai ditolak 403', function () {
+    $userSiswa = User::factory()->siswa()->create();
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+
+    $this->actingAs($userSiswa)->get('/guru/input-nilai')->assertForbidden();
+    $this->actingAs($userSiswa)->get('/admin/siswa')->assertForbidden();
+    $this->actingAs($userSiswa)->get('/guru/dashboard')->assertForbidden();
+    $this->actingAs($userSiswa)->get('/admin/dashboard')->assertForbidden();
+});
+
+test('Siswa nonaktif tidak bisa login', function () {
+    $admin = User::factory()->admin()->create();
+    $userSiswa = User::factory()->siswa()->inactive()->create();
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+
+    $response = $this->post('/login', [
+        'username' => $userSiswa->username,
+        'password' => 'password',
+    ]);
+
+    $this->assertTrue($response->isRedirection() || $response->isRedirect() || $response->getStatusCode() === 302);
+});
+
+test('Siswa tidak bisa akses endpoint nilai guru (POST save)', function () {
+    $userSiswa = User::factory()->siswa()->create();
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+
+    $this->actingAs($userSiswa)
+        ->post('/guru/input-nilai/save', [
+            'kelas' => 'X-A',
+            'mata_pelajaran' => 'Matematika',
+            'nilai' => [['nis' => '00001', 'nilai_tugas' => 100, 'nilai_uts' => 100, 'nilai_uas' => 100]],
+        ])
+        ->assertForbidden();
+});

@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans: 'Calibri', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: 'Consolas', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --color-primary: #1A56DB;
+    --color-primary-50: #EFF6FF;
+    --color-primary-100: #DBEAFE;
+    --color-primary-200: #BFDBFE;
+    --color-primary-500: #1A56DB;
+    --color-primary-600: #1E40AF;
+    --color-primary-700: #1D4ED8;
+    --color-primary-foreground: #FFFFFF;
+
+    --color-secondary: #374151;
+    --color-secondary-foreground: #FFFFFF;
+
+    --color-accent: #0EA5E9;
+    --color-accent-foreground: #FFFFFF;
+
+    --color-success: #10B981;
+    --color-success-50: #ECFDF5;
+    --color-success-100: #D1FAE5;
+    --color-success-foreground: #065F46;
+
+    --color-danger: #EF4444;
+    --color-danger-50: #FEF2F2;
+    --color-danger-100: #FEE2E2;
+    --color-danger-foreground: #991B1B;
+
+    --color-warning: #F59E0B;
+    --color-warning-50: #FFFBEB;
+    --color-warning-100: #FEF3C7;
+    --color-warning-foreground: #92400E;
+
+    --color-surface: #F1F5F9;
+    --color-surface-foreground: #1E293B;
+
+    --color-navy: #1E3A5F;
+    --color-navy-light: #1E3A8A;
+    --color-navy-foreground: #FFFFFF;
+    --color-navy-300: #93C5FD;
+
+    --color-background: #FFFFFF;
+    --color-foreground: #1F2937;
+    --color-card: #FFFFFF;
+    --color-card-foreground: #1F2937;
+    --color-border: #E2E8F0;
+    --color-input: #E2E8F0;
+    --color-ring: #1A56DB;
+    --color-muted: #F1F5F9;
+    --color-muted-foreground: #64748B;
+    --color-popover: #FFFFFF;
+    --color-popover-foreground: #1F2937;
+    --color-destructive: #EF4444;
+    --color-destructive-foreground: #FFFFFF;
+
+    --radius-sm: 0.375rem;
+    --radius: 0.5rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-surface text-foreground antialiased;
+        font-family: 'Calibri', ui-sans-serif, system-ui, sans-serif;
+    }
+    .font-mono {
+        font-family: 'Consolas', ui-monospace, monospace;
+    }
+}
