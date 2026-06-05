@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\GuruRequest;
 use App\Models\Guru;
 use App\Models\GuruMengajar;
+use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,7 @@ class GuruController extends Controller
 
     public function create(): Response
     {
-        $daftarKelas = \App\Models\Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
         $daftarMapel = GuruMengajar::query()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran');
 
         return Inertia::render('admin/guru/create', [
@@ -65,16 +66,20 @@ class GuruController extends Controller
 
     public function store(GuruRequest $request): RedirectResponse
     {
-        $guru = Guru::create(['nama_guru' => $request->validated()['nama_guru']]);
-        $this->syncMengajar($guru, $request->getMengajar());
+        $guru = DB::transaction(function () use ($request) {
+            $guru = Guru::create(['nama_guru' => $request->validated()['nama_guru']]);
+            $this->syncMengajar($guru, $request->getMengajar());
 
-        return redirect()->route('admin.guru.index')->with('success', "Guru {$guru->nama_guru} berhasil ditambahkan dengan " . count($request->getMengajar()) . ' kombinasi mengajar.');
+            return $guru;
+        });
+
+        return redirect()->route('admin.guru.index')->with('success', "Guru {$guru->nama_guru} berhasil ditambahkan dengan ".count($request->getMengajar()).' kombinasi mengajar.');
     }
 
     public function edit(Guru $guru): Response
     {
         $guru->load(['user:id,username,is_active', 'mengajar']);
-        $daftarKelas = \App\Models\Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
         $daftarMapel = GuruMengajar::query()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran');
 
         return Inertia::render('admin/guru/edit', [
@@ -86,8 +91,10 @@ class GuruController extends Controller
 
     public function update(GuruRequest $request, Guru $guru): RedirectResponse
     {
-        $guru->update(['nama_guru' => $request->validated()['nama_guru']]);
-        $this->syncMengajar($guru, $request->getMengajar());
+        DB::transaction(function () use ($request, $guru) {
+            $guru->update(['nama_guru' => $request->validated()['nama_guru']]);
+            $this->syncMengajar($guru, $request->getMengajar());
+        });
 
         return redirect()->route('admin.guru.index')->with('success', 'Data guru berhasil diperbarui.');
     }

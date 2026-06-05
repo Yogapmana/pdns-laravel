@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { Plus, Edit, Trash2, Search, X, Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import { PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
+import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
 type Siswa = {
     nis: string;
@@ -34,65 +35,13 @@ type Props = {
 
 export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
     useFlashToast();
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [kelas, setKelas] = useState(filters.kelas ?? '');
+    const { filters: state, loading, hasFilter, setFilter, reset } = useInertiaSearch({
+        url: '/admin/siswa',
+        initialFilters: { search: filters.search, kelas: filters.kelas },
+        only: ['siswa', 'filters'],
+    });
+
     const [deleteTarget, setDeleteTarget] = useState<Siswa | null>(null);
-    const [loading, setLoading] = useState(false);
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    function triggerSearch(nextSearch: string, nextKelas: string) {
-        if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
-
-        debounceRef.current = setTimeout(() => {
-            const params: Record<string, string> = {};
-
-            if (nextSearch) {
-params.search = nextSearch;
-}
-
-            if (nextKelas) {
-params.kelas = nextKelas;
-}
-
-            setLoading(true);
-            router.get('/admin/siswa', params, {
-                preserveState: true,
-                replace: true,
-                only: ['siswa', 'filters'],
-                preserveScroll: true,
-                onFinish: () => setLoading(false),
-            });
-        }, 300);
-    }
-
-    function onSearchChange(value: string) {
-        setSearch(value);
-        triggerSearch(value, kelas);
-    }
-
-    function onKelasChange(value: string) {
-        setKelas(value);
-        triggerSearch(search, value);
-    }
-
-    function clearFilters() {
-        if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
-
-        setSearch('');
-        setKelas('');
-        setLoading(true);
-        router.get('/admin/siswa', {}, {
-            preserveState: true,
-            replace: true,
-            only: ['siswa', 'filters'],
-            preserveScroll: true,
-            onFinish: () => setLoading(false),
-        });
-    }
 
     function doDelete() {
         if (!deleteTarget) {
@@ -103,8 +52,6 @@ return;
             onSuccess: () => setDeleteTarget(null),
         });
     }
-
-    const hasFilter = !!search || !!kelas;
 
     return (
         <div>
@@ -128,16 +75,16 @@ return;
                         <Input
                             type="search"
                             placeholder="Cari NIS atau nama..."
-                            value={search}
-                            onChange={(e) => onSearchChange(e.target.value)}
+                            value={state.search}
+                            onChange={(e) => setFilter('search', e.target.value)}
                             className="pl-9 pr-9"
                         />
                         {loading ? (
                             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-                        ) : hasFilter ? (
+                        ) : state.search ? (
                             <button
                                 type="button"
-                                onClick={() => onSearchChange('')}
+                                onClick={() => setFilter('search', '')}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 aria-label="Bersihkan pencarian"
                             >
@@ -145,14 +92,14 @@ return;
                             </button>
                         ) : null}
                     </div>
-                    <Select value={kelas} onChange={(e) => onKelasChange(e.target.value)} className="md:w-48">
+                    <Select value={state.kelas} onChange={(e) => setFilter('kelas', e.target.value)} className="md:w-48">
                         <option value="">Semua Kelas</option>
                         {daftar_kelas.map((k) => (
                             <option key={k} value={k}>{k}</option>
                         ))}
                     </Select>
                     {hasFilter && (
-                        <Button onClick={clearFilters} variant="outline">
+                        <Button onClick={reset} variant="outline">
                             <X className="h-4 w-4" />
                             Reset
                         </Button>

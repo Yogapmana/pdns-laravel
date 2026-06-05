@@ -20,14 +20,14 @@ class NilaiController extends Controller
             ->get()
             ->groupBy(fn ($n) => $n->kelas.'|'.$n->mata_pelajaran);
 
+        $guruMap = Guru::whereIn('id', $nilai->flatten()->pluck('id_guru')->unique())
+            ->get()
+            ->keyBy('id');
+
         $mapelList = $nilai->keys()
             ->map(fn ($k) => explode('|', $k)[1])
             ->unique()
             ->values();
-
-        $guruMap = Guru::whereHas('nilai', fn ($q) => $q->where('nis', $siswa->nis))
-            ->get()
-            ->keyBy('id');
 
         return Inertia::render('siswa/nilai/index', [
             'siswa' => $siswa,

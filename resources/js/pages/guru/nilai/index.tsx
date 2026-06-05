@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select';
 import { Container, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { calculateNilaiAkhir, calculateStatusLulus } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 type Siswa = { nis: string; nama_siswa: string; kelas: string };
 
@@ -219,6 +220,39 @@ return;
     );
 }
 
+type NilaiInputProps = {
+    name: string;
+    nis: string;
+    value: number | null;
+    onChange: (v: number | null) => void;
+    disabled?: boolean;
+};
+
+function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
+    const invalid = value !== null && (value < 0 || value > 100);
+
+    return (
+        <div className="px-3 py-2">
+            <input type="hidden" name={`nilai[${nis}][nis]`} value={nis} />
+            <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                name={name}
+                value={value ?? ''}
+                onChange={(e) => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
+                disabled={disabled}
+                className={cn(
+                    'w-20 border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 disabled:bg-surface',
+                    invalid ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary',
+                )}
+                placeholder="0-100"
+            />
+        </div>
+    );
+}
+
 function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nilai_tugas: number | null; nilai_uts: number | null; nilai_uas: number | null; nilai_akhir: number | null; status_lulus: string | null; status_validasi: string }; disabled: boolean }) {
     const [tugas, setTugas] = useState<number | null>(initial?.nilai_tugas ?? null);
     const [uts, setUts] = useState<number | null>(initial?.nilai_uts ?? null);
@@ -228,60 +262,35 @@ function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nila
     const status = calculateStatusLulus(akhir);
 
     const invalid = (n: number | null) => n !== null && (n < 0 || n > 100);
+    const hasInvalid = invalid(tugas) || invalid(uts) || invalid(uas);
 
     return (
         <tr className="hover:bg-blue-50">
             <td className="px-3 py-2 font-mono text-xs">{siswa.nis}</td>
             <td className="px-3 py-2 font-medium">{siswa.nama_siswa}</td>
-            <td className="px-3 py-2">
-                <input
-                    type="hidden"
-                    name={`nilai[${siswa.nis}][nis]`}
-                    value={siswa.nis}
-                />
-                <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    name={`nilai[${siswa.nis}][nilai_tugas]`}
-                    value={tugas ?? ''}
-                    onChange={(e) => setTugas(e.target.value === '' ? null : parseFloat(e.target.value))}
-                    disabled={disabled}
-                    className={`w-20 border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 ${invalid(tugas) ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'} disabled:bg-surface`}
-                    placeholder="0-100"
-                />
-            </td>
-            <td className="px-3 py-2">
-                <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    name={`nilai[${siswa.nis}][nilai_uts]`}
-                    value={uts ?? ''}
-                    onChange={(e) => setUts(e.target.value === '' ? null : parseFloat(e.target.value))}
-                    disabled={disabled}
-                    className={`w-20 border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 ${invalid(uts) ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'} disabled:bg-surface`}
-                    placeholder="0-100"
-                />
-            </td>
-            <td className="px-3 py-2">
-                <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    name={`nilai[${siswa.nis}][nilai_uas]`}
-                    value={uas ?? ''}
-                    onChange={(e) => setUas(e.target.value === '' ? null : parseFloat(e.target.value))}
-                    disabled={disabled}
-                    className={`w-20 border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 ${invalid(uas) ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'} disabled:bg-surface`}
-                    placeholder="0-100"
-                />
-            </td>
+            <NilaiInput
+                name={`nilai[${siswa.nis}][nilai_tugas]`}
+                nis={siswa.nis}
+                value={tugas}
+                onChange={setTugas}
+                disabled={disabled}
+            />
+            <NilaiInput
+                name={`nilai[${siswa.nis}][nilai_uts]`}
+                nis={siswa.nis}
+                value={uts}
+                onChange={setUts}
+                disabled={disabled}
+            />
+            <NilaiInput
+                name={`nilai[${siswa.nis}][nilai_uas]`}
+                nis={siswa.nis}
+                value={uas}
+                onChange={setUas}
+                disabled={disabled}
+            />
             <td className="px-3 py-2 text-center font-semibold text-navy">
-                {invalid(tugas) || invalid(uts) || invalid(uas) ? (
+                {hasInvalid ? (
                     <span className="text-danger inline-flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> —
                     </span>

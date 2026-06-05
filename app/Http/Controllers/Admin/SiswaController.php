@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiswaRequest;
 use App\Models\Siswa;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,7 +18,7 @@ class SiswaController extends Controller
         $kelas = $request->input('kelas');
 
         $siswa = Siswa::query()
-            ->with('user')
+            ->with('user:id,username,is_active')
             ->when($search, fn ($q) => $q->where(function ($qq) use ($search) {
                 $qq->where('nis', 'like', "%{$search}%")
                     ->orWhere('nama_siswa', 'like', "%{$search}%");

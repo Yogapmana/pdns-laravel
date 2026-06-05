@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Guru;
 use App\Models\Nilai;
 use App\Models\Siswa;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,30 +23,7 @@ class DashboardController extends Controller
         $tidakLulus = Nilai::where('status_lulus', Nilai::TIDAK_LULUS)->count();
         $persentaseLulus = $totalNilai > 0 ? round(($lulus / $totalNilai) * 100, 1) : 0;
 
-        $rekapPerKelas = Siswa::query()
-            ->select('kelas')
-            ->selectRaw('COUNT(DISTINCT siswa.nis) as jumlah_siswa')
-            ->groupBy('kelas')
-            ->orderBy('kelas')
-            ->get()
-            ->map(function ($row) {
-                $nisSiswaKelas = Siswa::where('kelas', $row->kelas)->pluck('nis');
-
-                $lulusKelas = Nilai::whereIn('nis', $nisSiswaKelas)
-                    ->where('status_lulus', Nilai::LULUS)
-                    ->count();
-                $tidakLulusKelas = Nilai::whereIn('nis', $nisSiswaKelas)
-                    ->where('status_lulus', Nilai::TIDAK_LULUS)
-                    ->count();
-
-                return [
-                    'kelas' => $row->kelas,
-                    'jumlah_siswa' => (int) $row->jumlah_siswa,
-                    'lulus' => $lulusKelas,
-                    'tidak_lulus' => $tidakLulusKelas,
-                ];
-            });
-
+        $rekapPerKelas = $this->buildRekapPerKelas();
         $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
 
         return Inertia::render('admin/dashboard', [
@@ -61,5 +38,41 @@ class DashboardController extends Controller
             'rekap_per_kelas' => $rekapPerKelas,
             'daftar_kelas' => $daftarKelas,
         ]);
+    }
+
+    /**
+     * @return array<int, array{kelas: string, jumlah_siswa: int, lulus: int, tidak_lulus: int}>
+     */
+    private function buildRekapPerKelas(): array
+    {
+        $siswaPerKelas = Siswa::query()
+            ->select('kelas')
+            ->selectRaw('COUNT(*) as jumlah_siswa')
+            ->groupBy('kelas')
+            ->pluck('jumlah_siswa', 'kelas');
+
+        $nilaiPerKelas = DB::table('nilai')
+            ->join('siswa', 'siswa.nis', '=', 'nilai.nis')
+            ->groupBy('siswa.kelas', 'nilai.status_lulus')
+            ->select([
+                'siswa.kelas',
+                'nilai.status_lulus',
+                DB::raw('COUNT(*) as total'),
+            ])
+            ->get()
+            ->groupBy('kelas');
+
+        $rekap = [];
+        foreach ($siswaPerKelas->keys()->sort() as $kelas) {
+            $statusCounts = $nilaiPerKelas->get($kelas, collect());
+            $rekap[] = [
+                'kelas' => $kelas,
+                'jumlah_siswa' => (int) $siswaPerKelas[$kelas],
+                'lulus' => (int) $statusCounts->firstWhere('status_lulus', Nilai::LULUS)?->total ?? 0,
+                'tidak_lulus' => (int) $statusCounts->firstWhere('status_lulus', Nilai::TIDAK_LULUS)?->total ?? 0,
+            ];
+        }
+
+        return $rekap;
     }
 }

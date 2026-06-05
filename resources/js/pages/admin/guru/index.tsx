@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { Plus, Edit, Trash2, Search, X, Power, UserPlus, Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import { PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
+import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
 type Mengajar = {
     id: number;
@@ -42,76 +43,17 @@ type Props = {
 
 export default function GuruIndex({ guru, daftar_kelas, daftar_mapel, filters }: Props) {
     useFlashToast();
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [kelas, setKelas] = useState(filters.kelas ?? '');
-    const [mapel, setMapel] = useState(filters.mapel ?? '');
+    const { filters: state, loading, hasFilter, setFilter, reset } = useInertiaSearch({
+        url: '/admin/guru',
+        initialFilters: {
+            search: filters.search,
+            kelas: filters.kelas,
+            mapel: filters.mapel,
+        },
+        only: ['guru', 'filters'],
+    });
+
     const [deleteTarget, setDeleteTarget] = useState<Guru | null>(null);
-    const [loading, setLoading] = useState(false);
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    function triggerSearch(nextSearch: string, nextKelas: string, nextMapel: string) {
-        if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
-
-        debounceRef.current = setTimeout(() => {
-            const params: Record<string, string> = {};
-
-            if (nextSearch) {
-params.search = nextSearch;
-}
-
-            if (nextKelas) {
-params.kelas = nextKelas;
-}
-
-            if (nextMapel) {
-params.mapel = nextMapel;
-}
-
-            setLoading(true);
-            router.get('/admin/guru', params, {
-                preserveState: true,
-                replace: true,
-                only: ['guru', 'filters'],
-                preserveScroll: true,
-                onFinish: () => setLoading(false),
-            });
-        }, 300);
-    }
-
-    function onSearchChange(value: string) {
-        setSearch(value);
-        triggerSearch(value, kelas, mapel);
-    }
-
-    function onKelasChange(value: string) {
-        setKelas(value);
-        triggerSearch(search, value, mapel);
-    }
-
-    function onMapelChange(value: string) {
-        setMapel(value);
-        triggerSearch(search, kelas, value);
-    }
-
-    function clearFilters() {
-        if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
-
-        setSearch('');
-        setKelas('');
-        setMapel('');
-        setLoading(true);
-        router.get('/admin/guru', {}, {
-            preserveState: true,
-            replace: true,
-            only: ['guru', 'filters'],
-            preserveScroll: true,
-            onFinish: () => setLoading(false),
-        });
-    }
 
     function doDelete() {
         if (!deleteTarget) {
@@ -126,8 +68,6 @@ return;
     function toggleActive(g: Guru) {
         router.patch(`/admin/guru/${g.id}/toggle-active`);
     }
-
-    const hasFilter = !!search || !!kelas || !!mapel;
 
     return (
         <div>
@@ -151,16 +91,16 @@ return;
                         <Input
                             type="search"
                             placeholder="Cari nama guru..."
-                            value={search}
-                            onChange={(e) => onSearchChange(e.target.value)}
+                            value={state.search}
+                            onChange={(e) => setFilter('search', e.target.value)}
                             className="pl-9 pr-9"
                         />
                         {loading ? (
                             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-                        ) : hasFilter ? (
+                        ) : state.search ? (
                             <button
                                 type="button"
-                                onClick={() => onSearchChange('')}
+                                onClick={() => setFilter('search', '')}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 aria-label="Bersihkan pencarian"
                             >
@@ -168,20 +108,20 @@ return;
                             </button>
                         ) : null}
                     </div>
-                    <Select value={kelas} onChange={(e) => onKelasChange(e.target.value)} className="md:w-40">
+                    <Select value={state.kelas} onChange={(e) => setFilter('kelas', e.target.value)} className="md:w-40">
                         <option value="">Semua Kelas</option>
                         {daftar_kelas.map((k) => (
                             <option key={k} value={k}>{k}</option>
                         ))}
                     </Select>
-                    <Select value={mapel} onChange={(e) => onMapelChange(e.target.value)} className="md:w-56">
+                    <Select value={state.mapel} onChange={(e) => setFilter('mapel', e.target.value)} className="md:w-56">
                         <option value="">Semua Mata Pelajaran</option>
                         {daftar_mapel.map((m) => (
                             <option key={m} value={m}>{m}</option>
                         ))}
                     </Select>
                     {hasFilter && (
-                        <Button onClick={clearFilters} variant="outline">
+                        <Button onClick={reset} variant="outline">
                             <X className="h-4 w-4" />
                             Reset
                         </Button>
