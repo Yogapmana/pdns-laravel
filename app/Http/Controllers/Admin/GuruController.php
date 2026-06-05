@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -19,6 +21,16 @@ use Inertia\Response;
 
 class GuruController extends Controller
 {
+    /**
+     * Display the paginated guru list with search, kelas, and mapel filters.
+     *
+     * Eager-loads the related `user` account and the `mengajar` combinations
+     * to prevent N+1 queries when rendering the table. Uses `whereHas()` to
+     * filter guru by their associated kelas/mapel.
+     *
+     * @param  Request  $request  Current HTTP request; reads `search`, `kelas`, and `mapel` query parameters.
+     * @return Response Inertia response rendering `admin/guru/index`.
+     */
     public function index(Request $request): Response
     {
         $search = $request->input('search');
@@ -53,6 +65,11 @@ class GuruController extends Controller
         ]);
     }
 
+    /**
+     * Show the form to create a new guru record.
+     *
+     * @return Response Inertia response rendering `admin/guru/create` with the available kelas and mapel lists.
+     */
     public function create(): Response
     {
         $daftarKelas = Kelas::pluckNamaOrdered();
@@ -64,6 +81,15 @@ class GuruController extends Controller
         ]);
     }
 
+    /**
+     * Persist a new guru record together with their mengajar combinations.
+     *
+     * Wraps the two writes (`guru` insert and `guru_mengajar` sync) in a
+     * database transaction so that a failure on either side rolls back both.
+     *
+     * @param  GuruRequest  $request  The validated form-request.
+     * @return RedirectResponse Redirect to the guru index with a success flash message.
+     */
     public function store(GuruRequest $request): RedirectResponse
     {
         $guru = DB::transaction(function () use ($request) {
@@ -76,6 +102,12 @@ class GuruController extends Controller
         return redirect()->route('admin.guru.index')->with('success', "Guru {$guru->nama_guru} berhasil ditambahkan dengan ".count($request->getMengajar()).' kombinasi mengajar.');
     }
 
+    /**
+     * Show the form to edit an existing guru.
+     *
+     * @param  Guru  $guru  The guru to edit, resolved by route-model binding.
+     * @return Response Inertia response rendering `admin/guru/edit`.
+     */
     public function edit(Guru $guru): Response
     {
         $guru->load(['user:id,username,is_active', 'mengajar']);
@@ -89,6 +121,17 @@ class GuruController extends Controller
         ]);
     }
 
+    /**
+     * Update an existing guru record and re-sync their mengajar combinations.
+     *
+     * Both writes are wrapped in a database transaction. The sync helper
+     * deletes the previous `guru_mengajar` rows and recreates them from the
+     * submitted (deduplicated) pairs.
+     *
+     * @param  GuruRequest  $request  The validated form-request.
+     * @param  Guru  $guru  The guru to update, resolved by route-model binding.
+     * @return RedirectResponse Redirect to the guru index with a success flash message.
+     */
     public function update(GuruRequest $request, Guru $guru): RedirectResponse
     {
         DB::transaction(function () use ($request, $guru) {
@@ -100,7 +143,14 @@ class GuruController extends Controller
     }
 
     /**
-     * @param  array<int, array{kelas: string, mata_pelajaran: string}>  $mengajar
+     * Replace the `guru_mengajar` rows for a guru with the supplied pairs.
+     *
+     * Existing rows are deleted first; new rows are then inserted in a
+     * deduplicated manner (the `(kelas, mata_pelajaran)` pair must be unique
+     * for a given guru).
+     *
+     * @param  Guru  $guru  The guru whose mengajar rows will be replaced.
+     * @param  array<int, array{kelas: string, mata_pelajaran: string}>  $mengajar  The new mengajar pairs.
      */
     private function syncMengajar(Guru $guru, array $mengajar): void
     {
@@ -120,6 +170,15 @@ class GuruController extends Controller
         }
     }
 
+    /**
+     * Delete a guru record. Refuses with an error flash if the guru has
+     * ever input nilai (database-level RESTRICT on the foreign key), and
+     * otherwise cascades the deletion to the linked user account and
+     * mengajar combinations inside a transaction.
+     *
+     * @param  Guru  $guru  The guru to delete, resolved by route-model binding.
+     * @return RedirectResponse Redirect to the guru index with a success or error flash message.
+     */
     public function destroy(Guru $guru): RedirectResponse
     {
         if ($guru->nilai()->exists()) {
@@ -135,6 +194,15 @@ class GuruController extends Controller
         return redirect()->route('admin.guru.index')->with('success', 'Guru berhasil dihapus.');
     }
 
+    /**
+     * Toggle the `is_active` flag of the user account linked to this guru.
+     *
+     * A guru with no linked account is a no-op for the underlying user row;
+     * the flash message still reflects the resulting state.
+     *
+     * @param  Guru  $guru  The guru whose account status will be toggled.
+     * @return RedirectResponse Redirect back with a success flash message.
+     */
     public function toggleActive(Guru $guru): RedirectResponse
     {
         $user = $guru->user;
@@ -147,6 +215,14 @@ class GuruController extends Controller
         return back()->with('success', "Akun guru berhasil {$status}.");
     }
 
+    /**
+     * Show the form to create a user account for a guru who does not yet have one.
+     *
+     * Aborts with 404 when the guru already has a `user_id` set.
+     *
+     * @param  Guru  $guru  The guru receiving a new account, resolved by route-model binding.
+     * @return Response Inertia response rendering `admin/guru/create-account`.
+     */
     public function createAccountForm(Guru $guru): Response
     {
         abort_if($guru->user_id !== null, 404, 'Guru ini sudah memiliki akun.');
@@ -156,6 +232,17 @@ class GuruController extends Controller
         ]);
     }
 
+    /**
+     * Persist a new user account for the guru and link it to the guru row.
+     *
+     * Aborts with 404 when the guru already has a `user_id`. The password
+     * is hashed before storage and the new user is created with the
+     * `guru` role and `is_active = true` by default.
+     *
+     * @param  Request  $request  Current HTTP request; reads `username`, `name`, `password`, and `password_confirmation`.
+     * @param  Guru  $guru  The guru receiving a new account, resolved by route-model binding.
+     * @return RedirectResponse Redirect to the guru index with a success flash message containing the new username.
+     */
     public function createAccount(Request $request, Guru $guru): RedirectResponse
     {
         abort_if($guru->user_id !== null, 404, 'Guru ini sudah memiliki akun.');

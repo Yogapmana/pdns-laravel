@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AccountRequest;
+use App\Models\Guru;
+use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +17,15 @@ use Inertia\Response;
 
 class AccountController extends Controller
 {
+    /**
+     * Display the paginated user account list with search and role filters.
+     *
+     * Eager-loads the linked `siswa` and `guru` profiles (and the guru's
+     * mengajar combinations) so the table can be rendered without N+1 queries.
+     *
+     * @param  Request  $request  Current HTTP request; reads `search` and `role` query parameters.
+     * @return Response Inertia response rendering `admin/accounts/index`.
+     */
     public function index(Request $request): Response
     {
         $search = $request->input('search');
@@ -39,13 +52,19 @@ class AccountController extends Controller
         ]);
     }
 
+    /**
+     * Show the form to create a new user account, listing siswa and guru
+     * records that do not yet have a linked account.
+     *
+     * @return Response Inertia response rendering `admin/accounts/create`.
+     */
     public function create(): Response
     {
-        $siswa = \App\Models\Siswa::whereNull('user_id')
+        $siswa = Siswa::whereNull('user_id')
             ->orderBy('nama_siswa')
             ->get(['nis', 'nama_siswa', 'kelas']);
 
-        $guru = \App\Models\Guru::whereNull('user_id')
+        $guru = Guru::whereNull('user_id')
             ->with('mengajar:id_guru,kelas,mata_pelajaran')
             ->orderBy('nama_guru')
             ->get();
@@ -56,6 +75,13 @@ class AccountController extends Controller
         ]);
     }
 
+    /**
+     * Persist a new user account, optionally linking it to an existing
+     * siswa or guru profile (depending on the chosen role).
+     *
+     * @param  AccountRequest  $request  The validated form-request.
+     * @return RedirectResponse Redirect to the accounts index with a success flash message.
+     */
     public function store(AccountRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -69,16 +95,25 @@ class AccountController extends Controller
         ]);
 
         if ($data['role'] === User::ROLE_SISWA && ! empty($data['nis'])) {
-            \App\Models\Siswa::where('nis', $data['nis'])->update(['user_id' => $user->id]);
+            Siswa::where('nis', $data['nis'])->update(['user_id' => $user->id]);
         }
 
         if ($data['role'] === User::ROLE_GURU && ! empty($data['guru_id'])) {
-            \App\Models\Guru::where('id', $data['guru_id'])->update(['user_id' => $user->id]);
+            Guru::where('id', $data['guru_id'])->update(['user_id' => $user->id]);
         }
 
         return redirect()->route('admin.accounts.index')->with('success', 'Akun berhasil dibuat.');
     }
 
+    /**
+     * Toggle the `is_active` flag of a user account.
+     *
+     * Refuses with an error flash if the target account is the currently
+     * authenticated user (prevents admins from locking themselves out).
+     *
+     * @param  User  $user  The target account, resolved by route-model binding.
+     * @return RedirectResponse Redirect back with a success or error flash message.
+     */
     public function toggleActive(User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
@@ -92,6 +127,13 @@ class AccountController extends Controller
         return back()->with('success', "Akun berhasil {$status}.");
     }
 
+    /**
+     * Reset the password of a user account.
+     *
+     * @param  Request  $request  Current HTTP request; reads the new `password` field (min 6 chars).
+     * @param  User  $user  The target account, resolved by route-model binding.
+     * @return RedirectResponse Redirect back with a success flash message naming the affected username.
+     */
     public function resetPassword(Request $request, User $user): RedirectResponse
     {
         $request->validate([

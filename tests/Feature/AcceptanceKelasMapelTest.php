@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Guru;
 use App\Models\GuruMengajar;
 use App\Models\Kelas;

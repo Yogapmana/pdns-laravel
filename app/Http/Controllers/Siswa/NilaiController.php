@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
@@ -12,6 +14,15 @@ use Inertia\Response;
 
 class NilaiController extends Controller
 {
+    /**
+     * Display the read-only personal nilai page for the authenticated siswa.
+     *
+     * Loads the siswa's `Nilai` rows (eager-loading the `guru` profile),
+     * groups them by the `(kelas, mata_pelajaran)` composite key, and
+     * builds the per-mapel chart payload.
+     *
+     * @return Response Inertia response rendering `siswa/nilai/index`.
+     */
     public function index(): Response
     {
         $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
@@ -44,13 +55,17 @@ class NilaiController extends Controller
     /**
      * Compute aggregated chart data from grouped nilai collection.
      *
-     * @param  Collection<string, Collection<int, Nilai>>  $nilai
+     * Walks the `(kelas, mata_pelajaran)`-keyed collection once, accumulating
+     * the sums required to compute averages for `tugas` / `uts` / `uas` /
+     * `akhir`, the per-mapel rows, and the pass/fail counters.
+     *
+     * @param  Collection<string, Collection<int, Nilai>>  $nilai  Grouped nilai rows, keyed by `"kelas|mata_pelajaran"`.
      * @return array{
      *     overall: array{tugas: float|null, uts: float|null, uas: float|null, akhir: float|null, count: int},
      *     per_mapel: array<int, array{mapel: string, tugas: float|null, uts: float|null, uas: float|null, akhir: float|null, status: string|null, kkm: float}>,
      *     kkm: float,
      *     stats: array{total_mapel: int, lulus: int, tidak_lulus: int}
-     * }
+     * }  Aggregated chart data.
      */
     private function buildChartData($nilai): array
     {
@@ -108,7 +123,7 @@ class NilaiController extends Controller
             }
         }
 
-        $avg = fn (int $sum) => $count > 0 ? (float) round($sum / $count, 2) : null;
+        $avg = fn (int|float $sum) => $count > 0 ? (float) round($sum / $count, 2) : null;
 
         $overallAkhir = $count > 0 ? (float) round($sumAkhir / $count, 2) : null;
 

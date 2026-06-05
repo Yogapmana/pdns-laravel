@@ -153,14 +153,23 @@ return;
                                     <input type="hidden" name="kelas" value={kelas} />
                                     <input type="hidden" name="mata_pelajaran" value={mata_pelajaran} />
                                     <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
+                                        <table className="w-full text-sm table-fixed">
+                                            <colgroup>
+                                                <col className="w-24" />
+                                                <col />
+                                                <col className="w-32" />
+                                                <col className="w-32" />
+                                                <col className="w-32" />
+                                                <col className="w-24" />
+                                                <col className="w-28" />
+                                            </colgroup>
                                             <thead>
                                                 <tr className="bg-primary text-white">
                                                     <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wide">NIS</th>
                                                     <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wide">Nama</th>
-                                                    <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide">Tugas<br /><span className="text-[10px] font-normal">(30%)</span></th>
-                                                    <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide">UTS<br /><span className="text-[10px] font-normal">(30%)</span></th>
-                                                    <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide">UAS<br /><span className="text-[10px] font-normal">(40%)</span></th>
+                                                    <th className="px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">Tugas<br /><span className="text-[10px] font-normal opacity-80">(30%)</span></th>
+                                                    <th className="px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">UTS<br /><span className="text-[10px] font-normal opacity-80">(30%)</span></th>
+                                                    <th className="px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">UAS<br /><span className="text-[10px] font-normal opacity-80">(40%)</span></th>
                                                     <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide">Akhir</th>
                                                     <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide">Status</th>
                                                 </tr>
@@ -232,7 +241,7 @@ function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
     const invalid = value !== null && (value < 0 || value > 100);
 
     return (
-        <div className="px-3 py-2">
+        <td className="px-2 py-2 text-center align-middle">
             <input type="hidden" name={`nilai[${nis}][nis]`} value={nis} />
             <input
                 type="number"
@@ -244,12 +253,12 @@ function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
                 onChange={(e) => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
                 disabled={disabled}
                 className={cn(
-                    'w-20 border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 disabled:bg-surface',
+                    'w-24 border rounded-md px-2 py-1.5 text-sm text-center font-mono focus:outline-none focus:ring-2 disabled:bg-surface disabled:cursor-not-allowed',
                     invalid ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary',
                 )}
                 placeholder="0-100"
             />
-        </div>
+        </td>
     );
 }
 
@@ -265,9 +274,9 @@ function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nila
     const hasInvalid = invalid(tugas) || invalid(uts) || invalid(uas);
 
     return (
-        <tr className="hover:bg-blue-50">
-            <td className="px-3 py-2 font-mono text-xs">{siswa.nis}</td>
-            <td className="px-3 py-2 font-medium">{siswa.nama_siswa}</td>
+        <tr className="hover:bg-blue-50/50">
+            <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">{siswa.nis}</td>
+            <td className="px-3 py-2 font-medium whitespace-nowrap">{siswa.nama_siswa}</td>
             <NilaiInput
                 name={`nilai[${siswa.nis}][nilai_tugas]`}
                 nis={siswa.nis}
@@ -289,7 +298,7 @@ function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nila
                 onChange={setUas}
                 disabled={disabled}
             />
-            <td className="px-3 py-2 text-center font-semibold text-navy">
+            <td className="px-3 py-2 text-center font-semibold font-mono text-navy whitespace-nowrap">
                 {hasInvalid ? (
                     <span className="text-danger inline-flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> —

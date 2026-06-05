@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
@@ -20,6 +22,9 @@ class HandleInertiaRequests extends Middleware
      * Determines the current asset version.
      *
      * @see https://inertiajs.com/asset-versioning
+     *
+     * @param  Request  $request  The current HTTP request.
+     * @return string|null The current asset version hash, or `null` if versioning is disabled.
      */
     public function version(Request $request): ?string
     {

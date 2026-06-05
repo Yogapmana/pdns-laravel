@@ -1258,6 +1258,117 @@ Backend aggregation di `Siswa\NilaiController::buildChartData()`:
 
 ---
 
+## 7.6 Fitur Tambahan: Grafik Interaktif Dashboard Admin
+
+Dashboard admin (`/admin/dashboard`) diperkaya dengan visualisasi data interaktif berbasis pure CSS/SVG (no chart library). 4 section utama:
+
+### 7.6.1 Statistik Overview (Stat Cards)
+
+4 stat cards di header:
+- **Total Siswa** (primary)
+- **Total Guru** (accent)
+- **Mata Pelajaran** (warning) — baru, dari `MataPelajaran::count()`
+- **Persentase Lulus** (success)
+
+### 7.6.2 Komposisi Kelulusan (Donut Chart)
+
+Donut chart CSS `conic-gradient` dengan 2 segmen:
+- **Lulus** (hijau `#10B981`)
+- **Tidak Lulus** (merah `#EF4444`)
+
+Tengah donut menampilkan **total nilai** dengan label. Animasi `transition-[background] duration-700` saat render. Legend di bawah: lulus count + tidak count.
+
+### 7.6.3 Kelulusan per Kelas (Stacked Bar Chart)
+
+Per kelas (X-A, X-B, XI-A, XI-B), tampilkan stacked horizontal bar:
+- **Lulus** (hijau) — width normalized ke max total
+- **Tidak Lulus** (merah) — width normalized ke max total
+
+**Interaktif**: klik bar → navigasi ke `/admin/siswa?kelas=X` dengan `<Link prefetch>`. Hover: color shift ke emerald-600 / rose-600. Tooltip per segmen via `title` attribute.
+
+Format: `Kelas | Lulus/Total (Persentase%)`
+
+### 7.6.4 Rata-rata Nilai per Mata Pelajaran (Horizontal Bar Chart)
+
+Per mata pelajaran, horizontal bar menampilkan rata-rata nilai_akhir:
+- **Bar hijau** jika rata-rata ≥ KKM (70)
+- **Bar kuning** jika rata-rata < KKM (warning)
+- **KKM line** navy vertical di posisi 70 (sama dengan chart siswa)
+- Caption: "Lulus N • Tidak M" dengan total nilai
+
+**Interaktif**: klik bar → `/admin/laporan?mapel=X`. Hover: opacity-80 transition.
+
+### 7.6.5 Top Siswa Berprestasi & Siswa Perlu Perhatian (Sortable Lists)
+
+2 cards berdampingan, masing-masing list top 5 siswa dengan:
+
+**Top Siswa Berprestasi** (icon Trophy, hijau):
+- Sort by rata-rata nilai_akhir desc
+- Tampilan: avatar (rank atau huruf pertama), nama, kelas, "N mapel • Lulus X/N", progress bar hijau, nilai rata-rata besar di kanan
+- Click → `/admin/siswa/{nis}/edit`
+
+**Siswa Perlu Perhatian** (icon AlertTriangle, merah):
+- Filter: siswa dengan **minimal 1 mapel tidak lulus**
+- Sort: rasio_tidak_lulus desc, lalu rata-rata asc
+- Tampilan: avatar (rank atau huruf), nama, kelas, "X/N mapel tidak lulus", progress bar merah (lebar = rasio%), rasio % besar di kanan
+- Click → `/admin/siswa/{nis}/edit`
+
+**Interaktif**: tombol sort toggle (Ranking ↔ A-Z) di header masing-masing card, dengan `useState<SortKey>` + `useMemo`.
+
+### 7.6.6 Conditional Insights (Smart Alerts)
+
+Di bawah dashboard, alert kontekstual:
+- **Tingkat kelulusan rendah** (rose-50) jika `tidak_lulus > lulus` — icon TrendingDown, saran evaluasi
+- **Performa akademik baik** (emerald-50) jika `lulus > 0 && lulus > tidak_lulus` — icon TrendingUp, pujian
+
+### 7.6.7 Backend Aggregation (3 Query Baru)
+
+Di `Admin\DashboardController`:
+
+1. **`buildRataRataPerMapel()`**: GROUP BY `mata_pelajaran`, AVG(nilai_akhir) + SUM(CASE WHEN lulus/tidak_lulus) + COUNT(*). Sort desc by rata-rata. 4 mapel (Matematika 76.29, IPS 75.17, IPA 74.88, Bahasa Indonesia 73.97).
+2. **`buildTopSiswa(int $limit = 5)`**: JOIN siswa, GROUP BY nis, AVG + COUNT + SUM per status. Sort desc by rata-rata. 5 siswa (Eko Hidayat 85.25, dst).
+3. **`buildSiswaPerhatian(int $limit = 5)`**: JOIN siswa, GROUP BY nis, HAVING SUM(tidak_lulus) > 0. Sort by SUM(tidak_lulus) DESC, AVG(nilai_akhir) ASC. 5 siswa dengan rasio tertinggi.
+
+### 7.6.8 Verifikasi & Test
+
+- `php artisan test` → 96/96 ✓ (637 assertions, +10 tests, +163 assertions dari T8 baseline 86/474)
+- `npx tsc --noEmit` → clean ✓
+- `npm run lint` → 0 errors ✓
+- `vendor/bin/pint --dirty --format agent` → passed (1 unused import fix) ✓
+- `npm run build` → built in 6.32s ✓
+- Smoke test admin → `/admin/dashboard` 200, 54.3KB ✓
+- `rekap_per_kelas`: 4 entries (X-A 62.5%, X-B 71.4%, XI-A 85.7%, XI-B 71.4%) ✓
+- `top_siswa`: 5 entries sorted desc ✓
+- `siswa_perhatian`: 5 entries sorted by rasio desc ✓
+- `kkm=70` ✓
+- Login guru/siswa → `/admin/dashboard` 403 ✓
+
+10 test baru di `AcceptanceAdminDashboardTest.php`:
+
+- Stats utama dengan total yang benar
+- Persentase lulus (66.7% untuk 2/3 lulus)
+- Rekap per kelas dengan jumlah siswa, lulus, tidak lulus, total, persentase (50% lulus di X-A)
+- Rata-rata per mapel sorted descending + persentase lulus (Matematika 85.0 100%, B.Indo 60.0 0%)
+- Top siswa sorted descending dan dibatasi 5
+- Siswa perhatian hanya berisi siswa dengan minimal 1 mapel tidak lulus
+- Siswa perhatian diurutkan rasio desc lalu rata-rata asc
+- Siswa perhatian kosong ketika semua siswa lulus
+- Role auth: admin 200, guru/siswa 403
+- Unauthenticated → redirect /login
+
+### 7.6.9 Catatan Teknis
+
+- **`DB::raw` dengan `?` binding tidak bisa** — `selectRaw` tidak support `?` placeholder untuk SQL aggregate. Solusi: interpolasi string `"SUM(CASE WHEN status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END)"`. Aman karena value dari PHP constant `Nilai::LULUS` (bukan user input).
+- **PHP `round()` return type quirk**: `round(50, 1)` returns `50` (int), bukan `50.0` (float), karena input int. Solusi: explicit `(float) cast` di controller output.
+- **JSON strips `.0`**: `json_encode(70.0)` returns `"70"`. Test assertion `->where('kkm', 70.0)` GAGAL strict comparison karena test melihat int 70 dari JSON. Solusi: assertion pakai int `70` bukan float `70.0`.
+- **Pure CSS donut chart**: `conic-gradient(#10B981 0deg ${pct*3.6}deg, #EF4444 ${pct*3.6}deg ..., #E2E8F0 ... 360deg)` di `div` rounded-full. Inner circle putih absolute dengan total.
+- **`<Link prefetch>`** di Inertia v3: pre-fetch halaman di hover (atau click) untuk navigasi instan.
+- **CSS animation budget**: 700ms `transition-[background]` di donut cukup smooth tanpa menyebabkan layout shift.
+
+> **[SCREENSHOT REQUIRED]** Screenshot dashboard admin baru: 4 stat cards, donut chart kelulusan, stacked bar kelulusan per kelas, horizontal bar rata-rata per mapel (dengan KKM line), 2 list sortable (top siswa + siswa perlu perhatian), conditional alert. (5-7 gambar)
+
+---
+
 ## 8. Potongan Kode Fungsi / Procedure
 
 ### 8.1 Static Method: Hitung Nilai Akhir (Nilai Model)
@@ -1926,13 +2037,14 @@ Beberapa bagian dari dokumen ini **memerlukan screenshot atau input manual** aga
 | 3 | **§3.6** Perhitungan Real-time | 📸 Screenshot form input nilai dengan kolom Tugas/UTS/UAS/Hasil real-time terupdate |
 | 4 | **§4.4** Laporan | 📸 Screenshot preview laporan, hasil export PDF (halaman 1-2), HTML export (3-4 gambar) |
 | 5 | **§5.7** Bukti Pengujian DB | 📸 Screenshot phpMyAdmin/HeidiSQL/MySQL Workbench tabel `users`, `siswa`, `guru`, `guru_mengajar`, `nilai`, **`kelas`, `mata_pelajaran`** dengan data real (7 gambar) |
-| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 86 passed |
+| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 96 passed |
 | 7 | **§7** Perbaikan Error | 📸 Screenshot output `npm run lint` 0 errors, output `pint` passed |
-| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar, entry #17 master tables, entry #18 rapor digital) |
+| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar, entry #17 master tables, entry #18 rapor digital, entry #19 grafik interaktif admin) |
 | 9 | **Manajemen Kelas & Mata Pelajaran** | 📸 Screenshot halaman `/admin/kelas` (search, count badges, delete-protection indicator) + `/admin/mata-pelajaran` (2 gambar) |
 | 10 | **Sidebar collapse** | 📸 Screenshot sidebar expanded dan collapsed (2 gambar) |
 | 11 | **Cetak Rapor Digital (Siswa)** | 📸 Screenshot `/siswa/dashboard` dengan card Cetak Rapor + `/siswa/nilai` dengan tombol Cetak Rapor di header & footer + 3 dashboard cards (Rata-rata Keseluruhan, Ringkasan Akademik, Komponen Perlu Perhatian) + bar chart "Performa per Mata Pelajaran" (5 gambar) |
 | 12 | **Rapor PDF (Siswa)** | 📸 Screenshot rapor PDF yang sudah di-download (header SMAN 7 Solo, identity table, tabel nilai, summary boxes, signature section) (1-2 gambar) |
+| 13 | **Grafik Interaktif Dashboard Admin** | 📸 Screenshot `/admin/dashboard`: 4 stat cards, donut chart kelulusan, stacked bar kelulusan per kelas (hover state), horizontal bar rata-rata per mapel (KKM line), Top Siswa Berprestasi + Siswa Perlu Perhatian (sortable, dengan progress bar), conditional alert (Performa baik) (5-7 gambar) |
 
 ### Tambahan Manual (jika perlu)
 

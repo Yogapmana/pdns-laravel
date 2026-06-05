@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Admin;
 
 use App\Models\GuruMengajar;
@@ -8,14 +10,41 @@ use App\Models\MataPelajaran;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
 
+/**
+ * Form-request for creating and updating `Guru` records together with
+ * their associated `GuruMengajar` rows.
+ *
+ * - Authorisation: admin only.
+ * - Validates that each mengajar pair references existing rows in `kelas`
+ *   and `mata_pelajaran`.
+ * - `withValidator()` rejects duplicate `(kelas, mata_pelajaran)` pairs in
+ *   the submission.
+ * - `prepareForValidation()` trims whitespace from each pair.
+ * - `getMengajar()` exposes the cleaned-up pairs to the controller.
+ */
 class GuruRequest extends FormRequest
 {
+    /**
+     * Determine whether the authenticated user is allowed to perform this request.
+     *
+     * @return bool `true` when the user is an admin, `false` otherwise.
+     */
     public function authorize(): bool
     {
         return $this->user()->isAdmin();
     }
 
+    /**
+     * Validation rules for the guru + mengajar form.
+     *
+     * For each submitted `mengajar.<i>` row, the method enforces that
+     * `kelas` and `mata_pelajaran` are required strings that exist in
+     * their respective master tables.
+     *
+     * @return array<string, array<int, string|In>> Validation rules keyed by field name.
+     */
     public function rules(): array
     {
         $guruId = $this->route('guru')?->id;
@@ -51,6 +80,11 @@ class GuruRequest extends FormRequest
 
     private array $existingMengajarPairs = [];
 
+    /**
+     * Indonesian-language error messages for the validation rules.
+     *
+     * @return array<string, string> Custom validation messages keyed by `field.rule`.
+     */
     public function messages(): array
     {
         return [
@@ -63,6 +97,12 @@ class GuruRequest extends FormRequest
         ];
     }
 
+    /**
+     * Add an `after` validation hook that rejects duplicate
+     * `(kelas, mata_pelajaran)` pairs in the submitted `mengajar` array.
+     *
+     * @param  Validator  $validator  The current validator instance.
+     */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $v) {
@@ -92,6 +132,10 @@ class GuruRequest extends FormRequest
         });
     }
 
+    /**
+     * Trim whitespace from each `mengajar.*.kelas` and `mengajar.*.mata_pelajaran`
+     * entry before validation runs.
+     */
     public function prepareForValidation(): void
     {
         $mengajar = $this->input('mengajar', []);
@@ -112,7 +156,13 @@ class GuruRequest extends FormRequest
     }
 
     /**
-     * @return array<int, array{kelas: string, mata_pelajaran: string}>
+     * Return the cleaned-up mengajar pairs as a 2-D array.
+     *
+     * Each pair is `['kelas' => string, 'mata_pelajaran' => string]`. Pairs
+     * with an empty `kelas` or `mata_pelajaran` are skipped (the rules
+     * already enforce non-empty values, so this is a defensive fallback).
+     *
+     * @return array<int, array{kelas: string, mata_pelajaran: string}> List of mengajar pairs.
      */
     public function getMengajar(): array
     {

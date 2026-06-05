@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
@@ -15,6 +17,17 @@ use Inertia\Response;
 
 class NilaiController extends Controller
 {
+    /**
+     * Display the guru's nilai-input page for a single (kelas, mata pelajaran) pair.
+     *
+     * Restricts the available kelas and mata-pelajaran options to the combos
+     * present in the guru's `guru_mengajar` rows. When a valid combo is
+     * selected, loads the siswa and any pre-existing `Nilai` rows so the form
+     * is pre-populated for editing.
+     *
+     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran` query parameters.
+     * @return Response Inertia response rendering `guru/nilai/index`.
+     */
     public function index(Request $request): Response
     {
         $guru = Guru::with('mengajar')->where('user_id', auth()->id())->firstOrFail();
@@ -67,6 +80,18 @@ class NilaiController extends Controller
         ]);
     }
 
+    /**
+     * Persist (create or update) one or more `Nilai` rows for the guru.
+     *
+     * Validates the payload, aborts with 403 if the guru does not teach the
+     * requested (kelas, mata_pelajaran) pair, then performs the writes inside
+     * a transaction. Each row's `nilai_akhir` and `status_lulus` are
+     * recomputed via the `Nilai` static helpers. Status is always set to
+     * `Draft` on save.
+     *
+     * @param  Request  $request  Current HTTP request carrying the bulk nilai payload.
+     * @return RedirectResponse Redirect back with a success flash message.
+     */
     public function save(Request $request): RedirectResponse
     {
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
@@ -130,6 +155,13 @@ class NilaiController extends Controller
         return back()->with('success', 'Nilai berhasil disimpan sebagai Draft.');
     }
 
+    /**
+     * Lock all of the guru's non-empty `Nilai` rows for a given
+     * (kelas, mata_pelajaran) pair by setting `status_validasi = Final`.
+     *
+     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran`.
+     * @return RedirectResponse Redirect back with a success flash message containing the number of affected rows.
+     */
     public function validateFinal(Request $request): RedirectResponse
     {
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
@@ -152,6 +184,16 @@ class NilaiController extends Controller
         return back()->with('success', "Nilai berhasil dikunci (Final). {$updated} baris nilai di-finalisasi.");
     }
 
+    /**
+     * Delete a single `Nilai` row owned by the guru.
+     *
+     * Aborts with 403 if the row's `id_guru` does not match the guru
+     * associated with the authenticated user. Refuses to delete rows
+     * already in `Final` status (return an error flash instead).
+     *
+     * @param  Nilai  $nilai  The nilai row to delete, resolved by route-model binding.
+     * @return RedirectResponse Redirect back with a success or error flash message.
+     */
     public function destroy(Nilai $nilai): RedirectResponse
     {
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
@@ -169,6 +211,15 @@ class NilaiController extends Controller
         return back()->with('success', 'Nilai berhasil dihapus.');
     }
 
+    /**
+     * Display the guru's rekapitulasi nilai page for a (kelas, mata pelajaran) pair.
+     *
+     * Computes lulus / tidak_lulus / belum counts for the selected combination
+     * and returns a per-siswa row with the associated `Nilai` (or null).
+     *
+     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran` query parameters.
+     * @return Response Inertia response rendering `guru/rekap/index`.
+     */
     public function rekap(Request $request): Response
     {
         $guru = Guru::with('mengajar')->where('user_id', auth()->id())->firstOrFail();

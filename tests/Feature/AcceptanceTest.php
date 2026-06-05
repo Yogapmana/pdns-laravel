@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Nilai;
-use App\Models\Siswa;
+declare(strict_types=1);
+
 use App\Models\User;
 
 test('AC-01: Login dengan kredensial valid role Admin redirect ke dashboard admin', function () {

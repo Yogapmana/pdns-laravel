@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
@@ -11,6 +13,11 @@ use Illuminate\Http\Response;
 
 class RaporController extends Controller
 {
+    /**
+     * Stream the authenticated siswa's personal rapor as a PDF download.
+     *
+     * @return Response A download response with `Content-Type: application/pdf` and a per-siswa filename.
+     */
     public function pdf(): Response
     {
         $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
@@ -77,6 +84,14 @@ class RaporController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Guess the current "tahun ajaran" string (e.g. `2025/2026`) based on
+     * the current month. Indonesian schools typically start the new tahun
+     * ajaran in July, so dates in the second half of the year use the
+     * current year as the start of the period.
+     *
+     * @return string The formatted tahun ajaran (`YYYY/YYYY`).
+     */
     private function guessTahunAjaran(): string
     {
         $now = now();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
@@ -11,6 +13,15 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    /**
+     * Display the guru dashboard with personal teaching statistics.
+     *
+     * Aggregates the guru's mengajar combinations, the total siswa taught,
+     * and counters for the guru's `Nilai` rows (total, draft, final, lulus,
+     * tidak_lulus, average).
+     *
+     * @return Response Inertia response rendering `guru/dashboard`.
+     */
     public function index(): Response
     {
         $guru = Guru::with('mengajar')->where('user_id', auth()->id())->firstOrFail();

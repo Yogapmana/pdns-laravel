@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -18,6 +20,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
+    /**
+     * Display the report-builder landing page with the available kelas and mata pelajaran.
+     *
+     * @param  Request  $request  Current HTTP request (currently unused).
+     * @return InertiaResponse Inertia response rendering `admin/reports/index`.
+     */
     public function index(Request $request): InertiaResponse
     {
         $daftarKelas = Kelas::pluckNamaOrdered();
@@ -29,6 +37,13 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Render the preview page (HTML) for the report, applying the same filter
+     * and data-builder pipeline as the export endpoints.
+     *
+     * @param  Request  $request  Current HTTP request; reads `kelas` (required array) and `mata_pelajaran` (optional array) query parameters.
+     * @return InertiaResponse Inertia response rendering `admin/reports/preview` with the aggregated report data.
+     */
     public function preview(Request $request): InertiaResponse
     {
         $payload = $this->validateFilter($request);
@@ -38,6 +53,14 @@ class ReportController extends Controller
         return Inertia::render('admin/reports/preview', $data);
     }
 
+    /**
+     * Stream the report as an A4-landscape PDF file.
+     *
+     * Uses `barryvdh/laravel-dompdf` to render the `reports.pdf` Blade view.
+     *
+     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
+     * @return Response A download response with `Content-Type: application/pdf`.
+     */
     public function exportPdf(Request $request): Response
     {
         $payload = $this->validateFilter($request);
@@ -49,6 +72,12 @@ class ReportController extends Controller
         return $pdf->download($filename.'.pdf');
     }
 
+    /**
+     * Stream the report as a standalone, download-attached HTML file.
+     *
+     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
+     * @return Response A download response with `Content-Type: text/html; charset=utf-8`.
+     */
     public function exportHtml(Request $request): Response
     {
         $payload = $this->validateFilter($request);
@@ -63,6 +92,14 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Stream the report as a CSV file. Uses a `StreamedResponse` so the
+     * payload is materialised into memory only as a 2-D array; a UTF-8 BOM
+     * is prepended so Excel opens the file with the correct encoding.
+     *
+     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
+     * @return StreamedResponse A streamed download response with `Content-Type: text/csv; charset=utf-8`.
+     */
     public function exportCsv(Request $request): StreamedResponse
     {
         $payload = $this->validateFilter($request);
@@ -82,6 +119,14 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Stream the report as an XLSX (Office Open XML SpreadsheetML) file.
+     *
+     * Delegates the actual workbook assembly to the `XlsxWriter` support class.
+     *
+     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
+     * @return Response A download response with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+     */
     public function exportXlsx(Request $request): Response
     {
         $payload = $this->validateFilter($request);
@@ -103,9 +148,15 @@ class ReportController extends Controller
     }
 
     /**
-     * Validate + normalize multi-kelas + multi-mapel filter.
+     * Validate and normalize the multi-kelas + multi-mapel filter.
      *
-     * @return array{kelas: array<int, string>, mata_pelajaran: array<int, string>}
+     * Reads `kelas` (required, at least one) and `mata_pelajaran` (optional)
+     * from the request, verifies that every entry exists in the corresponding
+     * master table, deduplicates, and sorts the resulting lists for a stable
+     * output filename.
+     *
+     * @param  Request  $request  Current HTTP request carrying the filter parameters.
+     * @return array{kelas: array<int, string>, mata_pelajaran: array<int, string>} The normalized filter payload.
      */
     private function validateFilter(Request $request): array
     {
@@ -135,7 +186,14 @@ class ReportController extends Controller
     }
 
     /**
-     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload
+     * Build the human-readable output filename for a given export.
+     *
+     * Single-kelas payloads use the sanitized class name; multi-kelas payloads
+     * collapse to `multi_<n>kelas` to keep the filename short.
+     *
+     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload  The normalized filter payload.
+     * @param  string  $ext  Extension suffix (currently unused in the produced filename but kept for future use).
+     * @return string The generated filename (without extension).
      */
     private function filenameFor(array $payload, string $ext): string
     {
@@ -147,10 +205,27 @@ class ReportController extends Controller
     }
 
     /**
-     * Build the report data: one or more "kelas" sections, each with rows of siswa.
+     * Build the aggregated report data used by every export and the HTML preview.
      *
-     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload
-     * @return array<string, mixed>
+     * Pipeline:
+     *  1. Load all `Siswa` rows whose `kelas` is in the filter.
+     *  2. Load all `Nilai` rows for those siswa, optionally restricted to the
+     *     selected `mata_pelajaran` filter, grouped by `[nis][mata_pelajaran]`.
+     *  3. Group siswa by `kelas` and, for every siswa, accumulate the per-mapel
+     *     nilai, the per-kelas pass/fail counts, and the global totals.
+     *
+     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload  The normalized filter payload.
+     * @return array{
+     *     kelas_list: array<int, string>,
+     *     mapel_list: array<int, string>,
+     *     sections: array<int, array{
+     *         kelas: string,
+     *         rows: array<int, array{siswa: Siswa, nilai_per_mapel: array<string, Nilai|null>, rata_rata: float|null}>,
+     *         stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int}
+     *     }>,
+     *     stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int},
+     *     tanggal_cetak: string
+     * }  The fully aggregated report payload.
      */
     private function buildReportData(array $payload): array
     {
@@ -254,7 +329,24 @@ class ReportController extends Controller
     }
 
     /**
-     * @return array<int, array<int, string|int|float|null>>
+     * Flatten the section-based report data into a 2-D array suitable for
+     * CSV and XLSX export. The first row is the header; subsequent rows
+     * contain one siswa per row with columns for `Kelas`, `NIS`, `Nama Siswa`,
+     * followed by `Tgs / UTS / UAS / Akhir` groups for every `mata_pelajaran`,
+     * and a final `Rata-rata` column.
+     *
+     * @param  array{
+     *     kelas_list: array<int, string>,
+     *     mapel_list: array<int, string>,
+     *     sections: array<int, array{
+     *         kelas: string,
+     *         rows: array<int, array{siswa: Siswa, nilai_per_mapel: array<string, Nilai|null>, rata_rata: float|null}>,
+     *         stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int}
+     *     }>,
+     *     stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int},
+     *     tanggal_cetak: string
+     * }  $data  The aggregated report data produced by `buildReportData()`.
+     * @return array<int, array<int, string|int|float|null>> A 2-D array of header + data rows.
      */
     private function flattenRowsForExport(array $data): array
     {

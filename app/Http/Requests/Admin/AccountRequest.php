@@ -1,19 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rules\RequiredIf;
 
+/**
+ * Form-request for the admin "create account" page.
+ *
+ * Validates a new user account payload: a unique `username`, a display
+ * `name`, one of the supported roles, and a password. The `nis` and
+ * `guru_id` fields are conditionally required based on the chosen role
+ * (they link the new account to an existing siswa or guru profile).
+ */
 class AccountRequest extends FormRequest
 {
+    /**
+     * Determine whether the authenticated user is allowed to perform this request.
+     *
+     * @return bool `true` when the user is an admin, `false` otherwise.
+     */
     public function authorize(): bool
     {
         return $this->user()->isAdmin();
     }
 
+    /**
+     * Validation rules for the account-creation form.
+     *
+     * @return array<string, array<int, string|In|Password|RequiredIf>> Validation rules keyed by field name.
+     */
     public function rules(): array
     {
         $role = $this->input('role');
