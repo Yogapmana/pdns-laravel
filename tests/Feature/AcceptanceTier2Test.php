@@ -6,6 +6,14 @@ use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Tests\Traits\SeedsAkademikMasters;
+
+uses(SeedsAkademikMasters::class);
+
+beforeEach(function () {
+    $this->seedKelas();
+    $this->seedMataPelajaran();
+});
 
 test('Admin bisa edit siswa (nama & kelas) tanpa mengubah NIS', function () {
     $admin = User::factory()->admin()->create();

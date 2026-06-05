@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library } from 'lucide-react';
+import {  useEffect, useState } from 'react';
+import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,8 @@ const NAV_ADMIN: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
     { label: 'Manajemen Siswa', href: '/admin/siswa', icon: <Users className="h-4 w-4" /> },
     { label: 'Manajemen Guru', href: '/admin/guru', icon: <GraduationCap className="h-4 w-4" /> },
+    { label: 'Manajemen Kelas', href: '/admin/kelas', icon: <School className="h-4 w-4" /> },
+    { label: 'Mata Pelajaran', href: '/admin/mata-pelajaran', icon: <Library className="h-4 w-4" /> },
     { label: 'Manajemen Akun', href: '/admin/akun', icon: <UserCog className="h-4 w-4" /> },
     { label: 'Laporan', href: '/admin/laporan', icon: <FileText className="h-4 w-4" /> },
 ];
@@ -56,6 +59,14 @@ return 'Manajemen Siswa';
 
         if (path.includes('/admin/guru')) {
 return 'Manajemen Guru';
+}
+
+        if (path.includes('/admin/kelas')) {
+return 'Manajemen Kelas';
+}
+
+        if (path.includes('/admin/mata-pelajaran')) {
+return 'Mata Pelajaran';
 }
 
         if (path.includes('/admin/akun')) {
@@ -88,9 +99,25 @@ return 'Nilai Saya';
     return 'Dashboard';
 }
 
+const SIDEBAR_KEY = 'pdns-sidebar-collapsed';
+const SIDEBAR_WIDTH = 'w-64';
+const SIDEBAR_WIDTH_COLLAPSED = 'w-16';
+const SIDEBAR_TRANSITION = 'transition-[width] duration-300 ease-in-out';
+
 export default function AppLayout({ children, title }: { children: ReactNode; title?: string }) {
     const { props, url } = usePage<PageProps>();
     const user = props.auth?.user;
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        if (typeof window === 'undefined') {
+return false;
+}
+
+        return window.localStorage.getItem(SIDEBAR_KEY) === 'true';
+    });
+
+    useEffect(() => {
+        window.localStorage.setItem(SIDEBAR_KEY, String(collapsed));
+    }, [collapsed]);
 
     if (!user) {
         return (
@@ -106,6 +133,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
     const nav = getNav(user.role, url);
     const pageTitle = title ?? getPageTitle(url, user.role);
     const roleLabel = user.role === 'admin' ? 'Admin' : user.role === 'guru' ? 'Guru' : 'Siswa';
+    const userInitial = (user.name ?? user.username).charAt(0).toUpperCase();
 
     function logout() {
         router.post('/logout');
@@ -115,48 +143,116 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
         <>
             <Head title={pageTitle} />
             <div className="flex h-screen bg-surface font-sans">
-                <aside className="w-64 bg-navy text-white flex-shrink-0 fixed h-full flex flex-col z-30">
-                    <div className="px-6 py-5 border-b border-navy-light">
-                        <p className="text-lg font-bold tracking-tight flex items-center gap-2">
-                            <BookOpen className="h-5 w-5" />
-                            SMAN 7 Solo
-                        </p>
-                        <p className="text-xs text-navy-300 mt-0.5">Sistem Akademik</p>
+                <aside
+                    className={cn(
+                        SIDEBAR_TRANSITION,
+                        'bg-navy text-white flex-shrink-0 fixed h-full flex flex-col z-30 overflow-hidden',
+                        collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH,
+                    )}
+                    aria-expanded={!collapsed}
+                >
+                    <div className={cn('flex items-center border-b border-navy-light flex-shrink-0', collapsed ? 'px-3 py-5 justify-center' : 'px-6 py-5 justify-between')}>
+                        {collapsed ? (
+                            <button
+                                type="button"
+                                onClick={() => setCollapsed(false)}
+                                className="text-navy-300 hover:text-white transition p-1.5 rounded hover:bg-navy-light"
+                                aria-label="Buka sidebar"
+                                title="Buka sidebar"
+                            >
+                                <PanelLeftOpen className="h-4 w-4" />
+                            </button>
+                        ) : (
+                            <>
+                                <div className="min-w-0">
+                                    <p className="text-lg font-bold tracking-tight flex items-center gap-2 truncate">
+                                        <BookOpen className="h-5 w-5 shrink-0" />
+                                        <span className="truncate">SMAN 7 Solo</span>
+                                    </p>
+                                    <p className="text-xs text-navy-300 mt-0.5 truncate">Sistem Akademik</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setCollapsed(true)}
+                                    className="text-navy-300 hover:text-white transition p-1 rounded hover:bg-navy-light shrink-0"
+                                    aria-label="Tutup sidebar"
+                                    title="Tutup sidebar"
+                                >
+                                    <PanelLeftClose className="h-4 w-4" />
+                                </button>
+                            </>
+                        )}
                     </div>
 
-                    <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
                         {nav.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                title={collapsed ? item.label : undefined}
                                 className={cn(
-                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition',
+                                    'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition',
+                                    collapsed ? 'justify-center gap-0 px-2' : 'gap-3',
                                     item.active
                                         ? 'bg-primary text-white'
                                         : 'text-navy-300 hover:bg-navy-light hover:text-white',
                                 )}
                             >
-                                {item.icon}
-                                {item.label}
+                                <span className="shrink-0">{item.icon}</span>
+                                <span
+                                    className={cn(
+                                        'whitespace-nowrap transition-all duration-300 ease-in-out overflow-hidden',
+                                        collapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100',
+                                    )}
+                                >
+                                    {item.label}
+                                </span>
                             </Link>
                         ))}
                     </nav>
 
-                    <div className="p-4 border-t border-navy-light">
-                        <p className="text-sm font-medium truncate">{user.name ?? user.username}</p>
-                        <p className="text-xs text-navy-300 capitalize">{roleLabel}</p>
-                        <button
-                            type="button"
-                            onClick={logout}
-                            className="w-full text-left text-xs text-navy-300 hover:text-white transition mt-3 flex items-center gap-1.5"
-                        >
-                            <LogOut className="h-3 w-3" />
-                            Keluar
-                        </button>
+                    <div className={cn('border-t border-navy-light flex-shrink-0', collapsed ? 'p-3' : 'p-4')}>
+                        {collapsed ? (
+                            <div className="flex flex-col items-center gap-3">
+                                <div
+                                    className="h-9 w-9 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center shrink-0"
+                                    title={user.name ?? user.username}
+                                >
+                                    {userInitial}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    title="Keluar"
+                                    className="text-navy-300 hover:text-white transition p-1.5 rounded hover:bg-navy-light"
+                                    aria-label="Keluar"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <p className="text-sm font-medium truncate">{user.name ?? user.username}</p>
+                                <p className="text-xs text-navy-300 capitalize">{roleLabel}</p>
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    className="w-full text-left text-xs text-navy-300 hover:text-white transition mt-3 flex items-center gap-1.5"
+                                >
+                                    <LogOut className="h-3 w-3" />
+                                    Keluar
+                                </button>
+                            </>
+                        )}
                     </div>
                 </aside>
 
-                <main className="ml-64 flex-1 flex flex-col min-h-screen overflow-hidden">
+                <main
+                    className={cn(
+                        'flex-1 flex flex-col min-h-screen overflow-hidden transition-[margin] duration-300 ease-in-out',
+                        collapsed ? 'ml-16' : 'ml-64',
+                    )}
+                >
                     <header className="bg-white border-b border-border px-6 py-4 flex items-center justify-between flex-shrink-0">
                         <p className="text-sm text-muted-foreground">
                             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}

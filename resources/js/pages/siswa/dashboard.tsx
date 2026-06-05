@@ -1,14 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { BookOpenCheck, GraduationCap } from 'lucide-react';
+import { BookOpenCheck, GraduationCap, Printer } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Container, PageHeader, StatCard } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Siswa = { nis: string; nama_siswa: string; kelas: string; user: { username: string } | null };
 
-type Props = { siswa: Siswa };
+type Props = { siswa: Siswa; has_nilai: boolean };
 
-export default function SiswaDashboard({ siswa }: Props) {
+export default function SiswaDashboard({ siswa, has_nilai }: Props) {
     useFlashToast();
 
     return (
@@ -43,6 +43,34 @@ export default function SiswaDashboard({ siswa }: Props) {
                     </div>
                 </CardContent>
             </Card>
+
+            {has_nilai && (
+                <Card>
+                    <CardContent>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full">
+                                <Printer className="h-8 w-8" />
+                            </div>
+                            <div className="flex-1 text-center sm:text-left">
+                                <h2 className="text-lg font-bold text-navy">Cetak Rapor Digital</h2>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Unduh rapor digital Anda dalam format PDF siap cetak. Sudah termasuk tabel nilai, ringkasan kelulusan, dan
+                                    kolom tanda tangan.
+                                </p>
+                            </div>
+                            <a
+                                href="/siswa/rapor/pdf"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition"
+                            >
+                                <Printer className="h-4 w-4" />
+                                Cetak Rapor (PDF)
+                            </a>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </Container>
     );
 }

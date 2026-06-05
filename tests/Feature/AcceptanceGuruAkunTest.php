@@ -3,7 +3,14 @@
 use App\Models\Guru;
 use App\Models\GuruMengajar;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Tests\Traits\SeedsAkademikMasters;
+
+uses(SeedsAkademikMasters::class);
+
+beforeEach(function () {
+    $this->seedKelas();
+    $this->seedMataPelajaran();
+});
 
 test('Admin buat guru baru TANPA akun login (akun dibuat terpisah di halaman Manajemen Akun)', function () {
     $admin = User::factory()->admin()->create();

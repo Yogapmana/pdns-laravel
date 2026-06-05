@@ -3,8 +3,11 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\GuruMengajar;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class GuruRequest extends FormRequest
 {
@@ -36,11 +39,9 @@ class GuruRequest extends FormRequest
 
             $kelasKey = "mengajar.$i.kelas";
             $mapelKey = "mengajar.$i.mata_pelajaran";
-            $mapelBaruKey = "mengajar.$i.mata_pelajaran_baru";
 
-            $rules[$kelasKey] = ['required', 'string', 'max:20'];
-            $rules[$mapelKey] = ['nullable', 'string', 'max:100'];
-            $rules[$mapelBaruKey] = ['nullable', 'string', 'max:100'];
+            $rules[$kelasKey] = ['required', 'string', Rule::exists(Kelas::class, 'nama')];
+            $rules[$mapelKey] = ['required', 'string', Rule::exists(MataPelajaran::class, 'nama')];
         }
 
         $this->existingMengajarPairs = $existingPairs;
@@ -56,6 +57,9 @@ class GuruRequest extends FormRequest
             'nama_guru.required' => 'Nama guru wajib diisi.',
             'mengajar.required' => 'Minimal satu kombinasi kelas dan mata pelajaran harus diisi.',
             'mengajar.min' => 'Minimal satu kombinasi kelas dan mata pelajaran harus diisi.',
+            'mengajar.*.kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
+            'mengajar.*.mata_pelajaran.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
+            'mengajar.*.mata_pelajaran.required' => 'Mata pelajaran wajib dipilih.',
         ];
     }
 
@@ -72,23 +76,12 @@ class GuruRequest extends FormRequest
 
                 $kelas = trim((string) ($row['kelas'] ?? ''));
                 $mapel = trim((string) ($row['mata_pelajaran'] ?? ''));
-                $mapelBaru = trim((string) ($row['mata_pelajaran_baru'] ?? ''));
 
-                if ($kelas === '') {
-                    $v->errors()->add("mengajar.$i.kelas", 'Kelas wajib diisi.');
-
+                if ($kelas === '' || $mapel === '') {
                     continue;
                 }
 
-                $finalMapel = $mapel !== '' ? $mapel : $mapelBaru;
-
-                if ($finalMapel === '') {
-                    $v->errors()->add("mengajar.$i.mata_pelajaran", 'Pilih atau isi mata pelajaran.');
-
-                    continue;
-                }
-
-                $pair = $kelas.'|'.$finalMapel;
+                $pair = $kelas.'|'.$mapel;
 
                 if (in_array($pair, $seen, true)) {
                     $v->errors()->add("mengajar.$i.mata_pelajaran", 'Kombinasi kelas & mata pelajaran duplikat.');
@@ -112,7 +105,6 @@ class GuruRequest extends FormRequest
                 $cleaned[] = [
                     'kelas' => isset($row['kelas']) ? trim((string) $row['kelas']) : '',
                     'mata_pelajaran' => isset($row['mata_pelajaran']) ? trim((string) $row['mata_pelajaran']) : '',
-                    'mata_pelajaran_baru' => isset($row['mata_pelajaran_baru']) ? trim((string) $row['mata_pelajaran_baru']) : '',
                 ];
             }
             $this->merge(['mengajar' => $cleaned]);
@@ -131,16 +123,11 @@ class GuruRequest extends FormRequest
             }
             $kelas = trim((string) ($row['kelas'] ?? ''));
             $mapel = trim((string) ($row['mata_pelajaran'] ?? ''));
-            $mapelBaru = trim((string) ($row['mata_pelajaran_baru'] ?? ''));
 
-            if ($kelas === '') {
+            if ($kelas === '' || $mapel === '') {
                 continue;
             }
-            $final = $mapel !== '' ? $mapel : $mapelBaru;
-            if ($final === '') {
-                continue;
-            }
-            $out[] = ['kelas' => $kelas, 'mata_pelajaran' => $final];
+            $out[] = ['kelas' => $kelas, 'mata_pelajaran' => $mapel];
         }
 
         return $out;

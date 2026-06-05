@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Guru;
 use App\Models\GuruMengajar;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
@@ -14,10 +16,51 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedKelas();
+        $this->seedMataPelajaran();
         $this->seedAdmin();
         $guru = $this->seedGuru();
         $siswa = $this->seedSiswa();
         $this->seedNilai($guru, $siswa);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function seedKelas(): array
+    {
+        $daftarKelas = ['X-A', 'X-B', 'XI-A', 'XI-B', 'XII-A', 'XII-B'];
+
+        foreach ($daftarKelas as $nama) {
+            Kelas::firstOrCreate(['nama' => $nama]);
+        }
+
+        return $daftarKelas;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function seedMataPelajaran(): array
+    {
+        $daftarMapel = [
+            'Matematika',
+            'Bahasa Indonesia',
+            'IPA',
+            'IPS',
+            'Bahasa Inggris',
+            'PKN',
+            'Penjaskes',
+            'Seni Budaya',
+            'Sejarah',
+            'Bahasa Jawa',
+        ];
+
+        foreach ($daftarMapel as $nama) {
+            MataPelajaran::firstOrCreate(['nama' => $nama]);
+        }
+
+        return $daftarMapel;
     }
 
     private function seedAdmin(): User

@@ -1173,6 +1173,91 @@ unset($data['kelas_baru']);
 
 ---
 
+## 7.5 Fitur Tambahan: Cetak Rapor Digital & Grafik Performa Akademik (Siswa)
+
+Dua fitur baru untuk role siswa, melengkapi pengalaman belajar di sistem:
+
+### 7.5.1 Cetak Rapor Digital (Export PDF)
+
+Tombol **Cetak Rapor (PDF)** tersedia di:
+
+- **Dashboard siswa**: card khusus (hijau, Printer icon) — hanya tampil jika siswa sudah memiliki nilai (`has_nilai=true`).
+- **Halaman Nilai Saya**: tombol di header (sebelah judul) + tombol besar di footer tabel per mapel.
+
+Generate PDF via `barryvdh/laravel-dompdf`, render dari `resources/views/reports/rapor-pdf.blade.php`:
+
+- **Header**: "SMAN 7 SOLO" + "RAPOR DIGITAL SISWA" + Tahun Ajaran (auto-detect: `YYYY/YYYY+1` jika bulan ≥ 7, else `YYYY-1/YYYY`)
+- **Identity table**: Nama Siswa (uppercase), NIS, Kelas, KKM (70)
+- **Tabel nilai (9 kolom)**: No, Mata Pelajaran, Guru Pengajar, Tugas (30%), UTS (30%), UAS (40%), Nilai Akhir, Status (Lulus/Tidak Lulus), Validasi (Final/Draft)
+- **Summary boxes**: Jumlah Mapel, Rata-rata, Lulus, Tidak Lulus
+- **Signature section**: 3 kolom tanda tangan (Orang Tua/Wali, Wali Kelas, Kepala Sekolah)
+- **Meta footer**: timestamp cetak otomatis, klaim "Rapor digital ini sah"
+
+Route: `GET /siswa/rapor/pdf` (middleware `auth` + `role:siswa`). Filename: `Rapor_{nama_siswa}_{nis}.pdf`. Otorisasi: hanya siswa yang login (route otomatis ambil dari `auth()->user()->siswa`). Guru & admin ditolak 403.
+
+### 7.5.2 Grafik Performa Akademik (Bar Chart Visual)
+
+3 dashboard cards di atas tabel nilai siswa:
+
+1. **Rata-rata Keseluruhan**: 3 bar chart `<ComponentBar>` untuk Tugas/UTS/UAS (cross-mapel average). KKM line navy vertical di 70. Bar hijau jika ≥ KKM, merah jika < KKM. Di bawah: nilai akhir rata-rata + badge Lulus/Tidak Lulus.
+2. **Ringkasan Akademik**: 3 box (Total Mapel, Lulus, Tidak Lulus) dengan icon dan warna (primary/emerald/rose).
+3. **Komponen Perlu Perhatian**: klasifikasi Tugas/UTS/UAS ke "Perlu Ditingkatkan" (merah) atau "Sudah Di Atas KKM" (hijau). Atau "🎉 Semua komponen di atas KKM" jika 0 below.
+
+Section tambahan **"Performa per Mata Pelajaran"**: card dengan `<PerMapelChart>` yang menampilkan per mapel 3 mini bars (Tgs/UTS/UAS) + KKM line. Auto-detect "Komponen terlemah" (T atau U atau A) dan tampilkan warning jika ada di bawah KKM.
+
+Backend aggregation di `Siswa\NilaiController::buildChartData()`:
+
+```json
+{
+  "overall": { "tugas": 77.5, "uts": 70, "uas": 75, "akhir": 74.25, "count": 2 },
+  "per_mapel": [
+    { "mapel": "Matematika", "kelas": "X-A", "tugas": 65, "uts": 56, "uas": 53, "akhir": 57.5, "status": "Tidak Lulus", "kkm": 70 },
+    { "mapel": "Bahasa Indonesia", "kelas": "X-A", "tugas": 90, "uts": 84, "uas": 97, "akhir": 91, "status": "Lulus", "kkm": 70 }
+  ],
+  "kkm": 70,
+  "stats": { "total_mapel": 2, "lulus": 1, "tidak_lulus": 1 }
+}
+```
+
+**Pure CSS/SVG bar chart** — tidak pakai chart library. Bar: `position: absolute; left: 0; width: {value}%` dengan background emerald/rose. KKM line: `position: absolute; left: {kkm}%; width: 0.5px; bg-navy`.
+
+### 7.5.3 Verifikasi & Test
+
+- `php artisan test` → 86/86 ✓ (474 assertions, +10 tests, +77 assertions dari T1+T2+T3 baseline 76/397)
+- `npx tsc --noEmit` → clean ✓
+- `npm run lint` → 0 errors ✓
+- `vendor/bin/pint --dirty --format agent` → passed ✓
+- `npm run build` → built in 6.31s ✓
+- Smoke test siswa 00001: `/siswa/nilai` 200 (40.3 KB) dengan `chart_data.overall.tugas=77.5, uts=70, uas=75, akhir=74.25` + 2 tombol Cetak Rapor ✓
+- `/siswa/rapor/pdf` 200, 1.27 MB, `application/pdf`, `%PDF-1.7` magic, NIS `00001` 7× di body ✓
+- Login guru `sariwahyuni` → `/siswa/rapor/pdf` **403** ✓
+- Login admin → `/siswa/rapor/pdf` **403** ✓
+- `/siswa/dashboard` 200 (23.7 KB) dengan Cetak Rapor card + `has_nilai=true` ✓
+
+10 test baru di `tests/Feature/AcceptanceSiswaRaporTest.php`:
+
+- `chart_data` dikirim lengkap (overall counts, per_mapel, stats, kkm)
+- `chart_data` untuk siswa tanpa nilai (semua null + count=0)
+- Siswa bisa download rapor PDF (Content-Type: application/pdf + `%PDF` magic)
+- Rapor PDF body berisi nama siswa (UTF-16BE hex), NIS, kelas, mapel (FlateDecode-decompressed)
+- Siswa lain tidak bisa akses rapor siswa lain (data isolation verified)
+- Filename pattern: `Rapor_Ahmad_Subagja_00001.pdf`
+- Guru ditolak 403
+- Admin ditolak 403
+- Dashboard `has_nilai=true` jika ada nilai
+- Dashboard `has_nilai=false` jika belum ada nilai
+
+### 7.5.4 Catatan Teknis
+
+- **PDF body extraction**: `dompdf` compress body stream dengan FlateDecode. Untuk test body content, gunakan `gzinflate()` pada extracted stream (regex `/stream\r?\n(.*?)\r?\nendstream/s`).
+- **UTF-16BE encoding**: dompdf encode text strings sebagai UTF-16BE dalam PDF stream. `assertStringContainsString($str, $pdfContent)` GAGAL untuk ASCII strings — gunakan `bin2hex(mb_convert_encoding($str, 'UTF-16BE', 'UTF-8'))` lalu cari di `bin2hex($pdfContent)`.
+- **JSON float encoding**: `json_encode(70.0)` di PHP menghasilkan `"70"` (bukan `"70.0"`). Untuk konsistensi tipe, gunakan `(float)` cast di controller ATAU expect int di test assertion.
+- **PDF binary assertions**: `getContent()` mengembalikan binary, bukan streamed. `streamedContent()` tidak bisa dipakai untuk `BinaryFileResponse`/PDF.
+
+> **[SCREENSHOT REQUIRED]** Screenshot dashboard siswa (card Cetak Rapor) + halaman Nilai Saya (3 dashboard cards + bar chart + tombol Cetak Rapor) + PDF rapor yang sudah di-download (1-5 gambar)
+
+---
+
 ## 8. Potongan Kode Fungsi / Procedure
 
 ### 8.1 Static Method: Hitung Nilai Akhir (Nilai Model)
@@ -1840,10 +1925,14 @@ Beberapa bagian dari dokumen ini **memerlukan screenshot atau input manual** aga
 | 2 | **§2** Form Input | 📸 Screenshot form tambah siswa, form tambah guru dengan dynamic rows, form input nilai dengan cascading dropdown (3 gambar) |
 | 3 | **§3.6** Perhitungan Real-time | 📸 Screenshot form input nilai dengan kolom Tugas/UTS/UAS/Hasil real-time terupdate |
 | 4 | **§4.4** Laporan | 📸 Screenshot preview laporan, hasil export PDF (halaman 1-2), HTML export (3-4 gambar) |
-| 5 | **§5.7** Bukti Pengujian DB | 📸 Screenshot phpMyAdmin/HeidiSQL/MySQL Workbench tabel `users`, `siswa`, `guru`, `guru_mengajar`, `nilai` dengan data real (5 gambar) |
-| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 40 passed |
+| 5 | **§5.7** Bukti Pengujian DB | 📸 Screenshot phpMyAdmin/HeidiSQL/MySQL Workbench tabel `users`, `siswa`, `guru`, `guru_mengajar`, `nilai`, **`kelas`, `mata_pelajaran`** dengan data real (7 gambar) |
+| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 86 passed |
 | 7 | **§7** Perbaikan Error | 📸 Screenshot output `npm run lint` 0 errors, output `pint` passed |
-| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar) |
+| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar, entry #17 master tables, entry #18 rapor digital) |
+| 9 | **Manajemen Kelas & Mata Pelajaran** | 📸 Screenshot halaman `/admin/kelas` (search, count badges, delete-protection indicator) + `/admin/mata-pelajaran` (2 gambar) |
+| 10 | **Sidebar collapse** | 📸 Screenshot sidebar expanded dan collapsed (2 gambar) |
+| 11 | **Cetak Rapor Digital (Siswa)** | 📸 Screenshot `/siswa/dashboard` dengan card Cetak Rapor + `/siswa/nilai` dengan tombol Cetak Rapor di header & footer + 3 dashboard cards (Rata-rata Keseluruhan, Ringkasan Akademik, Komponen Perlu Perhatian) + bar chart "Performa per Mata Pelajaran" (5 gambar) |
+| 12 | **Rapor PDF (Siswa)** | 📸 Screenshot rapor PDF yang sudah di-download (header SMAN 7 Solo, identity table, tabel nilai, summary boxes, signature section) (1-2 gambar) |
 
 ### Tambahan Manual (jika perlu)
 

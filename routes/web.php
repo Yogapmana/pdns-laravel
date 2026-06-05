@@ -2,13 +2,16 @@
 
 use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\MataPelajaranController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SiswaController;
-use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
 use App\Http\Controllers\Guru\NilaiController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\Siswa\NilaiController as SiswaNilaiController;
+use App\Http\Controllers\Siswa\RaporController as SiswaRaporController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -52,10 +55,15 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::patch('/akun/{user}/toggle-active', [AccountController::class, 'toggleActive'])->name('accounts.toggle-active');
     Route::post('/akun/{user}/reset-password', [AccountController::class, 'resetPassword'])->name('accounts.reset-password');
 
+    Route::resource('kelas', KelasController::class)->except(['show'])->names('kelas');
+    Route::resource('mata-pelajaran', MataPelajaranController::class)->except(['show'])->names('mata-pelajaran');
+
     Route::get('/laporan', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/laporan/preview', [ReportController::class, 'preview'])->name('reports.preview');
-    Route::get('/laporan/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
-    Route::get('/laporan/export/html', [ReportController::class, 'exportHtml'])->name('reports.export.html');
+    Route::match(['get', 'post'], '/laporan/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+    Route::match(['get', 'post'], '/laporan/export/html', [ReportController::class, 'exportHtml'])->name('reports.export.html');
+    Route::match(['get', 'post'], '/laporan/export/csv', [ReportController::class, 'exportCsv'])->name('reports.export.csv');
+    Route::match(['get', 'post'], '/laporan/export/xlsx', [ReportController::class, 'exportXlsx'])->name('reports.export.xlsx');
 });
 
 Route::prefix('guru')->middleware(['auth', 'role:guru'])->name('guru.')->group(function () {
@@ -72,4 +80,5 @@ Route::prefix('guru')->middleware(['auth', 'role:guru'])->name('guru.')->group(f
 Route::prefix('siswa')->middleware(['auth', 'role:siswa'])->name('siswa.')->group(function () {
     Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
     Route::get('/nilai', [SiswaNilaiController::class, 'index'])->name('nilai.index');
+    Route::get('/rapor/pdf', [SiswaRaporController::class, 'pdf'])->name('rapor.pdf');
 });

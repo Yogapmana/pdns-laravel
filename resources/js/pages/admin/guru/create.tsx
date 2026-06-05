@@ -15,16 +15,15 @@ type Props = {
 type MengajarRow = {
     kelas: string;
     mata_pelajaran: string;
-    mata_pelajaran_baru: string;
 };
 
 export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
     const [rows, setRows] = useState<MengajarRow[]>([
-        { kelas: '', mata_pelajaran: '', mata_pelajaran_baru: '' },
+        { kelas: '', mata_pelajaran: '' },
     ]);
 
     function addRow() {
-        setRows([...rows, { kelas: '', mata_pelajaran: '', mata_pelajaran_baru: '' }]);
+        setRows([...rows, { kelas: '', mata_pelajaran: '' }]);
     }
 
     function removeRow(index: number) {
@@ -76,7 +75,7 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                     <div className="space-y-3">
                                         {rows.map((row, i) => (
                                             <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-border bg-surface">
-                                                <div className="col-span-12 sm:col-span-4">
+                                                <div className="col-span-12 sm:col-span-5">
                                                     <label className="block text-xs font-medium text-muted-foreground mb-1">
                                                         Kelas <span className="text-danger">*</span>
                                                     </label>
@@ -86,23 +85,14 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                                         onChange={(e) => updateRow(i, 'kelas', e.target.value)}
                                                         required
                                                     >
-                                                        <option value="">Pilih kelas</option>
+                                                        <option value="" disabled>Pilih kelas</option>
                                                         {daftar_kelas.map((k) => (
                                                             <option key={k} value={k}>{k}</option>
                                                         ))}
-                                                        <option value="__baru__">+ Kelas baru...</option>
                                                     </Select>
-                                                    {row.kelas === '__baru__' && (
-                                                        <Input
-                                                            name={`mengajar[${i}][kelas_new]`}
-                                                            placeholder="Ketik kelas baru"
-                                                            className="mt-1"
-                                                            onChange={(e) => updateRow(i, 'kelas', e.target.value)}
-                                                        />
-                                                    )}
                                                     <InputError message={errors[`mengajar.${i}.kelas`]} />
                                                 </div>
-                                                <div className="col-span-10 sm:col-span-7">
+                                                <div className="col-span-10 sm:col-span-6">
                                                     <label className="block text-xs font-medium text-muted-foreground mb-1">
                                                         Mata Pelajaran <span className="text-danger">*</span>
                                                     </label>
@@ -110,19 +100,13 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                                         name={`mengajar[${i}][mata_pelajaran]`}
                                                         value={row.mata_pelajaran}
                                                         onChange={(e) => updateRow(i, 'mata_pelajaran', e.target.value)}
+                                                        required
                                                     >
-                                                        <option value="">Pilih mata pelajaran atau isi baru</option>
+                                                        <option value="" disabled>Pilih mata pelajaran</option>
                                                         {daftar_mapel.map((m) => (
                                                             <option key={m} value={m}>{m}</option>
                                                         ))}
                                                     </Select>
-                                                    <Input
-                                                        name={`mengajar[${i}][mata_pelajaran_baru]`}
-                                                        placeholder="Atau ketik mapel baru"
-                                                        className="mt-1"
-                                                        value={row.mata_pelajaran_baru}
-                                                        onChange={(e) => updateRow(i, 'mata_pelajaran_baru', e.target.value)}
-                                                    />
                                                     <InputError message={errors[`mengajar.${i}.mata_pelajaran`]} />
                                                 </div>
                                                 <div className="col-span-2 sm:col-span-1 flex items-end justify-end h-full">
@@ -140,6 +124,14 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                             </div>
                                         ))}
                                     </div>
+
+                                    <p className="text-xs text-muted-foreground mt-3">
+                                        Belum ada kelas atau mata pelajaran yang sesuai?{' '}
+                                        <Link href="/admin/kelas" className="text-primary hover:underline">Kelola kelas</Link>
+                                        {' atau '}
+                                        <Link href="/admin/mata-pelajaran" className="text-primary hover:underline">kelola mata pelajaran</Link>
+                                        .
+                                    </p>
                                 </div>
 
                                 <div className="flex gap-2 pt-4 border-t border-border">

@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { Plus, Power, KeyRound, Search, X } from 'lucide-react';
+import { Plus, Power, KeyRound, Search, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import { PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
+import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
 type Account = {
     id: number;
@@ -48,20 +49,14 @@ const ROLE_VARIANTS: Record<string, 'default' | 'success' | 'info'> = {
 
 export default function AccountsIndex({ accounts, filters }: Props) {
     useFlashToast();
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [role, setRole] = useState(filters.role ?? '');
+    const { filters: state, loading, hasFilter, setFilter, reset } = useInertiaSearch({
+        url: '/admin/akun',
+        initialFilters: { search: filters.search, role: filters.role },
+        only: ['accounts', 'filters'],
+    });
+
     const [resetTarget, setResetTarget] = useState<Account | null>(null);
     const [newPassword, setNewPassword] = useState('');
-
-    function applyFilters() {
-        router.get('/admin/akun', { search, role }, { preserveState: true });
-    }
-
-    function clearFilters() {
-        setSearch('');
-        setRole('');
-        router.get('/admin/akun', {}, { preserveState: true });
-    }
 
     function toggleActive(a: Account) {
         router.patch(`/admin/akun/${a.id}/toggle-active`);
@@ -102,21 +97,31 @@ return;
                         <Input
                             type="search"
                             placeholder="Cari username atau nama..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                            className="pl-9"
+                            value={state.search}
+                            onChange={(e) => setFilter('search', e.target.value)}
+                            className="pl-9 pr-9"
                         />
+                        {loading ? (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                        ) : state.search ? (
+                            <button
+                                type="button"
+                                onClick={() => setFilter('search', '')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                aria-label="Bersihkan pencarian"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        ) : null}
                     </div>
-                    <Select value={role} onChange={(e) => setRole(e.target.value)} className="md:w-48">
+                    <Select value={state.role} onChange={(e) => setFilter('role', e.target.value)} className="md:w-48">
                         <option value="">Semua Role</option>
                         <option value="admin">Admin</option>
                         <option value="guru">Guru</option>
                         <option value="siswa">Siswa</option>
                     </Select>
-                    <Button onClick={applyFilters} variant="primary">Cari</Button>
-                    {(search || role) && (
-                        <Button onClick={clearFilters} variant="outline">
+                    {hasFilter && (
+                        <Button onClick={reset} variant="outline">
                             <X className="h-4 w-4" />
                             Reset
                         </Button>

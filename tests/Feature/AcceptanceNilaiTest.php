@@ -5,6 +5,14 @@ use App\Models\GuruMengajar;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
+use Tests\Traits\SeedsAkademikMasters;
+
+uses(SeedsAkademikMasters::class);
+
+beforeEach(function () {
+    $this->seedKelas();
+    $this->seedMataPelajaran();
+});
 
 test('AC-04: Guru menginput nilai tugas=105 ditolak dengan validasi 0-100', function () {
     $userGuru = User::factory()->guru()->create();

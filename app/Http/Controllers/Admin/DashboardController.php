@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
+use App\Models\Kelas;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class DashboardController extends Controller
         $persentaseLulus = $totalNilai > 0 ? round(($lulus / $totalNilai) * 100, 1) : 0;
 
         $rekapPerKelas = $this->buildRekapPerKelas();
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Kelas::pluckNamaOrdered();
 
         return Inertia::render('admin/dashboard', [
             'stats' => [

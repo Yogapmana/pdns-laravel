@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Kelas;
 use App\Models\Siswa;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,8 +26,7 @@ class SiswaRequest extends FormRequest
                 Rule::unique(Siswa::class, 'nis')->ignore($nis, 'nis'),
             ],
             'nama_siswa' => ['required', 'string', 'max:255'],
-            'kelas' => ['nullable', 'string', 'max:20'],
-            'kelas_baru' => ['nullable', 'string', 'max:20'],
+            'kelas' => ['nullable', 'string', Rule::exists(Kelas::class, 'nama')],
         ];
     }
 
@@ -36,16 +36,8 @@ class SiswaRequest extends FormRequest
             'nis.unique' => 'NIS sudah terdaftar.',
             'nis.required' => 'NIS wajib diisi.',
             'nama_siswa.required' => 'Nama siswa wajib diisi.',
+            'kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
         ];
-    }
-
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($v) {
-            if (empty($this->kelas) && empty($this->kelas_baru)) {
-                $v->errors()->add('kelas', 'Pilih kelas dari daftar atau isi kelas baru.');
-            }
-        });
     }
 
     public function validated($key = null, $default = null)
@@ -56,14 +48,10 @@ class SiswaRequest extends FormRequest
             unset($data['nis']);
         }
 
-        return $data;
-    }
+        if (empty($data['kelas'])) {
+            unset($data['kelas']);
+        }
 
-    public function prepareForValidation(): void
-    {
-        $this->merge([
-            'kelas' => $this->input('kelas') ?: null,
-            'kelas_baru' => $this->input('kelas_baru') ?: null,
-        ]);
+        return $data;
     }
 }

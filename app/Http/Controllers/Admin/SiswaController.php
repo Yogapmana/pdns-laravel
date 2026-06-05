@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiswaRequest;
+use App\Models\Kelas;
 use App\Models\Siswa;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class SiswaController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Kelas::pluckNamaOrdered();
 
         return Inertia::render('admin/siswa/index', [
             'siswa' => $siswa,
@@ -43,7 +44,7 @@ class SiswaController extends Controller
 
     public function create(): Response
     {
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Kelas::pluckNamaOrdered();
 
         return Inertia::render('admin/siswa/create', [
             'daftar_kelas' => $daftarKelas,
@@ -53,14 +54,6 @@ class SiswaController extends Controller
     public function store(SiswaRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $kelasBaru = $data['kelas_baru'] ?? null;
-        unset($data['kelas_baru']);
-
-        if ($kelasBaru) {
-            $data['kelas'] = $kelasBaru;
-        } elseif (empty($data['kelas'])) {
-            unset($data['kelas']);
-        }
 
         Siswa::create($data);
 
@@ -69,7 +62,7 @@ class SiswaController extends Controller
 
     public function edit(Siswa $siswa): Response
     {
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
+        $daftarKelas = Kelas::pluckNamaOrdered();
 
         return Inertia::render('admin/siswa/edit', [
             'siswa' => $siswa,
@@ -80,14 +73,6 @@ class SiswaController extends Controller
     public function update(SiswaRequest $request, Siswa $siswa): RedirectResponse
     {
         $data = $request->validated();
-        $kelasBaru = $data['kelas_baru'] ?? null;
-        unset($data['kelas_baru']);
-
-        if ($kelasBaru) {
-            $data['kelas'] = $kelasBaru;
-        } elseif (empty($data['kelas'])) {
-            unset($data['kelas']);
-        }
 
         $siswa->update($data);
 

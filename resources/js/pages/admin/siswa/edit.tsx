@@ -50,13 +50,17 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                                         Kelas <span className="text-danger">*</span>
                                     </label>
                                     <Select id="kelas" name="kelas" defaultValue={siswa.kelas}>
-                                        <option value="">Pilih kelas atau isi baru di bawah</option>
+                                        <option value="" disabled>Pilih kelas</option>
                                         {daftar_kelas.map((k) => (
                                             <option key={k} value={k}>{k}</option>
                                         ))}
                                     </Select>
-                                    <p className="text-xs text-muted-foreground mt-1">Atau isi kelas baru:</p>
-                                    <Input id="kelas_baru" name="kelas_baru" placeholder="Contoh: X-A" className="mt-1" />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Belum ada kelas yang sesuai?{' '}
+                                        <Link href="/admin/kelas/create" className="text-primary hover:underline">
+                                            Tambah kelas baru
+                                        </Link>
+                                    </p>
                                     <InputError message={errors.kelas} />
                                 </div>
 

@@ -1,7 +1,18 @@
 <?php
 
+use App\Models\Guru;
+use App\Models\Kelas;
+use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
+use Tests\Traits\SeedsAkademikMasters;
+
+uses(SeedsAkademikMasters::class);
+
+beforeEach(function () {
+    $this->seedKelas();
+    $this->seedMataPelajaran();
+});
 
 test('AC-03: Admin menambahkan siswa dengan NIS duplikat ditolak', function () {
     $admin = User::factory()->admin()->create();
@@ -31,14 +42,14 @@ test('AC-03b: Admin berhasil menambah siswa dengan NIS unik', function () {
     expect(Siswa::where('nis', '00999')->first())->not->toBeNull();
 });
 
-test('AC-03b2: Admin menambah siswa dengan kelas_baru (kelas baru) tersimpan dengan benar', function () {
+test('AC-03b2: Admin menambah siswa dengan kelas dari master table (sebelumnya kelas_baru inline-add)', function () {
     $admin = User::factory()->admin()->create();
+    Kelas::firstOrCreate(['nama' => 'XII-C']);
 
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00699',
         'nama_siswa' => 'Mahmud Subagja',
-        'kelas' => '',
-        'kelas_baru' => 'XII-C',
+        'kelas' => 'XII-C',
     ]);
 
     $response->assertRedirect('/admin/siswa');
@@ -68,8 +79,8 @@ test('AC-03c: Admin berhasil edit data siswa (kecuali NIS)', function () {
 test('AC-03d: Admin hapus siswa juga menghapus nilai terkait (CASCADE)', function () {
     $admin = User::factory()->admin()->create();
     $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    $guru = \App\Models\Guru::create(['nama_guru' => 'Ibu Sari']);
-    \App\Models\Nilai::create([
+    $guru = Guru::create(['nama_guru' => 'Ibu Sari']);
+    Nilai::create([
         'nis' => $siswa->nis,
         'id_guru' => $guru->id,
         'kelas' => 'X-A',
@@ -81,12 +92,12 @@ test('AC-03d: Admin hapus siswa juga menghapus nilai terkait (CASCADE)', functio
         'status_lulus' => 'Lulus',
     ]);
 
-    expect(\App\Models\Nilai::where('nis', '00001')->count())->toBe(1);
+    expect(Nilai::where('nis', '00001')->count())->toBe(1);
 
     $this->actingAs($admin)->delete("/admin/siswa/{$siswa->nis}");
 
     expect(Siswa::where('nis', '00001')->count())->toBe(0);
-    expect(\App\Models\Nilai::where('nis', '00001')->count())->toBe(0);
+    expect(Nilai::where('nis', '00001')->count())->toBe(0);
 });
 
 test('AC-03e: Admin bisa search siswa by NIS, nama, atau kelas', function () {

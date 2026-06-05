@@ -2,8 +2,17 @@
 
 use App\Models\Guru;
 use App\Models\GuruMengajar;
+use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
+use Tests\Traits\SeedsAkademikMasters;
+
+uses(SeedsAkademikMasters::class);
+
+beforeEach(function () {
+    $this->seedKelas();
+    $this->seedMataPelajaran();
+});
 
 test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
     $userSiswaA = User::factory()->siswa()->create();
@@ -16,11 +25,11 @@ test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
     GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
 
-    \App\Models\Nilai::create([
+    Nilai::create([
         'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
     ]);
-    \App\Models\Nilai::create([
+    Nilai::create([
         'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus',
     ]);
@@ -68,7 +77,7 @@ test('Siswa nilai page menampilkan nama guru pengajar (guru_map adalah flat keyB
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari Wahyuni']);
     GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
 
-    \App\Models\Nilai::create([
+    Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
     ]);

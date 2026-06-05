@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\GuruRequest;
 use App\Models\Guru;
-use App\Models\GuruMengajar;
-use App\Models\Siswa;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,8 +38,8 @@ class GuruController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $daftarKelas = GuruMengajar::query()->distinct()->orderBy('kelas')->pluck('kelas');
-        $daftarMapel = GuruMengajar::query()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran');
+        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckNamaOrdered();
 
         return Inertia::render('admin/guru/index', [
             'guru' => $guru,
@@ -55,8 +55,8 @@ class GuruController extends Controller
 
     public function create(): Response
     {
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
-        $daftarMapel = GuruMengajar::query()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran');
+        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckNamaOrdered();
 
         return Inertia::render('admin/guru/create', [
             'daftar_kelas' => $daftarKelas,
@@ -79,8 +79,8 @@ class GuruController extends Controller
     public function edit(Guru $guru): Response
     {
         $guru->load(['user:id,username,is_active', 'mengajar']);
-        $daftarKelas = Siswa::query()->distinct()->orderBy('kelas')->pluck('kelas');
-        $daftarMapel = GuruMengajar::query()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran');
+        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckNamaOrdered();
 
         return Inertia::render('admin/guru/edit', [
             'guru' => $guru,
