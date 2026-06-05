@@ -17,6 +17,11 @@
 5. [Bukti Pengujian Database](#5-bukti-pengujian-database)
 6. [Catatan Error / Debugging](#6-catatan-error--debugging)
 7. [Perbaikan Error dan Hasil Setelah Diperbaiki](#7-perbaikan-error-dan-hasil-setelah-diperbaiki)
+   - 7.5 Cetak Rapor Digital (PDF) + Grafik Performa Akademik Siswa
+   - 7.6 Grafik Interaktif Dashboard Admin
+   - 7.7 Fitur Intervensi / Buka Kunci Nilai oleh Admin (Audit Trail)
+   - 7.8 Widget Notifikasi Dashboard Guru
+   - 7.9 Fix Bug: Stats Dashboard Guru & Status Mixed Final/Draft
 8. [Potongan Kode Fungsi / Procedure](#8-potongan-kode-fungsi--procedure)
 9. [Potongan Kode Class dan Method](#9-potongan-kode-class-dan-method)
 10. [Penjelasan Library atau Komponen yang Digunakan](#10-penjelasan-library-atau-komponen-yang-digunakan)
@@ -1369,6 +1374,379 @@ Di `Admin\DashboardController`:
 
 ---
 
+## 7.7 Fitur Tambahan: Intervensi / Buka Kunci Nilai oleh Admin
+
+### 7.7.1 Latar Belakang
+
+Setelah T8 ada fitur validasi Final di sisi guru (tombol **Validasi Final** mengunci nilai agar tidak bisa diedit), admin belum punya cara untuk membuka kunci nilai yang sudah Final jika ada kesalahan input dari guru atau revisi mendadak. T9 menambahkan:
+
+1. **Halaman khusus admin** untuk melihat semua combo nilai yang sedang berstatus Final
+2. **Tombol Buka Kunci** per-combo (guru + kelas + mata pelajaran) yang mengembalikan nilai ke Draft
+3. **Wajib mengisi alasan** (min 10 karakter) — untuk dokumentasi audit
+4. **Log audit immutable** yang mencatat siapa, kapan, target combo, berapa baris, dan alasan
+
+### 7.7.2 Lokasi Fitur
+
+- **Sidebar Admin**: item baru **"Manajemen Nilai"** dengan icon `ClipboardCheck` (muncul di antara "Manajemen Akun" dan "Laporan")
+- **URL**: `GET /admin/nilai` (admin only, 403 untuk guru/siswa)
+- **Route name**: `admin.nilai.index`
+- **POST endpoint**: `POST /admin/nilai/unlock` (name `admin.nilai.unlock`)
+
+### 7.7.3 Halaman Manajemen Nilai (Tampilan)
+
+Halaman utama `/admin/nilai` menampilkan:
+
+**1. Info Alert (Peringatan)** — box biru di paling atas menjelaskan:
+> Fitur ini akan mengembalikan nilai berstatus **Final** ke status **Draft**, sehingga guru mata pelajaran terkait dapat mengeditnya kembali. Tindakan ini **tidak menghapus data**, hanya membuka kunci edit dan akan tercatat di log audit (siapa, kapan, berapa baris, alasan).
+
+**2. Card 1: "Nilai Berstatus Final"** — berisi:
+- **Filter bar**:
+  - **Search box** (real-time, debounce 300ms via `useInertiaSearch`): cari nama guru, mata pelajaran, atau kelas (LIKE)
+  - **Select kelas** (filter exact match)
+  - **Tombol Reset** (muncul hanya jika ada filter)
+- **Tabel kolom**: Guru, Mata Pelajaran, Kelas (badge), Siswa (jumlah), Divalidasi (tanggal + jam), Aksi
+- **Tombol merah "Buka Kunci"** per row di kolom Aksi
+- **Empty state**: "Tidak ada nilai berstatus Final saat ini. Guru belum memvalidasi nilai ke Final."
+
+**3. Card 2: "Log Pembukaan Kunci (10 Terbaru)"** — berisi:
+- Tabel immutable 10 entry log terbaru (diurutkan `created_at desc`)
+- **Kolom**: Waktu (tanggal + jam Indonesia), Admin (nama), Target (guru + mapel + kelas badge), Baris (badge hijau/abu), Alasan (line-clamp-2)
+- **Empty state**: "Belum ada tindakan pembukaan kunci nilai."
+
+### 7.7.4 Modal Konfirmasi Buka Kunci
+
+Klik tombol **Buka Kunci** → muncul modal dengan:
+
+- **Title**: "Konfirmasi Buka Kunci Nilai"
+- **Description**: `"Buka kunci nilai [mapel] kelas [kelas] (guru: [nama_guru])?"`
+- **Warning box** (kuning): "Peringatan: Guru akan dapat mengedit nilai-nilai ini kembali. Tindakan ini akan dicatat di log audit dengan alasan yang Anda berikan."
+- **Textarea "Alasan Pembukaan Kunci"** (wajib, min 10 karakter):
+  - Placeholder: `"Contoh: Koreksi nilai UAS karena ada kesalahan input, akan diedit ulang."`
+  - Live counter di kanan bawah: `"X/10"` (hijau jika OK, abu jika belum)
+  - Validasi inline
+- **Footer**: Tombol "Batal" (abu) + "Buka Kunci" (merah, disabled sampai reason 10+ char, menampilkan spinner saat submitting)
+
+### 7.7.5 Backend Logic
+
+**`Admin\NilaiController::index()`**:
+- Query aggregate `Nilai` JOIN `guru` WHERE `status_validasi = Final` GROUP BY `(id_guru, nama_guru, kelas, mata_pelajaran)`
+- SELECT: `id_guru, nama_guru, kelas, mata_pelajaran, COUNT(*) as total_siswa, MAX(updated_at) as validated_at`
+- Filter: `search` (LIKE nama_guru/mapel/kelas) + `kelas` (exact)
+- Sort: `validated_at DESC, kelas, mata_pelajaran` (deterministic — 2ndary sort handle same-time inserts)
+- Eager-load 10 latest `NilaiUnlockLog` entries with `admin:id,name` + `guru:id,nama_guru` relations
+
+**`Admin\NilaiController::unlock()`**:
+- Validate: `id_guru (exists:guru,id), kelas, mata_pelajaran, reason (min:10, max:500)`
+- `DB::transaction`:
+  1. UPDATE `Nilai` WHERE `(id_guru, kelas, mata_pelajaran, status_validasi=Final)` SET `status_validasi=Draft` — count affected
+  2. `NilaiUnlockLog::create()` audit row dengan `id_admin = auth()->id()`, `affected_rows`, `reason`
+- Return flash: `success` jika affected>0, `info` jika affected=0 (idempotent)
+
+### 7.7.6 Audit Log Table (Immutable)
+
+Tabel `nilai_unlock_log`:
+
+```sql
+CREATE TABLE nilai_unlock_log (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_admin BIGINT UNSIGNED NOT NULL,
+    id_guru BIGINT UNSIGNED NOT NULL,
+    kelas VARCHAR(20) NOT NULL,
+    mata_pelajaran VARCHAR(100) NOT NULL,
+    affected_rows INT NOT NULL,
+    reason TEXT NOT NULL,
+    created_at TIMESTAMP NULL,
+    
+    FOREIGN KEY (id_admin) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_guru) REFERENCES guru(id) ON DELETE RESTRICT,
+    INDEX (id_guru, kelas, mata_pelajaran),
+    INDEX (id_admin),
+    INDEX (created_at)
+);
+```
+
+- **No `updated_at` column** — log append-only
+- **Model `NilaiUnlockLog`**: `UPDATED_AT = null`, `$fillable = [id_admin, id_guru, kelas, mata_pelajaran, affected_rows, reason]`
+- **FK RESTRICT**: admin/guru yang punya log unlock TIDAK BISA dihapus (proteksi audit trail)
+- **Index** `[id_guru, kelas, mata_pelajaran]` — untuk query cepat "siapa saja yang pernah unlock combo X?"
+
+### 7.7.7 Verifikasi & Test
+
+- `php artisan test --compact` → **108/108 ✓** (744 assertions, +12 tests, +107 assertions)
+- `npx tsc --noEmit` → clean ✓
+- `npm run lint` → 0 errors ✓
+- `vendor/bin/pint --dirty --format agent` → passed (3 files: NilaiUnlockLog, routes/web, test) ✓
+- `npm run build` → built in 10.47s ✓
+- `php artisan wayfinder:generate` → generated
+- **Smoke test admin**:
+  - Login admin → `/admin/nilai` 200, 15.8KB
+  - 3 combo Final terlihat: Bu Rini XI-B IPA (5 siswa), Pak Joko XI-B IPS (4), Pak Budi X-A B.Indo (5)
+  - POST `/admin/nilai/unlock` id_guru=3 kelas=XI-B mapel=IPA reason="Smoke test..." → 302 redirect ✓
+  - Reload → combo XI-B IPA hilang dari daftar ✓
+  - Log tercatat: admin "Administrator", 5 baris affected, reason lengkap ✓
+  - DB: 7 row XI-B IPA sekarang status `Draft`, 1 row `nilai_unlock_log` ✓
+- **Smoke test siswa**: login `00001` / `siswa123` → `/admin/nilai` **403** ✓
+- **Smoke test guru**: login `sariwahyuni` / `guru123` → `/admin/nilai` **403** ✓
+- **Cleanup**: `migrate:fresh --seed` → 32 Final / 26 Draft (original state) ✓
+
+### 7.7.8 12 Test di `AcceptanceAdminNilaiUnlockTest.php`
+
+| # | Test | Skenario |
+|---|------|----------|
+| 1 | Halaman 200 OK + Inertia props | GET `/admin/nilai` component `admin/nilai/index`, combos/logs/kelas_options keys exist |
+| 2 | 3 combo dikelompokkan per (guru+kelas+mapel) | Sort: validated_at desc + kelas+mapel asc (deterministic) |
+| 3 | Combo Draft TIDAK muncul | Filter `status_validasi = Final` di query |
+| 4 | Filter search + kelas | query params propagated to controller |
+| 5 | POST unlock → Final→Draft + log audit | 302 success, DB Draft, log row with affected_rows |
+| 6 | Validasi reason min 10 | "koreksi" (7 char) → 422 |
+| 7 | Scope per-combo (1 guru 2 kelas) | Unlock X-A saja → X-B tetap Final |
+| 8 | id_guru tidak valid ditolak | 9999 → 422 `id_guru` error |
+| 9 | Idempotent | Call kedua affected=0, log ke-2 tetap tercatat, flash "info" |
+| 10 | Guru bisa edit nilai post-unlock | PUT `/guru/input-nilai/save` setelah unlock → success, status Draft |
+| 11 | Guru/siswa 403 | Role middleware blocks both GET and POST |
+| 12 | Log muncul di halaman | Setelah unlock, GET `/admin/nilai` → logs array has 1 entry with admin_name, nama_guru, affected_rows |
+
+### 7.7.9 Catatan Teknis
+
+- **Eloquent `HasOne` (User→Guru/Siswa) vs `BelongsTo`**: method `associate()` HANYA ada di `BelongsTo` (inverse). User→Guru adalah `HasOne` jadi `$user->guru()->associate($guru)` akan throw "Call to undefined method HasOne::associate()". Pattern yang benar: `Guru::create(['user_id' => $guruUser->id, ...])` (manual FK set).
+- **Combo ordering deterministic**: `MAX(nilai.updated_at) DESC` saja tidak cukup kalau 3+ combo di-create di detik yang sama (race condition di SQLite/MySQL). Solusi: tambahkan secondary sort `ORDER BY kelas, mata_pelajaran` untuk tie-breaker yang stabil.
+- **Eloquent `create()` butuh `$fillable`**: tanpa explicit fillable array, `NilaiUnlockLog::create([...])` throw `MassAssignmentException: Add [id_admin] to fillable property`. Solusi: definisikan `$fillable = [...]` di model.
+- **Idempotent audit log**: meskipun affected=0 (guru sudah unlock manual), admin tetap catat log dengan reason-nya. Ini penting untuk audit trail: "siapa yang pertama kali coba unlock dan kenapa" — tidak boleh hilang.
+- **DB::transaction wrap critical**: UPDATE nilai + INSERT log harus atomic. Kalau INSERT log gagal setelah UPDATE sukses, kita akan kehilangan jejak audit. Solusi: `DB::transaction` callback return value.
+- **Live counter UX**: `X/10` di kanan textarea memberikan feedback real-time — user tidak perlu submit dulu untuk tahu apakah reason mereka cukup panjang.
+
+> **[SCREENSHOT REQUIRED]** Screenshot halaman `/admin/nilai`: info alert, filter bar, tabel Final combos, modal konfirmasi dengan textarea, tabel log audit, plus screenshot 403 untuk guru/siswa. (3-5 gambar)
+
+---
+
+## 7.8 Fitur Tambahan: Widget Notifikasi Dashboard Guru (Alert Kuning/Merah)
+
+### 7.8.1 Latar Belakang
+
+Setelah T8 (Validasi Final) dan T9 (Buka Kunci oleh Admin), guru punya workflow yang jelas untuk input + validasi nilai. Tapi belum ada visual feedback di dashboard guru untuk mengingatkan tugas yang belum selesai. User minta:
+
+> "Widget Notifikasi di Dashboard: Begitu guru login, hal pertama yang mereka lihat di dashboard atas adalah kartu peringatan (misalnya berwarna kuning atau merah). Contoh teksnya: 'Terdapat 2 Kelas (Biologi X-A, Biologi X-B) yang nilainya belum Anda input atau masih berstatus Draft.'"
+
+T10 menambahkan **2 kartu alert** di paling atas dashboard guru:
+
+1. **Kartu Kuning (warning)** — combo mengajar yang **belum lengkap diinput** (`jumlah_diinput < jumlah_siswa`)
+2. **Kartu Merah (error)** — combo mengajar yang **sudah lengkap tapi masih berstatus Draft** (perlu di-validasi Final)
+
+### 7.8.2 Lokasi & Tampilan
+
+- **Posisi**: Paling atas dashboard guru, **di atas** stat cards (Total Siswa, Total Nilai, Status Draft, Status Final)
+- **Kondisional**: Hanya render jika salah satu/dua-duanya list tidak kosong
+- **Komponen**: Pakai `Alert` component existing (variant `warning` / `error`)
+
+**Layout kartu kuning (belum_diinput):**
+
+```
+⚠ Perhatian: Terdapat 2 kelas (Matematika X-A, IPA X-B) yang nilainya
+   belum Anda input atau belum lengkap.
+   [X-A Matematika (3/8) ›]  [X-B IPA (1/5) ›]
+```
+
+**Layout kartu merah (masih_draft):**
+
+```
+✕ Tindak Lanjuti: Terdapat 2 kelas (Matematika X-A, Matematika X-B)
+   yang nilainya sudah lengkap diinput tetapi masih berstatus Draft.
+   Segera klik tombol "Validasi Final" untuk mengunci nilai.
+   [X-A Matematika 2 Draft ›]  [X-B Matematika 3 Draft ›]
+```
+
+Setiap chip clickable → `/guru/input-nilai?kelas=X&mata_pelajaran=Y` (langsung filter ke combo yang perlu di-handle).
+
+### 7.8.3 Logika Backend
+
+`Guru\DashboardController::buildNotifikasi(Guru $guru)`:
+
+```php
+// 1. Ambil semua mengajar combo guru (sorted)
+$mengajar = GuruMengajar::where('id_guru', $guru->id)
+    ->orderBy('kelas')->orderBy('mata_pelajaran')->get();
+
+// 2. Single grouped query: count siswa per kelas
+$siswaCounts = Siswa::selectRaw('kelas, COUNT(*) as total')
+    ->groupBy('kelas')->pluck('total', 'kelas');
+
+// 3. Untuk setiap combo, hitung 3 angka
+foreach ($mengajar as $m) {
+    $jumlahSiswa = $siswaCounts[$m->kelas] ?? 0;
+    $nilaiRows = Nilai::where('id_guru', $guru->id)
+        ->where('kelas', $m->kelas)
+        ->where('mata_pelajaran', $m->mata_pelajaran)
+        ->get(['status_validasi', 'nilai_akhir']);
+    
+    $jumlahDiinput = $nilaiRows->whereNotNull('nilai_akhir')->count();
+    $jumlahDraftRows = $nilaiRows->where('status_validasi', 'Draft')->count();
+    
+    // Kategorisasi
+    if ($jumlahSiswa > 0 && $jumlahDiinput < $jumlahSiswa) {
+        $belumDiinput[] = [...];
+    } elseif ($jumlahSiswa > 0 && $jumlahDiinput === $jumlahSiswa && $jumlahDraftRows > 0) {
+        $masihDraft[] = [...];
+    }
+}
+```
+
+**Key decision**: Combo dengan `jumlah_siswa == 0` (kelas benar-benar kosong) **TIDAK** muncul di notifikasi — tidak ada yang perlu diinput.
+
+### 7.8.4 Verifikasi & Test
+
+- `php artisan test --compact` → **120/120 ✓** (904 assertions, +12 tests, +160 assertions)
+- `npx tsc --noEmit` → clean ✓
+- `npm run lint` → 0 errors ✓
+- `vendor/bin/pint --dirty --format agent` → passed (1 test file) ✓
+- `npm run build` → built in 9.69s ✓
+- **Smoke test login `sariwahyuni` / `guru123`**:
+  - `/guru/dashboard` 200, 31.7KB
+  - `notifikasi.belum_diinput = []` (semua 15 siswa sudah ada nilai)
+  - `notifikasi.masih_draft = [{X-A Mat 2 Draft}, {X-B Mat 3 Draft}]`
+  - HTML mengandung: "Tindak Lanjuti" + "status Draft" + "Validasi Final"
+- **Role middleware**: admin/siswa → `/guru/dashboard` **403** ✓
+
+### 7.8.5 12 Test di `AcceptanceGuruNotifikasiTest.php`
+
+| # | Skenario | Expected |
+|---|----------|----------|
+| 1 | Guru tanpa mengajar | `belum_diinput=[]`, `masih_draft=[]` |
+| 2 | Kelas kosong (0 siswa) | Tidak muncul di notifikasi (skip) |
+| 3 | 0/3 siswa punya nilai | 1 entry `belum_diinput` (sisa=3) |
+| 4 | 1/3 siswa punya nilai | 1 entry `belum_diinput` (diinput=1, sisa=2) |
+| 5 | 3/3 siswa Draft | 1 entry `masih_draft` (jumlah_draft=3) |
+| 6 | Mixed 1 Draft + 1 Final + 1 Draft | 1 entry `masih_draft` (jumlah_draft=2, hanya count Draft) |
+| 7 | Semua Final | Tidak ada notifikasi |
+| 8 | 2 combo: 1 Draft semua + 1 Final semua | 1 entry `masih_draft` saja |
+| 9 | Scope per-guru (combo X-A Mat dari guru lain) | Hanya nilai dari `id_guru = guru->id` yang dihitung |
+| 10 | 2 kelas mapel sama (X-A + X-B) dihitung independent | 1 belum + 1 masih |
+| 11 | Siswa dengan nilai null (komponen belum lengkap) | Tetap dihitung sebagai `belum_diinput` (`whereNotNull('nilai_akhir')`) |
+| 12 | Role middleware | admin/siswa → 403 |
+
+### 7.8.6 Catatan Teknis
+
+- **Siswa count via single grouped query**: 1 query untuk semua kelas (bukan N+1 per combo). Pakai `Siswa::selectRaw('kelas, COUNT(*) as total')->groupBy('kelas')->pluck('total', 'kelas')`. Hemat ~7 queries untuk guru dengan 8 mengajar combo.
+- **Eager-load field selection**: `Nilai::get(['status_validasi', 'nilai_akhir'])` agar tidak load full row. Hemat memory + bandwidth.
+- **`whereNotNull('nilai_akhir')`**: siswa yang baru di-input 1-2 komponen (T saja, atau T+UTS) belum punya `nilai_akhir` dihitung. Siswa dengan `nilai_akhir = null` tetap masuk hitungan "belum_diinput" (sesuai spek: "nilai yang belum Anda input atau masih berstatus Draft").
+- **Siswa count `> 0` guard**: combo mengajar untuk kelas yang belum punya siswa (misal guru mengajar XII-A tapi XII-A belum di-seed) **tidak** muncul di notifikasi. Tidak ada yang perlu diinput, jadi tidak perlu alert.
+- **Counter display**: `({diinput}/{siswa})` untuk kuning, `{n} Draft` badge untuk merah — user langsung tahu progress/completion.
+- **Tips box tambahan**: di card "Menu Cepat" ditambah blue info box yang menjelaskan alur: input → Validasi Final → locked. Ini onboarding reminder untuk guru yang baru pertama kali login.
+
+> **[SCREENSHOT REQUIRED]** Screenshot `/guru/dashboard` (login sariwahyuni) dengan kartu merah "Tindak Lanjuti" untuk X-A Mat (2 Draft) + X-B Mat (3 Draft) + chip combo list; plus screenshot login guru dengan combo `belum_diinput` (kuning) + `masih_draft` (merah) keduanya; plus tips box di Menu Cepat. (3-4 gambar)
+
+---
+
+## 7.9 Fix Bug: Stats Dashboard Guru & Status Mixed Final/Draft per-row
+
+### 7.9.1 Latar Belakang (Bug yang Ditemukan User)
+
+Setelah T10 notifikasi live, user menemukan **2 bug kritis** saat login sebagai Joko Santoso (guru IPS XI-A & XI-B):
+
+1. **Bug Stats (SALAH TOTAL)**: Dashboard Joko menampilkan:
+   - `Status Draft: 6` ✓ (benar)
+   - `Status Final: 0` ❌ (harusnya 8!)
+   - `Lulus: 0` ❌ (harusnya 11!)
+   - `Tidak Lulus: 0` ❌ (harusnya 3!)
+
+   Padahal data di DB menunjukkan Joko punya 14 nilai (XI-A IPS 4 Final + 3 Draft, XI-B IPS 4 Final + 3 Draft), 11 siswa Lulus + 3 Tidak Lulus.
+
+2. **Bug Status Mixed (Misleading)**: Ketika Joko klik chip notifikasi "XI-A IPS" (yang berlabel "3 Draft"), halaman input-nilai menampilkan "Mode Read-Only: sudah Final" — padahal 3 dari 7 siswa masih Draft dan harusnya bisa diedit!
+
+### 7.9.2 Root Cause Analysis
+
+**Bug #1 — Eloquent Builder Mutation**: Controller `Guru\DashboardController` melakukan:
+
+```php
+$nilaiSaya = Nilai::where('id_guru', $guru->id);
+$draft = $nilaiSaya->where('status_validasi', 'Draft')->count();
+$final = $nilaiSaya->where('status_validasi', 'Final')->count();  // SALAH!
+$lulus = $nilaiSaya->where('status_lulus', 'Lulus')->count();
+$tidakLulus = $nilaiSaya->where('status_lulus', 'Tidak Lulus')->count();
+```
+
+`$nilaiSaya` adalah **Eloquent Builder object** yang **mutable** — setiap `->where()` menambahkan kondisi secara kumulatif. Jadi:
+- `$draft` = `WHERE id_guru=X AND status_validasi=Draft` → 3
+- `$final` = `WHERE id_guru=X AND status_validasi=Draft AND status_validasi=Final` (impossible!) → 0
+- `$lulus` = `WHERE id_guru=X AND status_validasi=Draft AND status_validasi=Final AND status_lulus=Lulus` → 0
+- `$tidakLulus` = semua kondisi di atas + `status_lulus=Tidak Lulus` → 0
+
+**Bug #2 — Status Validasi Global Naive**: Controller `Guru\NilaiController::index` set `statusValidasiGlobal = $existing->first()->status_validasi`. Untuk mixed state (4 Final + 3 Draft), `first()` mengembalikan row **pertama** secara urutan DB (mungkin row Final lebih dulu), sehingga `isFinal=true` dan seluruh form jadi read-only — menyesatkan guru.
+
+### 7.9.3 Solusi
+
+**Fix Bug #1 — Clone Pattern**: Pakai `(clone $nilaiBase)` sebelum setiap count agar setiap count mulai dari base query yang bersih:
+
+```php
+$nilaiBase = Nilai::where('id_guru', $guru->id);
+$draft = (clone $nilaiBase)->where('status_validasi', 'Draft')->count();
+$final = (clone $nilaiBase)->where('status_validasi', 'Final')->count();
+$lulus = (clone $nilaiBase)->where('status_lulus', 'Lulus')->count();
+$tidakLulus = (clone $nilaiBase)->where('status_lulus', 'Tidak Lulus')->count();
+```
+
+**Fix Bug #2 — Proper Global Status Logic**: Hitung jumlah Draft vs Final rows secara independen, set `Final` hanya jika **tidak ada** Draft:
+
+```php
+$jumlahFinalRows = $existing->where('status_validasi', Nilai::STATUS_FINAL)->count();
+$jumlahDraftRows = $existing->where('status_validasi', Nilai::STATUS_DRAFT)->count();
+$statusValidasiGlobal = $jumlahDraftRows === 0 ? Nilai::STATUS_FINAL : Nilai::STATUS_DRAFT;
+```
+
+**Per-row Disable (guru/nilai/index.tsx)**: Tambah `rowLocked` derived dari `nilai_map[s.nis]?.status_validasi === 'Final'`:
+
+```tsx
+const rowIsFinal = nilai_map[s.nis]?.status_validasi === 'Final';
+const inputDisabled = isFinal || rowIsFinal;
+```
+
+Baris Final ditampilkan dengan **badge hijau "Final"** di samping nama siswa, input disabled, background abu-abu — tapi hanya baris tersebut, bukan seluruh form.
+
+**Alert "Sebagian Final" (info)**: Ditampilkan saat global state Draft tapi ada minimal 1 row Final — memberi klarifikasi ke guru bahwa "beberapa nilai sudah Final, selesaikan sisanya lalu klik Validasi Final".
+
+### 7.9.4 Per-Combo Stats Table (Bonus)
+
+Di `Guru\DashboardController` tambah method `buildPerComboStats()` yang return breakdown per mengajar combo:
+
+```php
+return [
+    'id_mengajar' => 7,
+    'kelas' => 'XI-A',
+    'mata_pelajaran' => 'IPS',
+    'jumlah_siswa' => 7,
+    'jumlah_input' => 7,
+    'jumlah_final' => 4,
+    'jumlah_draft' => 3,
+];
+```
+
+Di dashboard ditambahkan tabel **"Status per Mengajar"** (4 kolom: kelas+mapel, siswa, input, status badge) yang menunjukkan status detail per combo + footer summary (comboFinal/sebagian/belumInput/kosong counts). Guru bisa langsung klik baris tabel untuk navigasi ke form input.
+
+### 7.9.5 Verifikasi & Test
+
+**6 test baru** di `AcceptanceGuruNotifikasiTest.php` (sebelumnya 12, sekarang 18):
+
+1. **T11 Stats fix**: dashboard stats menghitung draft/final/lulus/tidak_lulus secara independen (4 rows: 2 Final + 2 Draft, 4 Lulus) → `draft:2, final:2, lulus:4, tidak_lulus:0`
+2. **T11 Stats fix lulus vs tidak_lulus mixed**: 3 rows (1 Lulus, 2 Tidak Lulus) → `lulus:1, tidak_lulus:2`
+3. **T11 Per-combo stats breakdown**: 2 mengajar combos dengan breakdown lengkap (X-A Mat: 3 siswa, 3 input, 1 Final, 2 Draft; X-B B.Indo: 2 siswa, 2 Final, 0 Draft)
+4. **T11 Notifikasi consistency (mixed)**: combo dengan 4 Final + 3 Draft tetap muncul di `masih_draft` dengan `jumlah_final:4, jumlah_draft:3`
+5. **T11 Status validasi global mixed**: combo 4 Final + 3 Draft → form EDITABLE (`status_validasi_global=Draft`)
+6. **T11 Status validasi global kelas kosong**: 0 siswa → form editable dengan `Draft` (no warning, no false Final)
+
+**4 test T10 existing** di-update untuk field name `jumlah_diinput` → `jumlah_input` (konsistensi dengan `per_combo_stats`).
+
+### 7.9.6 Catatan Teknis
+
+- **(clone $query) pattern**: Laravel Eloquent `Builder` adalah mutable object. `Builder::where()` TIDAK return new builder — ia modify state internal. Untuk hitung 2+ count dengan kondisi berbeda pada scope yang sama, **WAJIB** `(clone $query)` atau instantiate ulang. Ini adalah gotcha umum di Laravel.
+- **`$collection->where(...)->count()` di Collection OK**: berbeda dengan Eloquent Builder, Laravel `Collection` method `where()` return new collection (immutable). Jadi `$existing->where('status_validasi', 'Final')->count()` setelah `(clone $qb)->get()` aman.
+- **`$existing->first()->status_validasi` itu liar**: untuk mixed-state, `first()` bisa return row mana saja (urutan DB, biasanya `id ASC`). Selalu aggregate dulu via `where('X')->count()` untuk status global.
+- **Per-row UI lock**: form input nilai sekarang punya 2 level disable — global (semua baris read-only) + per-row (baris Final read-only walaupun global Draft). Visual cue: badge hijau "Final" di samping nama siswa.
+- **Field rename `jumlah_diinput` → `jumlah_input`**: untuk konsistensi dengan `per_combo_stats.jumlah_input` yang dikirim dari backend. Single source of truth.
+- **Lihat juga T9 (Buka Kunci Nilai)**: admin bisa unlock seluruh combo Final via `/admin/nilai`. Jika guru ingin edit 1 row Final tanpa admin intervention, harus ke admin dulu.
+
+> **[SCREENSHOT REQUIRED]** Screenshot `/guru/dashboard` Joko Santoso **SETELAH FIX** (stats: draft 6, final 8, lulus 11, tidak lulus 3) + tabel "Status per Mengajar" dengan 2 rows XI-A IPS / XI-B IPS (badge "Sebagian Final"); screenshot `/guru/input-nilai?kelas=XI-A&mata_pelajaran=IPS` (Alert "Sebagian Final" + 4 baris hijau "Final" read-only + 3 baris Draft editable).
+
+---
+
 ## 8. Potongan Kode Fungsi / Procedure
 
 ### 8.1 Static Method: Hitung Nilai Akhir (Nilai Model)
@@ -2037,14 +2415,17 @@ Beberapa bagian dari dokumen ini **memerlukan screenshot atau input manual** aga
 | 3 | **§3.6** Perhitungan Real-time | 📸 Screenshot form input nilai dengan kolom Tugas/UTS/UAS/Hasil real-time terupdate |
 | 4 | **§4.4** Laporan | 📸 Screenshot preview laporan, hasil export PDF (halaman 1-2), HTML export (3-4 gambar) |
 | 5 | **§5.7** Bukti Pengujian DB | 📸 Screenshot phpMyAdmin/HeidiSQL/MySQL Workbench tabel `users`, `siswa`, `guru`, `guru_mengajar`, `nilai`, **`kelas`, `mata_pelajaran`** dengan data real (7 gambar) |
-| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 96 passed |
+| 6 | **§5.7** Bukti Pest | 📸 Screenshot output `php artisan test` menunjukkan 126 passed (992 assertions) |
 | 7 | **§7** Perbaikan Error | 📸 Screenshot output `npm run lint` 0 errors, output `pint` passed |
-| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar, entry #17 master tables, entry #18 rapor digital, entry #19 grafik interaktif admin) |
+| 8 | **§6/§7** DEBUG.md | Opsional: 📸 Screenshot file `DEBUG.md` atau bagian tertentu yang menarik (misal entry #14 refactor mengajar, entry #17 master tables, entry #18 rapor digital, entry #19 grafik interaktif admin, **entry #20 buka kunci nilai, entry #21 notifikasi guru, entry #22 fix bug stats+mixed state**) |
 | 9 | **Manajemen Kelas & Mata Pelajaran** | 📸 Screenshot halaman `/admin/kelas` (search, count badges, delete-protection indicator) + `/admin/mata-pelajaran` (2 gambar) |
 | 10 | **Sidebar collapse** | 📸 Screenshot sidebar expanded dan collapsed (2 gambar) |
 | 11 | **Cetak Rapor Digital (Siswa)** | 📸 Screenshot `/siswa/dashboard` dengan card Cetak Rapor + `/siswa/nilai` dengan tombol Cetak Rapor di header & footer + 3 dashboard cards (Rata-rata Keseluruhan, Ringkasan Akademik, Komponen Perlu Perhatian) + bar chart "Performa per Mata Pelajaran" (5 gambar) |
 | 12 | **Rapor PDF (Siswa)** | 📸 Screenshot rapor PDF yang sudah di-download (header SMAN 7 Solo, identity table, tabel nilai, summary boxes, signature section) (1-2 gambar) |
 | 13 | **Grafik Interaktif Dashboard Admin** | 📸 Screenshot `/admin/dashboard`: 4 stat cards, donut chart kelulusan, stacked bar kelulusan per kelas (hover state), horizontal bar rata-rata per mapel (KKM line), Top Siswa Berprestasi + Siswa Perlu Perhatian (sortable, dengan progress bar), conditional alert (Performa baik) (5-7 gambar) |
+| 14 | **Manajemen Nilai (Buka Kunci + Audit Log)** | 📸 Screenshot `/admin/nilai`: info alert, filter bar (search + kelas), tabel Final combos (3 rows), tombol Buka Kunci merah, modal konfirmasi dengan textarea + live counter X/10, tabel Log Pembukaan Kunci 10 Terbaru; plus screenshot 403 untuk login sebagai guru/siswa (4-6 gambar) |
+| 15 | **Widget Notifikasi Dashboard Guru** | 📸 Screenshot `/guru/dashboard` (login sariwahyuni) dengan kartu merah "Tindak Lanjuti" untuk X-A Mat (2 Draft) + X-B Mat (3 Draft) + chip combo list; plus screenshot login guru dengan combo belum_diinput (kuning) + masih_draft (merah) keduanya; plus tips box di Menu Cepat (3-4 gambar) |
+| 16 | **Fix Bug Stats & Mixed State (T11)** | 📸 Screenshot `/guru/dashboard` Joko Santoso **SETELAH FIX** (stats benar: draft 6, final 8, lulus 11, tidak lulus 3 + 4 stat cards baru + tabel "Status per Mengajar" 2 rows dengan badge "Sebagian Final") + screenshot `/guru/input-nilai?kelas=XI-A&mata_pelajaran=IPS` dengan Alert "Sebagian Final" + 4 baris hijau "Final" read-only + 3 baris Draft editable (2-3 gambar) |
 
 ### Tambahan Manual (jika perlu)
 
