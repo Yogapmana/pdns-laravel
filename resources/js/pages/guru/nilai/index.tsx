@@ -137,7 +137,13 @@ return;
                 <>
                     {isFinal && (
                         <Alert variant="warning">
-                            <strong>Mode Read-Only:</strong> Nilai untuk {mata_pelajaran} di kelas {kelas} sudah berstatus <Badge variant="info">Final</Badge> dan tidak dapat diubah.
+                            <strong>Mode Read-Only:</strong> Semua nilai untuk {mata_pelajaran} di kelas {kelas} sudah berstatus <Badge variant="info">Final</Badge> dan tidak dapat diubah. Hubungi admin jika perlu membuka kunci.
+                        </Alert>
+                    )}
+
+                    {!isFinal && (nilai_map && Object.values(nilai_map).some((n) => n?.status_validasi === 'Final')) && (
+                        <Alert variant="info">
+                            <strong>Sebagian Final:</strong> Beberapa nilai siswa sudah divalidasi Final (tidak dapat diedit). Anda masih dapat melengkapi nilai siswa yang belum divalidasi, lalu klik <strong>Validasi Final</strong> untuk mengunci sisanya.
                         </Alert>
                     )}
 
@@ -175,14 +181,20 @@ return;
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                {siswa.map((s) => (
-                                                    <NilaiRow
-                                                        key={s.nis}
-                                                        siswa={s}
-                                                        initial={nilai_map[s.nis]}
-                                                        disabled={isFinal}
-                                                    />
-                                                ))}
+                                                {siswa.map((s) => {
+                                                    const rowStatus = nilai_map[s.nis]?.status_validasi;
+                                                    const rowIsFinal = rowStatus === 'Final';
+
+                                                    return (
+                                                        <NilaiRow
+                                                            key={s.nis}
+                                                            siswa={s}
+                                                            initial={nilai_map[s.nis]}
+                                                            disabled={isFinal}
+                                                            rowLocked={rowIsFinal}
+                                                        />
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
@@ -207,7 +219,7 @@ return;
                                         <div className="flex-1">
                                             <p className="text-sm font-semibold text-navy">Validasi Final</p>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Mengunci semua nilai {mata_pelajaran} di kelas {kelas}. Nilai Final tidak dapat diubah.
+                                                Mengunci semua nilai {mata_pelajaran} di kelas {kelas} yang masih berstatus Draft. Nilai Final tidak dapat diubah.
                                             </p>
                                         </div>
                                         <Button type="submit" variant="success">
@@ -262,7 +274,7 @@ function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
     );
 }
 
-function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nilai_tugas: number | null; nilai_uts: number | null; nilai_uas: number | null; nilai_akhir: number | null; status_lulus: string | null; status_validasi: string }; disabled: boolean }) {
+function NilaiRow({ siswa, initial, disabled, rowLocked }: { siswa: Siswa; initial?: { nilai_tugas: number | null; nilai_uts: number | null; nilai_uas: number | null; nilai_akhir: number | null; status_lulus: string | null; status_validasi: string }; disabled: boolean; rowLocked?: boolean }) {
     const [tugas, setTugas] = useState<number | null>(initial?.nilai_tugas ?? null);
     const [uts, setUts] = useState<number | null>(initial?.nilai_uts ?? null);
     const [uas, setUas] = useState<number | null>(initial?.nilai_uas ?? null);
@@ -273,30 +285,39 @@ function NilaiRow({ siswa, initial, disabled }: { siswa: Siswa; initial?: { nila
     const invalid = (n: number | null) => n !== null && (n < 0 || n > 100);
     const hasInvalid = invalid(tugas) || invalid(uts) || invalid(uas);
 
+    const inputDisabled = disabled || (rowLocked ?? false);
+
     return (
-        <tr className="hover:bg-blue-50/50">
+        <tr className={cn('hover:bg-blue-50/50', inputDisabled && initial && rowLocked ? 'bg-surface' : '')}>
             <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">{siswa.nis}</td>
-            <td className="px-3 py-2 font-medium whitespace-nowrap">{siswa.nama_siswa}</td>
+            <td className="px-3 py-2 font-medium whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                    {siswa.nama_siswa}
+                    {rowLocked && (
+                        <Badge variant="success" className="!text-[10px]">Final</Badge>
+                    )}
+                </div>
+            </td>
             <NilaiInput
                 name={`nilai[${siswa.nis}][nilai_tugas]`}
                 nis={siswa.nis}
                 value={tugas}
                 onChange={setTugas}
-                disabled={disabled}
+                disabled={inputDisabled}
             />
             <NilaiInput
                 name={`nilai[${siswa.nis}][nilai_uts]`}
                 nis={siswa.nis}
                 value={uts}
                 onChange={setUts}
-                disabled={disabled}
+                disabled={inputDisabled}
             />
             <NilaiInput
                 name={`nilai[${siswa.nis}][nilai_uas]`}
                 nis={siswa.nis}
                 value={uas}
                 onChange={setUas}
-                disabled={disabled}
+                disabled={inputDisabled}
             />
             <td className="px-3 py-2 text-center font-semibold font-mono text-navy whitespace-nowrap">
                 {hasInvalid ? (

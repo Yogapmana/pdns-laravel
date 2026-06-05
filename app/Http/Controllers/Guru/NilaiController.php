@@ -63,7 +63,13 @@ class NilaiController extends Controller
                 $nilaiMap[$item->nis] = $item;
             }
 
-            $statusValidasiGlobal = $existing->first()?->status_validasi ?? Nilai::STATUS_DRAFT;
+            $jumlahFinalRows = $existing->where('status_validasi', Nilai::STATUS_FINAL)->count();
+            $jumlahDraftRows = $existing->where('status_validasi', Nilai::STATUS_DRAFT)->count();
+            $jumlahInputRows = $existing->whereNotNull('nilai_akhir')->count();
+
+            $statusValidasiGlobal = $jumlahInputRows > 0 && $jumlahDraftRows === 0
+                ? Nilai::STATUS_FINAL
+                : Nilai::STATUS_DRAFT;
         }
 
         return Inertia::render('guru/nilai/index', [
