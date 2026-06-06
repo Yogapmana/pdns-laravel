@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\KelasRequest;
 use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,7 +32,7 @@ class KelasController extends Controller
         $kelas = Kelas::query()
             ->search($search)
             ->orderBy('nama')
-            ->withCount(['siswa', 'guruMengajar'])
+            ->withCount(['siswa', 'guruMengajar', 'mataPelajaran'])
             ->paginate(20)
             ->withQueryString();
 
@@ -48,7 +49,9 @@ class KelasController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('admin/kelas/create');
+        return Inertia::render('admin/kelas/create', [
+            'semua_mapel' => MataPelajaran::pluckNamaOrdered()->values()->all(),
+        ]);
     }
 
     /**
@@ -59,9 +62,15 @@ class KelasController extends Controller
      */
     public function store(KelasRequest $request): RedirectResponse
     {
-        Kelas::create($request->validated());
+        $data = $request->validated();
+        $mapel = $request->getMataPelajaran();
 
-        return redirect()->route('admin.kelas.index')->with('success', 'Kelas berhasil ditambahkan.');
+        $kelas = Kelas::create(['nama' => $data['nama']]);
+        $this->syncAvailableMapel($kelas, $mapel);
+
+        $message = $this->buildSyncMessage('ditambahkan', $kelas->nama, $mapel, null);
+
+        return redirect()->route('admin.kelas.index')->with('success', $message);
     }
 
     /**
@@ -72,8 +81,12 @@ class KelasController extends Controller
      */
     public function edit(Kelas $kela): Response
     {
+        $selectedMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('nama')->all();
+
         return Inertia::render('admin/kelas/edit', [
             'kelas' => $kela,
+            'semua_mapel' => MataPelajaran::pluckNamaOrdered()->values()->all(),
+            'selected_mapel' => $selectedMapel,
         ]);
     }
 
@@ -86,9 +99,17 @@ class KelasController extends Controller
      */
     public function update(KelasRequest $request, Kelas $kela): RedirectResponse
     {
-        $kela->update($request->validated());
+        $data = $request->validated();
+        $previousMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('nama')->all();
+        $kela->update(['nama' => $data['nama']]);
 
-        return redirect()->route('admin.kelas.index')->with('success', 'Kelas berhasil diperbarui.');
+        if ($request->has('mata_pelajaran')) {
+            $this->syncAvailableMapel($kela, $request->getMataPelajaran());
+        }
+
+        $message = $this->buildSyncMessage('diperbarui', $kela->nama, $request->getMataPelajaran(), $previousMapel);
+
+        return redirect()->route('admin.kelas.index')->with('success', $message);
     }
 
     /**
@@ -104,8 +125,56 @@ class KelasController extends Controller
             return back()->with('error', "Tidak dapat menghapus kelas \"{$kela->nama}\" karena masih digunakan oleh {$kela->jumlah_siswa} siswa atau {$kela->jumlah_guru_mengajar} guru.");
         }
 
+        $kela->mataPelajaran()->detach();
         $kela->delete();
 
         return redirect()->route('admin.kelas.index')->with('success', 'Kelas berhasil dihapus.');
+    }
+
+    /**
+     * Replace the `kelas_mata_pelajaran` rows for the supplied kelas with
+     * the supplied list of mata-pelajaran names. Existing rows are
+     * detached; new rows are attached in the supplied order.
+     *
+     * @param  Kelas  $kela  The kelas whose mapel allow-list is being replaced.
+     * @param  array<int, string>  $mapel  Deduplicated, sorted list of mapel names.
+     */
+    private function syncAvailableMapel(Kelas $kela, array $mapel): void
+    {
+        $kela->mataPelajaran()->detach();
+
+        foreach ($mapel as $nama) {
+            $kela->mataPelajaran()->attach(
+                MataPelajaran::firstOrCreate(['nama' => $nama])
+            );
+        }
+    }
+
+    /**
+     * Build the Indonesian flash message for store/update. Includes a
+     * summary of how many mapel are now allowed for the kelas, and a
+     * "(sebelumnya: N)" tag on update when the count changed.
+     *
+     * @param  string  $verb  "ditambahkan" | "diperbarui"
+     * @param  string  $kelasName  The kelas display name.
+     * @param  array<int, string>  $mapel  The new mapel list (after sync).
+     * @param  array<int, string>|null  $previousMapel  The previous mapel list (only on update).
+     */
+    private function buildSyncMessage(string $verb, string $kelasName, array $mapel, ?array $previousMapel): string
+    {
+        $count = count($mapel);
+        $base = "Kelas \"{$kelasName}\" berhasil {$verb}.";
+
+        if ($count === 0) {
+            return $base.' Belum ada mata pelajaran yang diizinkan untuk kelas ini — tambahkan mata pelajaran agar guru dapat di-assign mengajar di kelas ini.';
+        }
+
+        $summary = "Kelas \"{$kelasName}\" berhasil {$verb} dengan {$count} mata pelajaran diizinkan.";
+
+        if ($previousMapel !== null && $count !== count($previousMapel)) {
+            $summary .= ' (sebelumnya: '.count($previousMapel).')';
+        }
+
+        return $summary;
     }
 }

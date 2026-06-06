@@ -196,14 +196,6 @@ export function DataTable({ children, className }: { children: ReactNode; classN
     );
 }
 
-export function FilterBar({ children, className }: { children: ReactNode; className?: string }) {
-    return (
-        <div className={cn('rounded-xl border border-border bg-white shadow-sm p-4 flex flex-col md:flex-row gap-3', className)}>
-            {children}
-        </div>
-    );
-}
-
 export type MenuLinkColor = 'primary' | 'success' | 'warning' | 'danger' | 'accent';
 
 export function MenuLink({

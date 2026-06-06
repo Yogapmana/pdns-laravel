@@ -15,6 +15,7 @@ uses(SeedsAkademikMasters::class);
 beforeEach(function () {
     $this->seedKelas();
     $this->seedMataPelajaran();
+    $this->seedKelasMataPelajaran();
 });
 
 test('Admin bisa edit siswa (nama & kelas) tanpa mengubah NIS', function () {

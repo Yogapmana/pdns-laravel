@@ -12,6 +12,7 @@ uses(SeedsAkademikMasters::class);
 beforeEach(function () {
     $this->seedKelas();
     $this->seedMataPelajaran();
+    $this->seedKelasMataPelajaran();
 });
 
 test('Admin buat guru baru TANPA akun login (akun dibuat terpisah di halaman Manajemen Akun)', function () {

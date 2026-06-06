@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Guru;
 use App\Models\GuruMengajar;
 use App\Models\Kelas;
+use App\Models\KelasMataPelajaran;
 use App\Models\MataPelajaran;
 use App\Models\Nilai;
 use App\Models\Siswa;
@@ -18,8 +19,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->seedKelas();
-        $this->seedMataPelajaran();
+        $kelas = $this->seedKelas();
+        $mapel = $this->seedMataPelajaran();
+        $this->seedKelasMataPelajaran($kelas, $mapel);
         $this->seedAdmin();
         $guru = $this->seedGuru();
         $siswa = $this->seedSiswa();
@@ -63,6 +65,23 @@ class DatabaseSeeder extends Seeder
         }
 
         return $daftarMapel;
+    }
+
+    /**
+     * Populate the `kelas_mata_pelajaran` pivot for every default (kelas, mapel)
+     * combination. Mirrors the test trait so the seeded demo dataset lets
+     * the admin guru form accept every default kombinasi.
+     *
+     * @param  array<int, string>  $kelasList
+     * @param  array<int, string>  $mapelList
+     */
+    private function seedKelasMataPelajaran(array $kelasList, array $mapelList): void
+    {
+        foreach ($kelasList as $k) {
+            foreach ($mapelList as $m) {
+                KelasMataPelajaran::firstOrCreate(['kelas' => $k, 'mata_pelajaran' => $m]);
+            }
+        }
     }
 
     private function seedAdmin(): User

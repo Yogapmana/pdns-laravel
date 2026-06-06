@@ -73,11 +73,11 @@ class GuruController extends Controller
     public function create(): Response
     {
         $daftarKelas = Kelas::pluckNamaOrdered();
-        $daftarMapel = MataPelajaran::pluckNamaOrdered();
+        $mapelByKelas = $this->buildMapelByKelas();
 
         return Inertia::render('admin/guru/create', [
             'daftar_kelas' => $daftarKelas,
-            'daftar_mapel' => $daftarMapel,
+            'mapel_by_kelas' => $mapelByKelas,
         ]);
     }
 
@@ -112,12 +112,12 @@ class GuruController extends Controller
     {
         $guru->load(['user:id,username,is_active', 'mengajar']);
         $daftarKelas = Kelas::pluckNamaOrdered();
-        $daftarMapel = MataPelajaran::pluckNamaOrdered();
+        $mapelByKelas = $this->buildMapelByKelas();
 
         return Inertia::render('admin/guru/edit', [
             'guru' => $guru,
             'daftar_kelas' => $daftarKelas,
-            'daftar_mapel' => $daftarMapel,
+            'mapel_by_kelas' => $mapelByKelas,
         ]);
     }
 
@@ -264,5 +264,33 @@ class GuruController extends Controller
         $guru->update(['user_id' => $user->id]);
 
         return redirect()->route('admin.guru.index')->with('success', "Akun untuk guru {$guru->nama_guru} berhasil dibuat (username: {$data['username']}).");
+    }
+
+    /**
+     * Build a nested `[kelas => [mapel1, mapel2, ...]]` map describing
+     * which mata-pelajaran each kelas currently allows, based on the
+     * `kelas_mata_pelajaran` pivot table.
+     *
+     * Used to populate the dependent mapel dropdown in the guru
+     * create/edit forms. A single SQL query is issued against the pivot
+     * table to avoid the N+1 trap that would otherwise occur when
+     * iterating over every kelas.
+     *
+     * @return array<string, array<int, string>> Map keyed by `kelas.nama`, values are sorted mapel names.
+     */
+    private function buildMapelByKelas(): array
+    {
+        $rows = DB::table('kelas_mata_pelajaran')
+            ->join('kelas', 'kelas.nama', '=', 'kelas_mata_pelajaran.kelas')
+            ->orderBy('kelas_mata_pelajaran.kelas')
+            ->orderBy('kelas_mata_pelajaran.mata_pelajaran')
+            ->get(['kelas_mata_pelajaran.kelas', 'kelas_mata_pelajaran.mata_pelajaran']);
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r->kelas][] = $r->mata_pelajaran;
+        }
+
+        return $map;
     }
 }

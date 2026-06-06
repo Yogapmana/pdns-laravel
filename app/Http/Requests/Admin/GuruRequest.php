@@ -6,6 +6,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\GuruMengajar;
 use App\Models\Kelas;
+use App\Models\KelasMataPelajaran;
 use App\Models\MataPelajaran;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -108,6 +109,7 @@ class GuruRequest extends FormRequest
         $validator->after(function (Validator $v) {
             $mengajar = $this->input('mengajar', []);
             $seen = [];
+            $allowedByKelas = $this->loadAllowedMapelByKelas($mengajar);
 
             foreach ($mengajar as $i => $row) {
                 if (! is_array($row)) {
@@ -128,8 +130,61 @@ class GuruRequest extends FormRequest
                 } else {
                     $seen[] = $pair;
                 }
+
+                $allowedForKelas = $allowedByKelas[$kelas] ?? null;
+                if ($allowedForKelas === null) {
+                    $v->errors()->add(
+                        "mengajar.$i.kelas",
+                        "Kelas \"{$kelas}\" belum punya mata pelajaran yang diizinkan. Atur dulu di Manajemen Kelas."
+                    );
+                } elseif (! in_array($mapel, $allowedForKelas, true)) {
+                    $v->errors()->add(
+                        "mengajar.$i.mata_pelajaran",
+                        "Mata pelajaran \"{$mapel}\" tidak diizinkan untuk kelas \"{$kelas}\". Atur dulu di Manajemen Kelas."
+                    );
+                }
             }
         });
+    }
+
+    /**
+     * Build a `[kelas => [mapel, ...]]` map of the allowed mata-pelajaran
+     * for every kelas referenced by the submitted `mengajar` rows. Used
+     * by `withValidator()` to detect combinations that are not in the
+     * `kelas_mata_pelajaran` master.
+     *
+     * @param  mixed  $mengajar  The raw input from `$this->input('mengajar', [])`.
+     * @return array<string, array<int, string>>
+     */
+    private function loadAllowedMapelByKelas(mixed $mengajar): array
+    {
+        if (! is_array($mengajar)) {
+            return [];
+        }
+
+        $kelasNames = [];
+        foreach ($mengajar as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $kelas = trim((string) ($row['kelas'] ?? ''));
+            if ($kelas !== '') {
+                $kelasNames[$kelas] = true;
+            }
+        }
+
+        if ($kelasNames === []) {
+            return [];
+        }
+
+        $rows = KelasMataPelajaran::whereIn('kelas', array_keys($kelasNames))->get(['kelas', 'mata_pelajaran']);
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r->kelas][] = $r->mata_pelajaran;
+        }
+
+        return $map;
     }
 
     /**

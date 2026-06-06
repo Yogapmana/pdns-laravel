@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -21,6 +22,8 @@ use Illuminate\Support\Collection;
  * @property string $nama
  * @property-read int $jumlah_siswa
  * @property-read int $jumlah_guru_mengajar
+ * @property-read int $jumlah_mapel
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, MataPelajaran> $mataPelajaran
  */
 #[Fillable(['nama'])]
 class Kelas extends Model
@@ -58,6 +61,25 @@ class Kelas extends Model
     }
 
     /**
+     * The mata-pelajaran rows that this kelas allows, joined through the
+     * `kelas_mata_pelajaran` pivot (matched on `kelas.nama == pivot.kelas`
+     * and `mata_pelajaran.nama == pivot.mata_pelajaran`).
+     *
+     * @return BelongsToMany<MataPelajaran>
+     */
+    public function mataPelajaran(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            MataPelajaran::class,
+            'kelas_mata_pelajaran',
+            'kelas',
+            'mata_pelajaran',
+            'nama',
+            'nama',
+        )->withTimestamps();
+    }
+
+    /**
      * Accessor: the count of siswa currently in this kelas.
      *
      * @return int The number of siswa rows.
@@ -75,6 +97,16 @@ class Kelas extends Model
     public function getJumlahGuruMengajarAttribute(): int
     {
         return $this->guruMengajar()->count();
+    }
+
+    /**
+     * Accessor: the count of mata-pelajaran rows that this kelas allows.
+     *
+     * @return int The number of `kelas_mata_pelajaran` rows for this kelas.
+     */
+    public function getJumlahMapelAttribute(): int
+    {
+        return $this->mataPelajaran()->count();
     }
 
     /**
