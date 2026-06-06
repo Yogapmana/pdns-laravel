@@ -2,6 +2,7 @@ import { Form, Link } from '@inertiajs/react';
 import { ArrowLeft, Save, UserPlus, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -58,7 +59,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
     }
 
     const mengajarSummary = guru.mengajar.length > 0
-        ? guru.mengajar.map((m) => `${m.kelas} • ${m.mata_pelajaran}`).join(' | ')
+        ? guru.mengajar.map((m) => `${m.kelas} — ${m.mata_pelajaran}`).join(' | ')
         : 'Belum ada';
 
     const emptyKelas = daftar_kelas.filter((k) => mapelForKelas(k).length === 0);
@@ -71,7 +72,16 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                 </Link>
                 <PageHeader
                     title="Edit Guru"
-                    description={`${guru.nama_guru}${hasAccount ? ` • @${guru.user!.username}` : ' • Tanpa Akun'}`}
+                    description={
+                        <div className="flex items-center gap-2">
+                            <span>{guru.nama_guru}</span>
+                            {hasAccount ? (
+                                <Badge variant="info">@{guru.user!.username}</Badge>
+                            ) : (
+                                <Badge variant="neutral">Tanpa Akun</Badge>
+                            )}
+                        </div>
+                    }
                 />
             </div>
 
@@ -180,21 +190,14 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
 
                                     {emptyKelas.length > 0 && (
                                         <Alert variant="warning" className="mt-3">
-                                            <p className="font-semibold mb-1">Kelas berikut belum punya mata pelajaran yang diizinkan:</p>
-                                            <p className="text-xs font-normal">
-                                                {emptyKelas.join(', ')}.{' '}
-                                                <Link href="/admin/kelas" className="underline">Atur mata pelajaran di Manajemen Kelas</Link> agar bisa di-assign.
-                                            </p>
+                                            {emptyKelas.join(', ')} belum punya mapel. <Link href="/admin/kelas" className="underline font-medium">Atur di Manajemen Kelas</Link>.
                                         </Alert>
                                     )}
                                 </div>
 
                                 {hasAccount && (
                                     <Alert variant="info">
-                                        <p className="font-semibold mb-1">Guru ini sudah punya akun login.</p>
-                                        <p className="text-xs font-normal">
-                                            Untuk reset password atau nonaktifkan, buka <Link href="/admin/akun" className="underline">Manajemen Akun</Link>.
-                                        </p>
+                                        Akun login tersedia. Kelola password dan status melalui <Link href="/admin/akun" className="underline font-medium">Manajemen Akun</Link>.
                                     </Alert>
                                 )}
 

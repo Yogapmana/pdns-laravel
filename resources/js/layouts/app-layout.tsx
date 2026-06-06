@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck } from 'lucide-react';
-import {  useEffect, useState } from 'react';
+import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Bell, Search, Calendar } from 'lucide-react';
+import { useState, useSyncExternalStore } from 'react';
 import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
@@ -105,24 +105,61 @@ return 'Nilai Saya';
 }
 
 const SIDEBAR_KEY = 'pdns-sidebar-collapsed';
-const SIDEBAR_WIDTH = 'w-64';
-const SIDEBAR_WIDTH_COLLAPSED = 'w-16';
+const SIDEBAR_EVENT = 'pdns-sidebar-change';
 const SIDEBAR_TRANSITION = 'transition-[width] duration-300 ease-in-out';
+
+const sidebarSubscribers = new Set<() => void>();
+
+function notifySidebarSubscribers(): void {
+    sidebarSubscribers.forEach((cb) => cb());
+}
+
+function subscribeSidebar(callback: () => void): () => void {
+    if (typeof window === 'undefined') {
+        return () => {};
+    }
+
+    sidebarSubscribers.add(callback);
+    window.addEventListener('storage', callback);
+    window.addEventListener(SIDEBAR_EVENT, callback);
+
+    return () => {
+        sidebarSubscribers.delete(callback);
+        window.removeEventListener('storage', callback);
+        window.removeEventListener(SIDEBAR_EVENT, callback);
+    };
+}
+
+function getServerSidebarSnapshot(): boolean {
+    return false;
+}
+
+function getClientSidebarSnapshot(): boolean {
+    return window.localStorage.getItem(SIDEBAR_KEY) === 'true';
+}
+
+const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+const noopSubscribe = (): (() => void) => () => {};
+
+const getServerToday = (): string => '';
+
+const getClientToday = (): string => DATE_FORMATTER.format(new Date());
+
+function logout() {
+    router.post('/logout');
+}
 
 export default function AppLayout({ children, title }: { children: ReactNode; title?: string }) {
     const { props, url } = usePage<PageProps>();
     const user = props.auth?.user;
-    const [collapsed, setCollapsed] = useState<boolean>(() => {
-        if (typeof window === 'undefined') {
-return false;
-}
-
-        return window.localStorage.getItem(SIDEBAR_KEY) === 'true';
-    });
-
-    useEffect(() => {
-        window.localStorage.setItem(SIDEBAR_KEY, String(collapsed));
-    }, [collapsed]);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const collapsed = useSyncExternalStore(
+        subscribeSidebar,
+        getClientSidebarSnapshot,
+        getServerSidebarSnapshot,
+    );
+    const today = useSyncExternalStore(noopSubscribe, getClientToday, getServerToday);
 
     if (!user) {
         return (
@@ -140,28 +177,43 @@ return false;
     const roleLabel = user.role === 'admin' ? 'Admin' : user.role === 'guru' ? 'Guru' : 'Siswa';
     const userInitial = (user.name ?? user.username).charAt(0).toUpperCase();
 
-    function logout() {
-        router.post('/logout');
+    function toggleCollapsed() {
+        const next = !collapsed;
+        window.localStorage.setItem(SIDEBAR_KEY, String(next));
+        notifySidebarSubscribers();
+    }
+
+    function closeMobileMenu() {
+        setMobileMenuOpen(false);
     }
 
     return (
         <>
             <Head title={pageTitle} />
             <div className="flex h-screen bg-surface font-sans">
+                {mobileMenuOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                        onClick={closeMobileMenu}
+                        aria-hidden="true"
+                    />
+                )}
+
                 <aside
                     className={cn(
                         SIDEBAR_TRANSITION,
-                        'bg-navy text-white flex-shrink-0 fixed h-full flex flex-col z-30 overflow-hidden',
-                        collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH,
+                        'bg-navy text-white flex-shrink-0 fixed h-full flex flex-col z-40 overflow-hidden',
+                        mobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64',
+                        'md:translate-x-0',
+                        collapsed ? 'md:w-16' : 'md:w-64',
                     )}
-                    aria-expanded={!collapsed}
                 >
-                    <div className={cn('flex items-center border-b border-navy-light flex-shrink-0', collapsed ? 'px-3 py-5 justify-center' : 'px-6 py-5 justify-between')}>
+                    <div className={cn('flex items-center border-b border-navy-light flex-shrink-0 h-[69px]', collapsed ? 'px-3 justify-center' : 'px-6 justify-between')}>
                         {collapsed ? (
                             <button
                                 type="button"
-                                onClick={() => setCollapsed(false)}
-                                className="text-navy-300 hover:text-white transition p-1.5 rounded hover:bg-navy-light"
+                                onClick={toggleCollapsed}
+                                className="text-navy-300 hover:text-white transition p-1.5 rounded hover:bg-navy-light hidden md:block"
                                 aria-label="Buka sidebar"
                                 title="Buka sidebar"
                             >
@@ -174,16 +226,24 @@ return false;
                                         <BookOpen className="h-5 w-5 shrink-0" />
                                         <span className="truncate">SMAN 7 Solo</span>
                                     </p>
-                                    <p className="text-xs text-navy-300 mt-0.5 truncate">Sistem Akademik</p>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setCollapsed(true)}
-                                    className="text-navy-300 hover:text-white transition p-1 rounded hover:bg-navy-light shrink-0"
+                                    onClick={toggleCollapsed}
+                                    className="text-navy-300 hover:text-white transition p-1 rounded hover:bg-navy-light shrink-0 hidden md:block"
                                     aria-label="Tutup sidebar"
                                     title="Tutup sidebar"
                                 >
                                     <PanelLeftClose className="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeMobileMenu}
+                                    className="text-navy-300 hover:text-white transition p-1 rounded hover:bg-navy-light shrink-0 md:hidden"
+                                    aria-label="Tutup menu"
+                                    title="Tutup menu"
+                                >
+                                    <X className="h-5 w-5" />
                                 </button>
                             </>
                         )}
@@ -194,6 +254,7 @@ return false;
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                onClick={closeMobileMenu}
                                 title={collapsed ? item.label : undefined}
                                 className={cn(
                                     'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition',
@@ -255,13 +316,45 @@ return false;
                 <main
                     className={cn(
                         'flex-1 flex flex-col min-h-screen overflow-hidden transition-[margin] duration-300 ease-in-out',
-                        collapsed ? 'ml-16' : 'ml-64',
+                        'ml-0',
+                        collapsed ? 'md:ml-16' : 'md:ml-64',
                     )}
                 >
-                    <header className="bg-white border-b border-border px-6 py-4 flex items-center justify-between flex-shrink-0">
-                        <p className="text-sm text-muted-foreground">
-                            {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                        </p>
+                    <header className="bg-white border-b border-border px-4 md:px-6 h-[69px] flex items-center justify-between flex-shrink-0 gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setMobileMenuOpen(true)}
+                                className="md:hidden p-1.5 -ml-1.5 text-navy hover:bg-slate-100 rounded-md"
+                                aria-label="Buka menu"
+                            >
+                                <Menu className="h-5 w-5" />
+                            </button>
+                            <div className="hidden md:flex items-center">
+                                <span className="text-sm font-semibold text-navy/70 uppercase tracking-widest">Sistem Akademik</span>
+                            </div>
+                            <p className="text-sm font-semibold text-navy md:hidden truncate">
+                                {pageTitle}
+                            </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 md:gap-3">
+                            <button type="button" className="md:hidden text-muted-foreground hover:text-navy transition p-2 rounded-full hover:bg-slate-100" aria-label="Cari" title="Cari">
+                                <Search className="h-4 w-4" />
+                            </button>
+                            
+                            <button type="button" className="relative text-muted-foreground hover:text-navy transition p-2 rounded-full hover:bg-slate-100 mr-2 md:mr-0" aria-label="Notifikasi" title="Notifikasi">
+                                <Bell className="h-4 w-4 md:h-5 md:w-5" />
+                                <span className="absolute top-1.5 right-1.5 h-2 w-2 md:h-2.5 md:w-2.5 rounded-full bg-danger border border-white md:border-2"></span>
+                            </button>
+                            
+                            <div className="w-px h-6 bg-border hidden md:block mx-1"></div>
+                            
+                            <div className="hidden md:flex items-center gap-2 text-sm text-navy font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                <Calendar className="h-4 w-4 text-primary" />
+                                {today}
+                            </div>
+                        </div>
                     </header>
 
                     <div className="flex-1 overflow-y-auto p-6">{children}</div>

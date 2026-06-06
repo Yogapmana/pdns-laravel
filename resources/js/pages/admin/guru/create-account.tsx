@@ -37,10 +37,7 @@ export default function GuruCreateAccount({ guru }: Props) {
                         {({ processing, errors }) => (
                             <>
                                 <Alert variant="info">
-                                    <p className="font-semibold mb-1">Akun ini akan dibuat dengan role Guru.</p>
-                                    <p className="text-xs font-normal">
-                                        Guru akan bisa login ke sistem dengan username dan password di bawah.
-                                    </p>
+                                    Guru dapat login menggunakan username dan password yang dibuat di bawah.
                                 </Alert>
 
                                 <div>

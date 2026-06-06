@@ -14,7 +14,12 @@ class DashboardController extends Controller
 {
     /**
      * Display the siswa dashboard with the profile and a flag indicating
-     * whether the siswa has any nilai rows yet.
+     * whether the siswa has any Final (validated) nilai rows yet.
+     *
+     * The `has_nilai` flag deliberately ignores Draft rows: a guru that
+     * has only entered scores but not yet locked the combo is not
+     * surfaced to the siswa, mirroring the visibility rules of the
+     * `/siswa/nilai` page and the rapor PDF.
      *
      * @return Response Inertia response rendering `siswa/dashboard`.
      */
@@ -24,7 +29,9 @@ class DashboardController extends Controller
             ->where('user_id', auth()->id())
             ->firstOrFail();
 
-        $hasNilai = Nilai::where('nis', $siswa->nis)->exists();
+        $hasNilai = Nilai::where('nis', $siswa->nis)
+            ->where('status_validasi', Nilai::STATUS_FINAL)
+            ->exists();
 
         return Inertia::render('siswa/dashboard', [
             'siswa' => $siswa,

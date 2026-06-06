@@ -1,9 +1,25 @@
 import { Link } from '@inertiajs/react';
-import { Users, FileEdit, CheckCircle, XCircle, BookOpen, ChevronRight, TrendingUp, AlertTriangle, Edit3, Lock } from 'lucide-react';
+import {
+    Users,
+    FileEdit,
+    CheckCircle,
+    XCircle,
+    BookOpen,
+    ChevronRight,
+    TrendingUp,
+    AlertTriangle,
+    Edit3,
+    Lock,
+} from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { PageHeader, Container, StatCard, DataTable } from '@/components/ui/shared';
+import {
+    PageHeader,
+    Container,
+    StatCard,
+    DataTable,
+} from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -49,10 +65,13 @@ function formatComboList(items: NotifikasiItem[]): string {
     return items.map((it) => `${it.mata_pelajaran} ${it.kelas}`).join(', ');
 }
 
-function comboStateLabel(combo: PerCombo): { label: string; variant: 'neutral' | 'success' | 'warning' | 'info' | 'danger' } {
+function comboStateLabel(combo: PerCombo): {
+    label: string;
+    variant: 'neutral' | 'success' | 'warning' | 'info' | 'danger';
+} {
     if (combo.jumlah_siswa === 0) {
-return { label: 'Kelas kosong', variant: 'neutral' };
-}
+        return { label: 'Kelas kosong', variant: 'neutral' };
+    }
 
     if (combo.jumlah_input < combo.jumlah_siswa) {
         const sisa = combo.jumlah_siswa - combo.jumlah_input;
@@ -68,10 +87,18 @@ return { label: 'Kelas kosong', variant: 'neutral' };
         return { label: 'Semua Final', variant: 'success' };
     }
 
-    return { label: `${combo.jumlah_final}/${combo.jumlah_siswa} Final`, variant: 'info' };
+    return {
+        label: `${combo.jumlah_final}/${combo.jumlah_siswa} Final`,
+        variant: 'info',
+    };
 }
 
-export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi }: Props) {
+export default function GuruDashboard({
+    guru,
+    stats,
+    per_combo_stats,
+    notifikasi,
+}: Props) {
     useFlashToast();
 
     const mengajar = guru.mengajar ?? [];
@@ -82,18 +109,31 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
     const masihDraft = notifikasi?.masih_draft ?? [];
     const adaNotifikasi = belumDiinput.length > 0 || masihDraft.length > 0;
 
-    const comboFinal = per_combo_stats.filter((c) => c.jumlah_siswa > 0 && c.jumlah_final === c.jumlah_siswa).length;
-    const comboSebagian = per_combo_stats.filter((c) => c.jumlah_siswa > 0 && c.jumlah_draft > 0 && c.jumlah_final > 0).length;
-    const comboBelumInput = per_combo_stats.filter((c) => c.jumlah_siswa > 0 && c.jumlah_input < c.jumlah_siswa).length;
-    const comboKosong = per_combo_stats.filter((c) => c.jumlah_siswa === 0).length;
+    const comboFinal = per_combo_stats.filter(
+        (c) => c.jumlah_siswa > 0 && c.jumlah_final === c.jumlah_siswa,
+    ).length;
+    const comboSebagian = per_combo_stats.filter(
+        (c) => c.jumlah_siswa > 0 && c.jumlah_draft > 0 && c.jumlah_final > 0,
+    ).length;
+    const comboBelumInput = per_combo_stats.filter(
+        (c) => c.jumlah_siswa > 0 && c.jumlah_input < c.jumlah_siswa,
+    ).length;
+    const comboKosong = per_combo_stats.filter(
+        (c) => c.jumlah_siswa === 0,
+    ).length;
 
     return (
         <Container>
             <PageHeader
                 title={`Selamat Datang, ${guru.nama_guru}`}
-                description={`${mengajar.length} kombinasi mengajar • ${totalKelas} kelas • ${totalMapel} mata pelajaran`}
+                description={
+                    <div className="flex flex-wrap items-center gap-2"></div>
+                }
                 action={
-                    <Link href="/guru/input-nilai" className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition">
+                    <Link
+                        href="/guru/input-nilai"
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
+                    >
                         <Edit3 className="h-4 w-4" />
                         Input Nilai
                     </Link>
@@ -106,20 +146,28 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                         <Alert variant="warning" className="mb-0">
                             <div className="flex flex-col gap-2">
                                 <p>
-                                    <span className="font-bold">Perhatian:</span> Terdapat {belumDiinput.length} kelas
-                                    ({formatComboList(belumDiinput)}) yang nilainya
-                                    <strong> belum Anda input atau belum lengkap</strong>.
+                                    Nilai {belumDiinput.length} kelas (
+                                    {formatComboList(belumDiinput)}){' '}
+                                    <strong>belum lengkap diinput</strong>.
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {belumDiinput.map((it) => (
                                         <Link
                                             key={it.id_mengajar}
                                             href={`/guru/input-nilai?kelas=${encodeURIComponent(it.kelas)}&mata_pelajaran=${encodeURIComponent(it.mata_pelajaran)}`}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-yellow-300 rounded-md text-xs font-medium text-yellow-900 hover:bg-yellow-100 transition"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-yellow-300 bg-white px-2.5 py-1 text-xs font-medium text-yellow-900 transition hover:bg-yellow-100"
                                         >
-                                            <Badge variant="info" className="!text-[10px] !px-1.5 !py-0">{it.kelas}</Badge>
+                                            <Badge
+                                                variant="info"
+                                                className="!px-1.5 !py-0 !text-[10px]"
+                                            >
+                                                {it.kelas}
+                                            </Badge>
                                             <span>{it.mata_pelajaran}</span>
-                                            <span className="text-yellow-700">({it.jumlah_input}/{it.jumlah_siswa})</span>
+                                            <span className="text-yellow-700">
+                                                ({it.jumlah_input}/
+                                                {it.jumlah_siswa})
+                                            </span>
                                             <ChevronRight className="h-3 w-3" />
                                         </Link>
                                     ))}
@@ -132,20 +180,31 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                         <Alert variant="error" className="mb-0">
                             <div className="flex flex-col gap-2">
                                 <p>
-                                    <span className="font-bold">Tindak Lanjuti:</span> Terdapat {masihDraft.length} kelas
-                                    ({formatComboList(masihDraft)}) yang nilainya sudah lengkap diinput tetapi
-                                    <strong> masih berstatus Draft</strong>. Klik tombol "Validasi Final" untuk mengunci nilai.
+                                    Nilai {masihDraft.length} kelas (
+                                    {formatComboList(masihDraft)}) sudah lengkap
+                                    namun <strong>masih Draft</strong>. Silakan
+                                    lakukan Validasi Final.
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {masihDraft.map((it) => (
                                         <Link
                                             key={it.id_mengajar}
                                             href={`/guru/input-nilai?kelas=${encodeURIComponent(it.kelas)}&mata_pelajaran=${encodeURIComponent(it.mata_pelajaran)}`}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-red-300 rounded-md text-xs font-medium text-red-900 hover:bg-red-100 transition"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-900 transition hover:bg-red-100"
                                         >
-                                            <Badge variant="info" className="!text-[10px] !px-1.5 !py-0">{it.kelas}</Badge>
+                                            <Badge
+                                                variant="info"
+                                                className="!px-1.5 !py-0 !text-[10px]"
+                                            >
+                                                {it.kelas}
+                                            </Badge>
                                             <span>{it.mata_pelajaran}</span>
-                                            <Badge variant="warning" className="!text-[10px] !px-1.5 !py-0">{it.jumlah_draft} Draft</Badge>
+                                            <Badge
+                                                variant="warning"
+                                                className="!px-1.5 !py-0 !text-[10px]"
+                                            >
+                                                {it.jumlah_draft} Draft
+                                            </Badge>
                                             <ChevronRight className="h-3 w-3" />
                                         </Link>
                                     ))}
@@ -159,7 +218,7 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
             <Card>
                 <CardHeader>Ringkasan Nilai</CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         <StatCard
                             label="Total Siswa"
                             value={stats.total_siswa}
@@ -196,7 +255,7 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <Card>
                     <CardHeader>Ringkasan Kelulusan</CardHeader>
                     <CardContent>
@@ -230,20 +289,32 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                     <CardHeader>Status per Mengajar</CardHeader>
                     <CardContent>
                         {per_combo_stats.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">
+                            <p className="py-4 text-center text-sm text-muted-foreground">
                                 Belum ada kombinasi mengajar. Hubungi admin.
                             </p>
                         ) : (
-                            <div className="overflow-x-auto -mx-2">
+                            <div className="-mx-2 overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="text-secondary">
-                                            <th className="px-2 py-2 text-left text-xs font-bold uppercase tracking-wide">Kelas</th>
-                                            <th className="px-2 py-2 text-left text-xs font-bold uppercase tracking-wide">Mata Pelajaran</th>
-                                            <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wide">Siswa</th>
-                                            <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wide">Input</th>
-                                            <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wide">Status</th>
-                                            <th className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wide w-20">Aksi</th>
+                                            <th className="px-2 py-2 text-left text-xs font-bold tracking-wide uppercase">
+                                                Kelas
+                                            </th>
+                                            <th className="px-2 py-2 text-left text-xs font-bold tracking-wide uppercase">
+                                                Mata Pelajaran
+                                            </th>
+                                            <th className="px-2 py-2 text-center text-xs font-bold tracking-wide uppercase">
+                                                Siswa
+                                            </th>
+                                            <th className="px-2 py-2 text-center text-xs font-bold tracking-wide uppercase">
+                                                Input
+                                            </th>
+                                            <th className="px-2 py-2 text-center text-xs font-bold tracking-wide uppercase">
+                                                Status
+                                            </th>
+                                            <th className="w-20 px-2 py-2 text-right text-xs font-bold tracking-wide uppercase">
+                                                Aksi
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -251,23 +322,42 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                                             const state = comboStateLabel(c);
 
                                             return (
-                                                <tr key={c.id_mengajar} className="hover:bg-blue-50/50">
+                                                <tr
+                                                    key={c.id_mengajar}
+                                                    className="hover:bg-blue-50/50"
+                                                >
                                                     <td className="px-2 py-2">
-                                                        <Badge variant="info">{c.kelas}</Badge>
+                                                        <Badge variant="info">
+                                                            {c.kelas}
+                                                        </Badge>
                                                     </td>
-                                                    <td className="px-2 py-2 font-medium">{c.mata_pelajaran}</td>
-                                                    <td className="px-2 py-2 text-center font-mono">{c.jumlah_siswa}</td>
-                                                    <td className="px-2 py-2 text-center font-mono">{c.jumlah_input}/{c.jumlah_siswa}</td>
+                                                    <td className="px-2 py-2 font-medium">
+                                                        {c.mata_pelajaran}
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center font-mono">
+                                                        {c.jumlah_siswa}
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center font-mono">
+                                                        {c.jumlah_input}/
+                                                        {c.jumlah_siswa}
+                                                    </td>
                                                     <td className="px-2 py-2 text-center">
-                                                        <Badge variant={state.variant}>{state.label}</Badge>
+                                                        <Badge
+                                                            variant={
+                                                                state.variant
+                                                            }
+                                                        >
+                                                            {state.label}
+                                                        </Badge>
                                                     </td>
                                                     <td className="px-2 py-2 text-right">
                                                         <Link
                                                             href={`/guru/input-nilai?kelas=${encodeURIComponent(c.kelas)}&mata_pelajaran=${encodeURIComponent(c.mata_pelajaran)}`}
-                                                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-blue-100 rounded transition"
+                                                            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary transition hover:bg-blue-100"
                                                             title="Buka Input Nilai"
                                                         >
-                                                            Buka <ChevronRight className="h-3 w-3" />
+                                                            Buka{' '}
+                                                            <ChevronRight className="h-3 w-3" />
                                                         </Link>
                                                     </td>
                                                 </tr>
@@ -279,7 +369,7 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                         )}
 
                         {per_combo_stats.length > 0 && (
-                            <div className="mt-4 pt-3 border-t border-border flex flex-wrap gap-2 text-xs text-muted-foreground">
+                            <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
                                 <span className="inline-flex items-center gap-1">
                                     <CheckCircle className="h-3 w-3 text-success" />
                                     {comboFinal} combo Final
@@ -307,7 +397,6 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                     </CardContent>
                 </DataTable>
             </div>
-
         </Container>
     );
 }

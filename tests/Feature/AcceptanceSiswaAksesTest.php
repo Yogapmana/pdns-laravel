@@ -30,10 +30,12 @@ test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
     Nilai::create([
         'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
         'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswaA)->get('/siswa/nilai');
@@ -82,6 +84,7 @@ test('Siswa nilai page menampilkan nama guru pengajar (guru_map adalah flat keyB
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/nilai');

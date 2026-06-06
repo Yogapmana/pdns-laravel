@@ -1,4 +1,5 @@
 import { BookOpenCheck, GraduationCap, Printer } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Container, PageHeader, StatCard, ActionCard } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
@@ -13,7 +14,12 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
         <Container>
             <PageHeader
                 title={`Halo, ${siswa.nama_siswa}!`}
-                description={`NIS: ${siswa.nis} — Kelas: ${siswa.kelas}`}
+                description={
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="neutral">NIS: {siswa.nis}</Badge>
+                        <Badge variant="info">Kelas: {siswa.kelas}</Badge>
+                    </div>
+                }
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

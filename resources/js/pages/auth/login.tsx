@@ -1,9 +1,16 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { useSyncExternalStore } from 'react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+const noopSubscribe = (): (() => void) => () => {};
+
+const getYear = (): number => CURRENT_YEAR;
 
 type Props = { status?: string };
 
@@ -11,6 +18,7 @@ export default function Login({ status }: Props) {
     const { props } = usePage<{ errors: { username?: string; password?: string; credentials?: string } }>();
     const errors = props.errors ?? {};
     const [showPassword, setShowPassword] = useState(false);
+    const year = useSyncExternalStore(noopSubscribe, getYear, getYear);
 
     return (
         <>
@@ -91,7 +99,7 @@ export default function Login({ status }: Props) {
                 </Form>
 
                 <p className="text-center text-xs text-muted-foreground mt-6">
-                    &copy; {new Date().getFullYear()} SMAN 7 Solo. Sistem Informasi Akademik.
+                    &copy; {year} SMAN 7 Solo. Sistem Informasi Akademik.
                 </p>
             </div>
         </>

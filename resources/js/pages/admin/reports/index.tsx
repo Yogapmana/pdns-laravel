@@ -18,14 +18,14 @@ function buildUrl(endpoint: string, kelas: string[], mapel: string[]) {
     return `${endpoint}?${search.toString()}`;
 }
 
+function toggle(list: string[], setter: (v: string[]) => void, value: string) {
+    setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+}
+
 export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
     useFlashToast();
     const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
     const [selectedMapel, setSelectedMapel] = useState<string[]>([]);
-
-    function toggle(list: string[], setter: (v: string[]) => void, value: string) {
-        setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
-    }
 
     function selectAllKelas() {
         setSelectedKelas(selectedKelas.length === daftar_kelas.length ? [] : [...daftar_kelas]);
@@ -171,12 +171,10 @@ return;
             </Card>
 
             <Alert variant="info">
-                <p className="font-semibold mb-1">Petunjuk:</p>
                 <ul className="list-disc list-inside space-y-1 text-xs font-normal">
-                    <li>Pilih minimal satu kelas. Boleh pilih lebih dari satu untuk rekap gabungan.</li>
-                    <li>Pilih mata pelajaran (opsional). Kosongkan untuk rekap semua mapel.</li>
-                    <li>"Generate Laporan" untuk preview di browser dengan tabel interaktif.</li>
-                    <li>Ekspor PDF/Excel/CSV/HTML akan mengunduh file dengan format landscape A4 (PDF) atau tabulasi (Excel/CSV/HTML).</li>
+                    <li>Pilih ≥1 kelas. Pilih mapel jika perlu (kosongkan = semua).</li>
+                    <li>Klik <strong>Generate Laporan</strong> untuk pratinjau tabel interaktif.</li>
+                    <li>Gunakan tombol <strong>Ekspor</strong> untuk mengunduh laporan PDF/Excel/CSV/HTML.</li>
                 </ul>
             </Alert>
         </Container>

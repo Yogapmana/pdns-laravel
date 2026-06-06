@@ -124,7 +124,7 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
                                 <span>← Geser horizontal untuk melihat mata pelajaran lainnya →</span>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm border-collapse table-fixed">
+                                <table className="w-full min-w-[1000px] text-sm border-collapse table-fixed">
                                     <colgroup>
                                         <col className="w-12" />
                                         <col className="w-24" />

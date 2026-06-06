@@ -19,7 +19,9 @@ class NilaiController extends Controller
      *
      * Loads the siswa's `Nilai` rows (eager-loading the `guru` profile),
      * groups them by the `(kelas, mata_pelajaran)` composite key, and
-     * builds the per-mapel chart payload.
+     * builds the per-mapel chart payload. Only rows that have been
+     * validated (`status_validasi = Final`) are surfaced — Draft rows
+     * remain hidden from the siswa until the guru locks them.
      *
      * @return Response Inertia response rendering `siswa/nilai/index`.
      */
@@ -29,6 +31,7 @@ class NilaiController extends Controller
 
         $nilai = Nilai::with('guru:id,nama_guru')
             ->where('nis', $siswa->nis)
+            ->where('status_validasi', Nilai::STATUS_FINAL)
             ->get()
             ->groupBy(fn ($n) => $n->kelas.'|'.$n->mata_pelajaran);
 

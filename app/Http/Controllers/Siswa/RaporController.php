@@ -16,6 +16,10 @@ class RaporController extends Controller
     /**
      * Stream the authenticated siswa's personal rapor as a PDF download.
      *
+     * Only `Final` nilai rows are included — Draft values are kept
+     * hidden until the guru locks them, so the printed rapor matches
+     * what the siswa sees in the nilai page.
+     *
      * @return Response A download response with `Content-Type: application/pdf` and a per-siswa filename.
      */
     public function pdf(): Response
@@ -24,6 +28,7 @@ class RaporController extends Controller
 
         $nilai = Nilai::with('guru:id,nama_guru')
             ->where('nis', $siswa->nis)
+            ->where('status_validasi', Nilai::STATUS_FINAL)
             ->orderBy('mata_pelajaran')
             ->get();
 

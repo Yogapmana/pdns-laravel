@@ -44,10 +44,12 @@ test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', funct
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
         'nilai_tugas' => 60, 'nilai_uts' => 50, 'nilai_uas' => 55, 'nilai_akhir' => 55, 'status_lulus' => 'Tidak Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
@@ -93,6 +95,7 @@ test('Siswa dapat mengunduh rapor PDF mereka', function () {
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/rapor/pdf');
@@ -111,6 +114,7 @@ test('Rapor PDF berisi nama siswa, NIS, kelas, dan mapel (UTF-16BE encoded)', fu
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/rapor/pdf');
@@ -180,6 +184,7 @@ test('Siswa dashboard menampilkan has_nilai=true jika ada nilai', function () {
     Nilai::create([
         'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/dashboard');

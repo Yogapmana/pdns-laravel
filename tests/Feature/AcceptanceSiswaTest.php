@@ -92,6 +92,7 @@ test('AC-03d: Admin hapus siswa juga menghapus nilai terkait (CASCADE)', functio
         'nilai_uas' => 90,
         'nilai_akhir' => 81,
         'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
     expect(Nilai::where('nis', '00001')->count())->toBe(1);
