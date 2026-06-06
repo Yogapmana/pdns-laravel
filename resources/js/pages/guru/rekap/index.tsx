@@ -5,6 +5,9 @@ import {
     AlertCircle,
     Info,
     BookOpen,
+    Filter,
+    Search,
+    FileSpreadsheet,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
@@ -102,15 +105,21 @@ export default function RekapIndex({
             )}
 
             {has_mengajar && (
-                <Card>
-                    <CardContent>
-                        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-3">
-                            <div>
+                <div className="mb-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-border bg-slate-50/50 px-5 py-3">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-secondary">
+                            Filter Rekap Nilai
+                        </h3>
+                    </div>
+                    <div className="p-5">
+                        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
+                            <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="kelas"
-                                    className="mb-2 block text-sm font-medium text-secondary"
+                                    className="mb-1.5 block text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
-                                    Pilih Kelas
+                                    Kelas
                                 </label>
                                 <Select
                                     id="kelas"
@@ -118,6 +127,7 @@ export default function RekapIndex({
                                     onChange={(e) =>
                                         changeKelas(e.target.value)
                                     }
+                                    className="h-10"
                                 >
                                     <option value="">Pilih kelas...</option>
                                     {daftar_kelas.map((k) => (
@@ -127,12 +137,12 @@ export default function RekapIndex({
                                     ))}
                                 </Select>
                             </div>
-                            <div>
+                            <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="mapel"
-                                    className="mb-2 block text-sm font-medium text-secondary"
+                                    className="mb-1.5 block text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
-                                    Pilih Mata Pelajaran
+                                    Mata Pelajaran
                                 </label>
                                 <Select
                                     id="mapel"
@@ -141,6 +151,7 @@ export default function RekapIndex({
                                         setSelectedMapel(e.target.value)
                                     }
                                     disabled={!selectedKelas}
+                                    className="h-10"
                                 >
                                     <option value="">
                                         {selectedKelas
@@ -165,12 +176,30 @@ export default function RekapIndex({
                             <Button
                                 onClick={applyFilter}
                                 disabled={!selectedKelas || !selectedMapel}
+                                className="h-10 w-full shrink-0 px-6 sm:w-auto"
                             >
-                                Tampilkan Rekap
+                                <Search className="mr-2 h-4 w-4" />
+                                Tampilkan
                             </Button>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+            )}
+
+            {has_mengajar && (!kelas || !mata_pelajaran) && (
+                <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-slate-50/50 py-16 text-center">
+                    <div className="rounded-full bg-slate-100 p-4">
+                        <FileSpreadsheet className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-secondary">
+                        Belum Ada Data yang Ditampilkan
+                    </h3>
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                        Silakan pilih <strong>Kelas</strong> dan{' '}
+                        <strong>Mata Pelajaran</strong> terlebih dahulu pada
+                        filter di atas untuk melihat rekap nilai.
+                    </p>
+                </div>
             )}
 
             {kelas && mata_pelajaran && (
@@ -318,15 +347,6 @@ export default function RekapIndex({
                         </div>
                     </DataTable>
                 </>
-            )}
-
-            {!kelas && !mata_pelajaran && has_mengajar && (
-                <Card>
-                    <CardContent className="py-12 text-center text-muted-foreground">
-                        Pilih kelas dan mata pelajaran terlebih dahulu untuk
-                        melihat rekap.
-                    </CardContent>
-                </Card>
             )}
         </Container>
     );

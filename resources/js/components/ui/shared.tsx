@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HTMLAttributes, ReactNode } from 'react';
 
@@ -119,7 +120,6 @@ export function ActionCard({
     icon,
     title,
     description,
-    actionLabel,
     href,
     variant = 'primary',
     external = false,
@@ -128,53 +128,42 @@ export function ActionCard({
     icon: ReactNode;
     title: string;
     description: string;
-    actionLabel: string;
     href: string;
     variant?: 'primary' | 'success' | 'warning' | 'danger';
     external?: boolean;
     method?: 'get' | 'post';
 }) {
-    const variantClasses: Record<typeof variant, { iconBox: string; button: string }> = {
-        primary: { iconBox: 'bg-blue-100 text-primary', button: 'bg-primary text-white hover:bg-primary-700' },
-        success: { iconBox: 'bg-emerald-100 text-emerald-600', button: 'bg-emerald-600 text-white hover:bg-emerald-700' },
-        warning: { iconBox: 'bg-yellow-100 text-warning', button: 'bg-warning text-white hover:bg-yellow-600' },
-        danger: { iconBox: 'bg-red-100 text-danger', button: 'bg-danger text-white hover:bg-red-700' },
+    const variantClasses = {
+        primary: { border: 'hover:border-primary', iconBox: 'bg-blue-50 text-primary group-hover:bg-primary group-hover:text-white' },
+        success: { border: 'hover:border-emerald-500', iconBox: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' },
+        warning: { border: 'hover:border-warning', iconBox: 'bg-yellow-50 text-warning group-hover:bg-warning group-hover:text-white' },
+        danger: { border: 'hover:border-danger', iconBox: 'bg-red-50 text-danger group-hover:bg-danger group-hover:text-white' },
     };
     const v = variantClasses[variant];
 
-    const buttonClass = cn('inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition', v.button);
-
-    const iconBox = (
-        <div className={cn('p-4 rounded-full shrink-0', v.iconBox)}>
-            <span className="[&>svg]:h-8 [&>svg]:w-8 block">{icon}</span>
+    const content = (
+        <div className={cn('bg-white rounded-xl shadow-sm border border-border p-5 flex items-center gap-4 transition-all duration-200 cursor-pointer group hover:shadow-md', v.border)}>
+            <div className={cn('p-3 rounded-xl shrink-0 transition-colors', v.iconBox)}>
+                <span className="[&>svg]:h-6 [&>svg]:w-6 block">{icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+                <h2 className="text-base font-bold text-navy truncate">{title}</h2>
+                <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none mt-0.5">{description}</p>
+            </div>
+            <div className="shrink-0 text-muted-foreground group-hover:text-navy transition-colors">
+                <ChevronRight className="h-5 w-5" />
+            </div>
         </div>
     );
 
-    const button = external ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClass}>
-            <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>
-            {actionLabel}
+    return external ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="block outline-none">
+            {content}
         </a>
     ) : (
-        <Link href={href} method={method} className={buttonClass}>
-            <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>
-            {actionLabel}
+        <Link href={href} method={method} className="block outline-none">
+            {content}
         </Link>
-    );
-
-    return (
-        <Card>
-            <CardContent>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                    {iconBox}
-                    <div className="flex-1 text-center sm:text-left">
-                        <h2 className="text-lg font-bold text-navy">{title}</h2>
-                        <p className="text-sm text-muted-foreground mt-1">{description}</p>
-                    </div>
-                    {button}
-                </div>
-            </CardContent>
-        </Card>
     );
 }
 

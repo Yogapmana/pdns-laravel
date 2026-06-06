@@ -1,5 +1,5 @@
 import { Form, router } from '@inertiajs/react';
-import { Save, Lock, AlertCircle, Info } from 'lucide-react';
+import { Save, Lock, AlertCircle, Info, Search, Filter, FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -95,13 +95,19 @@ export default function NilaiIndex({
             )}
 
             {has_mengajar && (
-                <Card>
-                    <CardContent>
-                        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-3">
-                            <div>
+                <div className="mb-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-border bg-slate-50/50 px-5 py-3">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-secondary">
+                            Filter Data Nilai
+                        </h3>
+                    </div>
+                    <div className="p-5">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                            <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="kelas"
-                                    className="mb-2 block text-sm font-medium text-secondary"
+                                    className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                                 >
                                     Kelas
                                 </label>
@@ -111,6 +117,7 @@ export default function NilaiIndex({
                                     onChange={(e) =>
                                         changeKelas(e.target.value)
                                     }
+                                    className="h-10"
                                 >
                                     <option value="">Pilih Kelas...</option>
                                     {daftar_kelas.map((k) => (
@@ -120,10 +127,10 @@ export default function NilaiIndex({
                                     ))}
                                 </Select>
                             </div>
-                            <div>
+                            <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="mapel"
-                                    className="mb-2 block text-sm font-medium text-secondary"
+                                    className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                                 >
                                     Mata Pelajaran
                                 </label>
@@ -134,6 +141,7 @@ export default function NilaiIndex({
                                         setSelectedMapel(e.target.value)
                                     }
                                     disabled={!selectedKelas}
+                                    className="h-10"
                                 >
                                     <option value="">
                                         {selectedKelas
@@ -148,22 +156,35 @@ export default function NilaiIndex({
                                 </Select>
                                 {selectedKelas &&
                                     availableMapel.length === 0 && (
-                                        <p className="mt-1 flex items-center gap-1 text-xs text-warning">
+                                        <p className="absolute mt-1 flex items-center gap-1 text-xs text-warning">
                                             <Info className="h-3 w-3" /> Anda
-                                            tidak mengajar mata pelajaran apapun
-                                            di kelas ini.
+                                            tidak mengajar mapel di kelas ini.
                                         </p>
                                     )}
                             </div>
                             <Button
                                 onClick={applyFilter}
                                 disabled={!selectedKelas || !selectedMapel}
+                                className="w-full sm:w-auto h-10 px-6 shrink-0"
                             >
-                                Tampilkan Daftar Siswa
+                                <Search className="mr-2 h-4 w-4" />
+                                Tampilkan
                             </Button>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+            )}
+
+            {has_mengajar && (!kelas || !mata_pelajaran) && (
+                <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-slate-50/50 py-16 text-center">
+                    <div className="rounded-full bg-slate-100 p-4">
+                        <FileSpreadsheet className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-secondary">Belum Ada Data yang Ditampilkan</h3>
+                    <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+                        Silakan pilih <strong>Kelas</strong> dan <strong>Mata Pelajaran</strong> terlebih dahulu pada filter di atas untuk mulai menginput nilai.
+                    </p>
+                </div>
             )}
 
             {kelas && mata_pelajaran && siswa.length > 0 && (
@@ -189,33 +210,20 @@ export default function NilaiIndex({
                             </Alert>
                         )}
 
-                    <DataTable>
-                        <div className="border-b border-border bg-surface px-6 py-3">
-                            <p className="text-sm">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-semibold text-navy">
-                                        {mata_pelajaran}
-                                    </span>
-                                    <Badge variant="info">Kelas {kelas}</Badge>
-                                    <Badge variant="neutral">
-                                        {siswa.length} siswa
-                                    </Badge>
-                                </div>
-                            </p>
-                        </div>
-                        <Form action="/guru/input-nilai/save" method="post">
-                            {({ processing }) => (
-                                <>
-                                    <input
-                                        type="hidden"
-                                        name="kelas"
-                                        value={kelas}
-                                    />
-                                    <input
-                                        type="hidden"
-                                        name="mata_pelajaran"
-                                        value={mata_pelajaran}
-                                    />
+                    <Form action="/guru/input-nilai/save" method="post">
+                        {({ processing }) => (
+                            <>
+                                <input
+                                    type="hidden"
+                                    name="kelas"
+                                    value={kelas}
+                                />
+                                <input
+                                    type="hidden"
+                                    name="mata_pelajaran"
+                                    value={mata_pelajaran}
+                                />
+                                <DataTable>
                                     <div className="overflow-x-auto">
                                         <table className="w-full min-w-[800px] table-fixed text-sm">
                                             <colgroup>
@@ -289,21 +297,22 @@ export default function NilaiIndex({
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="flex flex-wrap justify-end gap-2 border-t border-border px-6 py-4">
-                                        <Button
-                                            type="submit"
-                                            disabled={processing || isFinal}
-                                        >
-                                            <Save className="h-4 w-4" />
-                                            {processing
-                                                ? 'Menyimpan...'
-                                                : 'Simpan sebagai Draft'}
-                                        </Button>
-                                    </div>
-                                </>
-                            )}
-                        </Form>
-                    </DataTable>
+                                </DataTable>
+
+                                <div className="mt-4 flex justify-end">
+                                    <Button
+                                        type="submit"
+                                        disabled={processing || isFinal}
+                                    >
+                                        <Save className="h-4 w-4" />
+                                        {processing
+                                            ? 'Menyimpan...'
+                                            : 'Simpan sebagai Draft'}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Form>
 
                     {!isFinal && (
                         <Form
@@ -316,24 +325,24 @@ export default function NilaiIndex({
                                 name="mata_pelajaran"
                                 value={mata_pelajaran}
                             />
-                            <Card>
-                                <CardContent>
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex-1">
-                                            <p className="text-sm font-semibold text-navy">
+                            <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
+                                <CardContent className="p-4 sm:px-5">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex-1 text-center sm:text-left">
+                                            <h3 className="flex justify-center sm:justify-start items-center gap-2 text-base font-bold text-emerald-800">
+                                                <Lock className="h-4 w-4" />
                                                 Validasi Final
-                                            </p>
-                                            <p className="mt-1 text-xs text-muted-foreground">
+                                            </h3>
+                                            <p className="mt-0.5 text-xs text-emerald-600">
                                                 Mengunci semua nilai{' '}
                                                 {mata_pelajaran} di kelas{' '}
                                                 {kelas} yang masih berstatus
-                                                Draft. Nilai Final tidak dapat
-                                                diubah.
+                                                Draft. <strong className="font-semibold">Nilai Final tidak dapat diubah kembali.</strong>
                                             </p>
                                         </div>
-                                        <Button type="submit" variant="success">
-                                            <Lock className="h-4 w-4" />
-                                            Validasi Final
+                                        <Button type="submit" variant="success" className="shrink-0 w-full sm:w-auto h-9 px-4 text-xs">
+                                            <Lock className="h-3.5 w-3.5 mr-1.5" />
+                                            Validasi Semua Nilai
                                         </Button>
                                     </div>
                                 </CardContent>

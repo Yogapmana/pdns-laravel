@@ -293,7 +293,7 @@ function MiniBar({
     );
 }
 
-export default function SiswaNilai({
+export default function SiswaStatistik({
     siswa,
     nilai,
     mapel_list,
@@ -310,7 +310,7 @@ export default function SiswaNilai({
         <Container>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageHeader
-                    title="Nilai Saya"
+                    title="Statistik Akademik"
                     description={
                         <div className="flex flex-wrap items-center gap-2">
                             <span>{siswa.nama_siswa}</span>
@@ -319,168 +319,152 @@ export default function SiswaNilai({
                         </div>
                     }
                 />
-                {hasData && (
-                    <a
-                        href="/siswa/rapor/pdf"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
-                    >
-                        <Printer className="h-4 w-4" />
-                        Cetak Rapor (PDF)
-                    </a>
-                )}
             </div>
 
-            <Alert variant="info">
-                <span className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Halaman ini hanya dapat dilihat, tidak dapat diubah.
-                </span>
-            </Alert>
 
 
-
-            {!hasData ? (
-                <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-24 shadow-sm">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-primary ring-8 ring-blue-50/50">
-                        <Inbox className="h-8 w-8" />
-                    </div>
-                    <h3 className="mb-1 text-lg font-bold text-navy">
-                        Belum Ada Nilai
-                    </h3>
-                    <p className="max-w-sm text-center text-sm text-muted-foreground">
-                        Saat ini belum ada nilai mata pelajaran yang diinput
-                        oleh guru untuk Anda. Silakan periksa kembali nanti.
-                    </p>
-                </div>
-            ) : (
-                mapel_list.map((mapel) => {
-                    const entries = Object.entries(nilai).filter(([key]) =>
-                        key.endsWith(`|${mapel}`),
-                    );
-
-                    return entries.map(([key, list]) => {
-                        const kelas = list[0]?.kelas ?? '';
-                        const namaGuru =
-                            guru_map[String(list[0]?.id_guru)]?.nama_guru ??
-                            '—';
-
-                        return (
-                            <DataTable key={key}>
-                                <CardHeader>
-                                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                        <span className="flex items-center gap-2">
-                                            <BookOpen className="h-4 w-4 text-primary" />
-                                            {mapel}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="info">
-                                                {kelas}
-                                            </Badge>
-                                            <span className="text-sm font-normal text-muted-foreground">
-                                                Guru:{' '}
-                                                <strong>{namaGuru}</strong>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="bg-surface text-secondary">
-                                                <th className="px-4 py-3 text-left text-xs font-bold tracking-wide uppercase">
-                                                    Komponen
-                                                </th>
-                                                <th className="px-4 py-3 text-center text-xs font-bold tracking-wide uppercase">
-                                                    Nilai
-                                                </th>
-                                                <th className="px-4 py-3 text-center text-xs font-bold tracking-wide uppercase">
-                                                    Bobot
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            <tr>
-                                                <td className="px-4 py-3">
-                                                    Tugas
-                                                </td>
-                                                <td className="px-4 py-3 text-center font-mono">
-                                                    {list[0]?.nilai_tugas ??
-                                                        '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-muted-foreground">
-                                                    30%
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-3">
-                                                    UTS
-                                                </td>
-                                                <td className="px-4 py-3 text-center font-mono">
-                                                    {list[0]?.nilai_uts ?? '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-muted-foreground">
-                                                    30%
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-3">
-                                                    UAS
-                                                </td>
-                                                <td className="px-4 py-3 text-center font-mono">
-                                                    {list[0]?.nilai_uas ?? '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-muted-foreground">
-                                                    40%
-                                                </td>
-                                            </tr>
-                                            <tr className="bg-blue-50">
-                                                <td className="px-4 py-3 font-semibold text-navy">
-                                                    Nilai Akhir
-                                                </td>
-                                                <td
-                                                    colSpan={2}
-                                                    className="px-4 py-3 text-center"
-                                                >
-                                                    <div className="flex items-center justify-center gap-3">
-                                                        <span className="text-2xl font-bold text-navy">
-                                                            {list[0]
-                                                                ?.nilai_akhir ??
-                                                                '—'}
-                                                        </span>
-                                                        {list[0]
-                                                            ?.status_lulus ===
-                                                            'Lulus' && (
-                                                            <Badge variant="success">
-                                                                <CheckCircle className="mr-1 h-3 w-3" />
-                                                                Lulus
-                                                            </Badge>
-                                                        )}
-                                                        {list[0]
-                                                            ?.status_lulus ===
-                                                            'Tidak Lulus' && (
-                                                            <Badge variant="danger">
-                                                                <XCircle className="mr-1 h-3 w-3" />
-                                                                Tidak Lulus
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+            {hasData && (
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                                <span className="font-semibold">
+                                    Rata-rata Keseluruhan
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <OverallChart
+                                overall={chart_data.overall}
+                                kkm={chart_data.kkm}
+                            />
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                                <span className="text-xs text-muted-foreground">
+                                    Nilai Akhir Rata-rata
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={`font-mono text-2xl font-bold ${nilaiTextColor(overallAkhir, chart_data.kkm)}`}
+                                    >
+                                        {formatNumber(overallAkhir)}
+                                    </span>
+                                    {overallAkhir !== null && (
+                                        <Badge
+                                            variant={
+                                                isPassing ? 'success' : 'danger'
+                                            }
+                                        >
+                                            {isPassing
+                                                ? 'Lulus'
+                                                : 'Tidak Lulus'}
+                                        </Badge>
+                                    )}
                                 </div>
-                            </DataTable>
-                        );
-                    });
-                })
+                            </div>
+                            <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <span className="h-0.5 w-3 bg-navy" />
+                                    KKM {chart_data.kkm}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="h-2 w-3 rounded-sm bg-emerald-500" />
+                                    ≥ KKM
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="h-2 w-3 rounded-sm bg-rose-500" />
+                                    &lt; KKM
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-primary" />
+                                <span className="font-semibold">
+                                    Ringkasan Akademik
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
+                                    <span className="text-sm text-secondary">
+                                        Total Mata Pelajaran
+                                    </span>
+                                    <span className="text-2xl font-bold text-primary">
+                                        {chart_data.stats.total_mapel}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
+                                    <span className="flex items-center gap-1.5 text-sm text-secondary">
+                                        <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                        Lulus
+                                    </span>
+                                    <span className="text-2xl font-bold text-emerald-600">
+                                        {chart_data.stats.lulus}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg bg-rose-50 p-3">
+                                    <span className="flex items-center gap-1.5 text-sm text-secondary">
+                                        <XCircle className="h-4 w-4 text-rose-600" />
+                                        Tidak Lulus
+                                    </span>
+                                    <span className="text-2xl font-bold text-rose-600">
+                                        {chart_data.stats.tidak_lulus}
+                                    </span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-warning" />
+                                <span className="font-semibold">
+                                    Komponen Perlu Perhatian
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <WeakComponents
+                                overall={chart_data.overall}
+                                kkm={chart_data.kkm}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
             )}
+
+            {hasData && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4 text-primary" />
+                            <span className="font-semibold">
+                                Performa per Mata Pelajaran
+                            </span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Setiap baris menunjukkan perbandingan nilai Tugas,
+                            UTS, dan UAS untuk satu mata pelajaran.
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        <PerMapelChart perMapel={chart_data.per_mapel} />
+                    </CardContent>
+                </Card>
+            )}
+
+
         </Container>
     );
 }
 
-SiswaNilai.layout = { title: 'Nilai Saya' };
+SiswaStatistik.layout = { title: 'Statistik Nilai' };
 
 function WeakComponents({
     overall,

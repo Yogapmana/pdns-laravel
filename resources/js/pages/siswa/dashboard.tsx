@@ -28,26 +28,26 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
                 <StatCard label="Username" value={siswa.user?.username ?? '—'} icon={<GraduationCap className="h-4 w-4" />} color="warning" variant="colored" description="Username login" />
             </div>
 
-            <ActionCard
-                icon={<BookOpenCheck />}
-                title="Lihat Nilai Anda"
-                description="Cek rincian nilai tugas, UTS, UAS, nilai akhir, dan status kelulusan untuk semua mata pelajaran."
-                actionLabel="Buka Nilai Saya"
-                href="/siswa/nilai"
-                variant="primary"
-            />
-
-            {has_nilai && (
+            <div className="mt-6 flex flex-col gap-4">
                 <ActionCard
-                    icon={<Printer />}
-                    title="Cetak Rapor Digital"
-                    description="Unduh rapor digital Anda dalam format PDF siap cetak. Sudah termasuk tabel nilai, ringkasan kelulusan, dan kolom tanda tangan."
-                    actionLabel="Cetak Rapor (PDF)"
-                    href="/siswa/rapor/pdf"
-                    variant="success"
-                    external
+                    icon={<BookOpenCheck />}
+                    title="Lihat Nilai Anda"
+                    description="Cek rincian nilai tugas, UTS, UAS, nilai akhir, dan status kelulusan untuk semua mata pelajaran."
+                    href="/siswa/nilai"
+                    variant="primary"
                 />
-            )}
+
+                {has_nilai && (
+                    <ActionCard
+                        icon={<Printer />}
+                        title="Cetak Rapor Digital"
+                        description="Unduh rapor digital Anda dalam format PDF siap cetak. Sudah termasuk tabel nilai, ringkasan kelulusan, dan kolom tanda tangan."
+                        href="/siswa/rapor/pdf"
+                        variant="success"
+                        external
+                    />
+                )}
+            </div>
         </Container>
     );
 }
