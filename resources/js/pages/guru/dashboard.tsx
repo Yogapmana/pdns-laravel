@@ -3,7 +3,7 @@ import { Users, FileEdit, CheckCircle, XCircle, BookOpen, ChevronRight, Trending
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { PageHeader, Container, StatCard, MenuLink } from '@/components/ui/shared';
+import { PageHeader, Container, StatCard } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -308,32 +308,6 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader>Menu Cepat</CardHeader>
-                <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <MenuLink
-                            href="/guru/input-nilai"
-                            icon={<Edit3 />}
-                            title="Input Nilai"
-                            description="Input nilai untuk siswa di kelas & mapel yang Anda ajar"
-                            color="primary"
-                        />
-                        <MenuLink
-                            href="/guru/rekap"
-                            icon={<BookOpen />}
-                            title="Rekap Nilai"
-                            description="Lihat rekap nilai yang sudah diinput"
-                            color="success"
-                        />
-                    </div>
-                    <Alert variant="info">
-                        <p className="text-xs font-normal">
-                            <strong>Tips:</strong> Setelah selesai input nilai untuk satu kelas + mata pelajaran, klik tombol <strong>"Validasi Final"</strong> di halaman Input Nilai untuk mengunci nilai. Nilai yang sudah Final tidak dapat diedit kecuali dibuka kunci oleh Admin.
-                        </p>
-                    </Alert>
-                </CardContent>
-            </Card>
         </Container>
     );
 }

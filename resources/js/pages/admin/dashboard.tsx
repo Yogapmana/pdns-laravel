@@ -4,8 +4,6 @@ import {
     GraduationCap,
     BookOpen,
     CheckCircle,
-    FileText,
-    UserPlus,
     AlertTriangle,
     Filter,
     BarChart3,
@@ -14,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Alert } from '@/components/ui/alert';
-import { Card, CardHeader, CardContent, StatCard, PageHeader, Container, MenuLink } from '@/components/ui/shared';
+import { Card, CardHeader, CardContent, StatCard, PageHeader, Container } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Stats = {
@@ -396,8 +394,8 @@ export default function AdminDashboard({
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2">
+            <div className="grid grid-cols-1 gap-6">
+                <Card>
                     <CardHeader
                         action={
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -412,33 +410,6 @@ export default function AdminDashboard({
                     </CardHeader>
                     <CardContent>
                         <MapelBarChart data={rata_rata_per_mapel} kkm={kkm} />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>Aksi Cepat</CardHeader>
-                    <CardContent className="space-y-3">
-                        <MenuLink
-                            href="/admin/siswa/create"
-                            icon={<UserPlus />}
-                            title="Tambah Siswa"
-                            description="Daftarkan siswa baru"
-                            color="primary"
-                        />
-                        <MenuLink
-                            href="/admin/guru/create"
-                            icon={<GraduationCap />}
-                            title="Tambah Guru"
-                            description="Daftarkan guru baru"
-                            color="accent"
-                        />
-                        <MenuLink
-                            href="/admin/laporan"
-                            icon={<FileText />}
-                            title="Cetak Laporan"
-                            description="Generate laporan kelas"
-                            color="success"
-                        />
                     </CardContent>
                 </Card>
             </div>
