@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
-import { DataTable, InputError, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { DataTable, FilterBar, InputError, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -131,45 +131,46 @@ return;
                 membuka kunci edit dan akan tercatat di log audit (siapa, kapan, berapa baris, alasan).
             </Alert>
 
-            <DataTable>
-                <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Cari nama guru, mata pelajaran, atau kelas..."
-                            value={state.search}
-                            onChange={(e) => setFilter('search', e.target.value)}
-                            className="pl-9 pr-9"
-                        />
-                        {loading ? (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-                        ) : state.search ? (
-                            <button
-                                type="button"
-                                onClick={() => setFilter('search', '')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                aria-label="Bersihkan pencarian"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        ) : null}
-                    </div>
-                    <Select value={state.kelas} onChange={(e) => setFilter('kelas', e.target.value)} className="md:w-48">
-                        <option value="">Semua Kelas</option>
-                        {kelas_options.map((k) => (
-                            <option key={k} value={k}>
-                                {k}
-                            </option>
-                        ))}
-                    </Select>
-                    {hasFilter && (
-                        <Button onClick={reset} variant="outline">
+            <FilterBar>
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Cari nama guru, mata pelajaran, atau kelas..."
+                        value={state.search}
+                        onChange={(e) => setFilter('search', e.target.value)}
+                        className="pl-9 pr-9"
+                    />
+                    {loading ? (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                    ) : state.search ? (
+                        <button
+                            type="button"
+                            onClick={() => setFilter('search', '')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="Bersihkan pencarian"
+                        >
                             <X className="h-4 w-4" />
-                            Reset
-                        </Button>
-                    )}
+                        </button>
+                    ) : null}
                 </div>
+                <Select value={state.kelas} onChange={(e) => setFilter('kelas', e.target.value)} className="md:w-48">
+                    <option value="">Semua Kelas</option>
+                    {kelas_options.map((k) => (
+                        <option key={k} value={k}>
+                            {k}
+                        </option>
+                    ))}
+                </Select>
+                {hasFilter && (
+                    <Button onClick={reset} variant="outline">
+                        <X className="h-4 w-4" />
+                        Reset
+                    </Button>
+                )}
+            </FilterBar>
+
+            <DataTable>
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">

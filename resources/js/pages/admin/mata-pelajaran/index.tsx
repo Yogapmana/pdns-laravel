@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PaginationFooter } from '@/components/ui/pagination';
-import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { DataTable, FilterBar, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -59,37 +59,38 @@ return;
                 }
             />
 
-            <DataTable>
-                <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Cari nama mata pelajaran..."
-                            value={state.q}
-                            onChange={(e) => setFilter('q', e.target.value)}
-                            className="pl-9 pr-9"
-                        />
-                        {loading ? (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-                        ) : state.q ? (
-                            <button
-                                type="button"
-                                onClick={() => setFilter('q', '')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                aria-label="Bersihkan pencarian"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        ) : null}
-                    </div>
-                    {hasFilter && (
-                        <Button onClick={reset} variant="outline">
+            <FilterBar>
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Cari nama mata pelajaran..."
+                        value={state.q}
+                        onChange={(e) => setFilter('q', e.target.value)}
+                        className="pl-9 pr-9"
+                    />
+                    {loading ? (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                    ) : state.q ? (
+                        <button
+                            type="button"
+                            onClick={() => setFilter('q', '')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="Bersihkan pencarian"
+                        >
                             <X className="h-4 w-4" />
-                            Reset
-                        </Button>
-                    )}
+                        </button>
+                    ) : null}
                 </div>
+                {hasFilter && (
+                    <Button onClick={reset} variant="outline">
+                        <X className="h-4 w-4" />
+                        Reset
+                    </Button>
+                )}
+            </FilterBar>
+
+            <DataTable>
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
