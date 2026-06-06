@@ -46,7 +46,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::get('/guru/{guru}/edit', [GuruController::class, 'edit'])->name('guru.edit');
     Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
     Route::delete('/guru/{guru}', [GuruController::class, 'destroy'])->name('guru.destroy');
-    Route::patch('/guru/{guru}/toggle-active', [GuruController::class, 'toggleActive'])->name('guru.toggle-active');
     Route::get('/akun', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/akun/create-admin', [AccountController::class, 'showCreateAdmin'])->name('accounts.create-admin');
     Route::post('/akun/create-admin', [AccountController::class, 'createAdmin'])->name('accounts.create-admin.store');

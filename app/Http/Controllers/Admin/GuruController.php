@@ -218,27 +218,6 @@ class GuruController extends Controller
     }
 
     /**
-     * Toggle the `is_active` flag of the user account linked to this guru.
-     *
-     * A guru with no linked account is a no-op for the underlying user row;
-     * the flash message still reflects the resulting state.
-     *
-     * @param  Guru  $guru  The guru whose account status will be toggled.
-     * @return RedirectResponse Redirect back with a success flash message.
-     */
-    public function toggleActive(Guru $guru): RedirectResponse
-    {
-        $user = $guru->user;
-        if ($user) {
-            $user->update(['is_active' => ! $user->is_active]);
-        }
-
-        $status = $user?->is_active ? 'diaktifkan' : 'dinonaktifkan';
-
-        return back()->with('success', "Akun guru berhasil {$status}.");
-    }
-
-    /**
      * Generate a unique `users.username` from the guru's display name.
      *
      * Strategy (mirrors `DatabaseSeeder::generateGuruUsername`):
