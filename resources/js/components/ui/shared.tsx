@@ -188,6 +188,14 @@ export function TableEmpty({ message, colSpan = 6 }: { message: string; colSpan?
     );
 }
 
+export function DataTable({ children, className }: { children: ReactNode; className?: string }) {
+    return (
+        <div className={cn('rounded-xl border border-border bg-white shadow-sm overflow-hidden', className)}>
+            {children}
+        </div>
+    );
+}
+
 export type MenuLinkColor = 'primary' | 'success' | 'warning' | 'danger' | 'accent';
 
 export function MenuLink({

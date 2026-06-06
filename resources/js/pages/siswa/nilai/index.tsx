@@ -2,7 +2,7 @@ import { Lock, CheckCircle, XCircle, BookOpen, Printer, TrendingUp, AlertTriangl
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Container, PageHeader } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Siswa = { nis: string; nama_siswa: string; kelas: string };
@@ -346,7 +346,7 @@ export default function SiswaNilai({ siswa, nilai, mapel_list, guru_map, chart_d
                         const namaGuru = guru_map[String(list[0]?.id_guru)]?.nama_guru ?? '—';
 
                         return (
-                            <Card key={key} className="p-0 overflow-hidden">
+                            <DataTable key={key}>
                                 <CardHeader>
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
                                         <span className="flex items-center gap-2">
@@ -411,7 +411,7 @@ export default function SiswaNilai({ siswa, nilai, mapel_list, guru_map, chart_d
                                         </tbody>
                                     </table>
                                 </div>
-                            </Card>
+                            </DataTable>
                         );
                     });
                 })

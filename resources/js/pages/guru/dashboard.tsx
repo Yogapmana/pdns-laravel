@@ -3,7 +3,7 @@ import { Users, FileEdit, CheckCircle, XCircle, BookOpen, ChevronRight, Trending
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { PageHeader, Container, StatCard } from '@/components/ui/shared';
+import { PageHeader, Container, StatCard, DataTable } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -226,7 +226,7 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-2">
+                <DataTable className="lg:col-span-2">
                     <CardHeader>Status per Mengajar</CardHeader>
                     <CardContent>
                         {per_combo_stats.length === 0 ? (
@@ -305,7 +305,7 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                             </div>
                         )}
                     </CardContent>
-                </Card>
+                </DataTable>
             </div>
 
         </Container>

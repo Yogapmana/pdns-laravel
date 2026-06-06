@@ -3,12 +3,11 @@ import { Plus, Power, KeyRound, Search, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import { PageHeader, TableEmpty } from '@/components/ui/shared';
+import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -90,7 +89,7 @@ return;
                 }
             />
 
-            <Card className="p-0">
+            <DataTable>
                 <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -193,7 +192,7 @@ return;
                 </div>
 
                 <PaginationFooter from={accounts.from} to={accounts.to} total={accounts.total} links={accounts.links} />
-            </Card>
+            </DataTable>
 
             <Modal
                 open={!!resetTarget}

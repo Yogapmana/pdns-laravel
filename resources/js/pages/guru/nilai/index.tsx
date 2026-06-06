@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
-import { Container, PageHeader } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { calculateNilaiAkhir, calculateStatusLulus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -147,7 +147,7 @@ return;
                         </Alert>
                     )}
 
-                    <Card className="p-0 overflow-hidden">
+                    <DataTable>
                         <div className="px-6 py-3 bg-surface border-b border-border">
                             <p className="text-sm">
                                 <span className="font-semibold text-navy">{mata_pelajaran}</span> • Kelas <span className="font-semibold">{kelas}</span> • {siswa.length} siswa
@@ -207,7 +207,7 @@ return;
                                 </>
                             )}
                         </Form>
-                    </Card>
+                    </DataTable>
 
                     {!isFinal && (
                         <Form action="/guru/input-nilai/validate-final" method="post">

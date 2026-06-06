@@ -2,10 +2,9 @@ import { Link, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Search, X, Loader2, Users, GraduationCap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PaginationFooter } from '@/components/ui/pagination';
-import { PageHeader, TableEmpty } from '@/components/ui/shared';
+import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -60,7 +59,7 @@ return;
                 }
             />
 
-            <Card className="p-0">
+            <DataTable>
                 <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -155,7 +154,7 @@ return;
                 </div>
 
                 <PaginationFooter from={kelas.from} to={kelas.to} total={kelas.total} links={kelas.links} />
-            </Card>
+            </DataTable>
         </div>
     );
 }

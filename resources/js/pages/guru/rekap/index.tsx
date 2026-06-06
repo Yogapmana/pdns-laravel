@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
-import { Container, PageHeader, StatCard, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, StatCard, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -139,7 +139,7 @@ return;
                         <StatCard label="Belum Dinilai" value={stats.belum} icon={<AlertCircle />} color="warning" variant="colored" />
                     </div>
 
-                    <Card className="p-0 overflow-hidden">
+                    <DataTable>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
@@ -192,7 +192,7 @@ return;
                                 </tbody>
                             </table>
                         </div>
-                    </Card>
+                    </DataTable>
                 </>
             )}
 

@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Container, PageHeader, StatCard, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, StatCard, TableEmpty } from '@/components/ui/shared';
 
 type NilaiItem = {
     id: number;
@@ -103,9 +103,9 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
 
             {sections.length === 0 ? (
                 <Card>
-                    <Card className="text-center text-muted-foreground py-12">
+                    <div className="text-center text-muted-foreground py-12">
                         Tidak ada data untuk filter yang dipilih.
-                    </Card>
+                    </div>
                 </Card>
             ) : (
                 sections.map((section) => (
@@ -119,7 +119,7 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
                             </div>
                         </div>
 
-                        <Card className="p-0 overflow-hidden">
+                        <DataTable>
                             <div className="text-[10px] text-muted-foreground bg-slate-50 px-4 py-1.5 border-b border-border flex items-center gap-1.5">
                                 <span>← Geser horizontal untuk melihat mata pelajaran lainnya →</span>
                             </div>
@@ -218,7 +218,7 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
                                     </tbody>
                                 </table>
                             </div>
-                        </Card>
+                        </DataTable>
                     </div>
                 ))
             )}

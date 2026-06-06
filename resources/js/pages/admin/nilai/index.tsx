@@ -4,12 +4,10 @@ import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
-import { InputError } from '@/components/ui/shared';
-import { PageHeader, TableEmpty } from '@/components/ui/shared';
+import { DataTable, InputError, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -133,7 +131,7 @@ return;
                 membuka kunci edit dan akan tercatat di log audit (siapa, kapan, berapa baris, alasan).
             </Alert>
 
-            <Card className="p-0">
+            <DataTable>
                 <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -222,9 +220,9 @@ return;
                         </tbody>
                     </table>
                 </div>
-            </Card>
+            </DataTable>
 
-            <Card className="p-0">
+            <DataTable>
                 <div className="px-6 py-4 border-b border-border flex items-center gap-2">
                     <History className="h-4 w-4 text-primary" />
                     <h2 className="text-lg font-semibold text-navy">Log Pembukaan Kunci (10 Terbaru)</h2>
@@ -273,7 +271,7 @@ return;
                         </table>
                     </div>
                 )}
-            </Card>
+            </DataTable>
 
             <Modal
                 open={!!unlockTarget}
