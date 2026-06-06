@@ -1,9 +1,9 @@
 import { Link } from '@inertiajs/react';
-import { Users, FileEdit, CheckCircle, XCircle, BookOpen, AlertCircle, ChevronRight, TrendingUp, AlertTriangle, Edit3, Lock } from 'lucide-react';
+import { Users, FileEdit, CheckCircle, XCircle, BookOpen, ChevronRight, TrendingUp, AlertTriangle, Edit3, Lock } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { PageHeader, Container, StatCard } from '@/components/ui/shared';
+import { PageHeader, Container, StatCard, MenuLink } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -312,31 +312,26 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                 <CardHeader>Menu Cepat</CardHeader>
                 <CardContent className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Link href="/guru/input-nilai" className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface transition">
-                            <div className="p-2 bg-blue-100 text-primary rounded-lg">
-                                <Edit3 className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold">Input Nilai</p>
-                                <p className="text-xs text-muted-foreground">Input nilai untuk siswa di kelas & mapel yang Anda ajar</p>
-                            </div>
-                        </Link>
-                        <Link href="/guru/rekap" className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface transition">
-                            <div className="p-2 bg-green-100 text-success rounded-lg">
-                                <BookOpen className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold">Rekap Nilai</p>
-                                <p className="text-xs text-muted-foreground">Lihat rekap nilai yang sudah diinput</p>
-                            </div>
-                        </Link>
+                        <MenuLink
+                            href="/guru/input-nilai"
+                            icon={<Edit3 />}
+                            title="Input Nilai"
+                            description="Input nilai untuk siswa di kelas & mapel yang Anda ajar"
+                            color="primary"
+                        />
+                        <MenuLink
+                            href="/guru/rekap"
+                            icon={<BookOpen />}
+                            title="Rekap Nilai"
+                            description="Lihat rekap nilai yang sudah diinput"
+                            color="success"
+                        />
                     </div>
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        <p className="text-xs text-blue-800">
+                    <Alert variant="info">
+                        <p className="text-xs font-normal">
                             <strong>Tips:</strong> Setelah selesai input nilai untuk satu kelas + mata pelajaran, klik tombol <strong>"Validasi Final"</strong> di halaman Input Nilai untuk mengunci nilai. Nilai yang sudah Final tidak dapat diedit kecuali dibuka kunci oleh Admin.
                         </p>
-                    </div>
+                    </Alert>
                 </CardContent>
             </Card>
         </Container>

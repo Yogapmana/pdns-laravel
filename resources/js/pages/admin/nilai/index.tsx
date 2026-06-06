@@ -306,10 +306,12 @@ return;
                 }
             >
                 <div className="space-y-3">
-                    <div className="bg-yellow-50 border-l-4 border-warning p-3 rounded text-xs text-yellow-800">
-                        <strong>Peringatan:</strong> Guru akan dapat mengedit nilai-nilai ini kembali. Tindakan ini akan dicatat di
-                        log audit dengan alasan yang Anda berikan.
-                    </div>
+                    <Alert variant="warning">
+                        <p className="text-xs font-normal">
+                            <strong>Peringatan:</strong> Guru akan dapat mengedit nilai-nilai ini kembali. Tindakan ini akan dicatat di
+                            log audit dengan alasan yang Anda berikan.
+                        </p>
+                    </Alert>
                     <div>
                         <label htmlFor="reason" className="block text-sm font-medium text-secondary mb-2">
                             Alasan Pembukaan Kunci <span className="text-danger">*</span>

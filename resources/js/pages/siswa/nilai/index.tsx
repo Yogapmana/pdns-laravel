@@ -453,35 +453,35 @@ function WeakComponents({ overall, kkm }: { overall: ChartData['overall']; kkm: 
     return (
         <div className="space-y-3">
             {below.length > 0 && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
-                    <p className="text-xs font-bold text-rose-700 mb-2">⚠️ Perlu Ditingkatkan</p>
-                    <ul className="space-y-1">
+                <Alert variant="error">
+                    <p className="text-xs font-bold mb-2">⚠️ Perlu Ditingkatkan</p>
+                    <ul className="space-y-1 text-sm font-normal">
                         {below.map((c) => (
-                            <li key={c.name} className="text-sm text-rose-700 flex items-center justify-between">
+                            <li key={c.name} className="flex items-center justify-between">
                                 <span>{c.name}</span>
                                 <span className="font-mono font-bold">{formatNumber(c.value)}</span>
                             </li>
                         ))}
                     </ul>
-                </div>
+                </Alert>
             )}
             {above.length > 0 && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-xs font-bold text-emerald-700 mb-2">✓ Sudah Di Atas KKM</p>
-                    <ul className="space-y-1">
+                <Alert variant="success">
+                    <p className="text-xs font-bold mb-2">✓ Sudah Di Atas KKM</p>
+                    <ul className="space-y-1 text-sm font-normal">
                         {above.map((c) => (
-                            <li key={c.name} className="text-sm text-emerald-700 flex items-center justify-between">
+                            <li key={c.name} className="flex items-center justify-between">
                                 <span>{c.name}</span>
                                 <span className="font-mono font-bold">{formatNumber(c.value)}</span>
                             </li>
                         ))}
                     </ul>
-                </div>
+                </Alert>
             )}
             {below.length === 0 && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
-                    <p className="text-sm text-emerald-700 font-semibold">🎉 Semua komponen di atas KKM!</p>
-                </div>
+                <Alert variant="success">
+                    <p className="text-center font-semibold">🎉 Semua komponen di atas KKM!</p>
+                </Alert>
             )}
         </div>
     );

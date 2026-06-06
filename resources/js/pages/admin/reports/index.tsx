@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { Search, FileDown, Globe, FileSpreadsheet, FileText, CheckSquare, Square } from 'lucide-react';
 import { useState } from 'react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Container, PageHeader } from '@/components/ui/shared';
@@ -169,15 +170,15 @@ return;
                 </CardContent>
             </Card>
 
-            <div className="bg-blue-50 border-l-4 border-primary p-4 rounded-lg text-sm text-blue-800">
-                <p className="font-medium">Petunjuk:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1 text-xs">
+            <Alert variant="info">
+                <p className="font-semibold mb-1">Petunjuk:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs font-normal">
                     <li>Pilih minimal satu kelas. Boleh pilih lebih dari satu untuk rekap gabungan.</li>
                     <li>Pilih mata pelajaran (opsional). Kosongkan untuk rekap semua mapel.</li>
                     <li>"Generate Laporan" untuk preview di browser dengan tabel interaktif.</li>
                     <li>Ekspor PDF/Excel/CSV/HTML akan mengunduh file dengan format landscape A4 (PDF) atau tabulasi (Excel/CSV/HTML).</li>
                 </ul>
-            </div>
+            </Alert>
         </Container>
     );
 }

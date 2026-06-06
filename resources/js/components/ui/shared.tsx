@@ -188,6 +188,72 @@ export function TableEmpty({ message, colSpan = 6 }: { message: string; colSpan?
     );
 }
 
+export type MenuLinkColor = 'primary' | 'success' | 'warning' | 'danger' | 'accent';
+
+export function MenuLink({
+    href,
+    icon,
+    title,
+    description,
+    color = 'primary',
+    external = false,
+    prefetch = false,
+}: {
+    href: string;
+    icon: ReactNode;
+    title: string;
+    description: string;
+    color?: MenuLinkColor;
+    external?: boolean;
+    prefetch?: boolean;
+}) {
+    const iconBoxClasses: Record<MenuLinkColor, string> = {
+        primary: 'bg-blue-100 text-primary group-hover:bg-primary group-hover:text-white',
+        success: 'bg-green-100 text-success group-hover:bg-success group-hover:text-white',
+        warning: 'bg-yellow-100 text-warning group-hover:bg-warning group-hover:text-white',
+        danger: 'bg-red-100 text-danger group-hover:bg-danger group-hover:text-white',
+        accent: 'bg-sky-100 text-accent group-hover:bg-accent group-hover:text-white',
+    };
+    const hoverBorderClasses: Record<MenuLinkColor, string> = {
+        primary: 'hover:border-primary',
+        success: 'hover:border-success',
+        warning: 'hover:border-warning',
+        danger: 'hover:border-danger',
+        accent: 'hover:border-accent',
+    };
+
+    const className = cn(
+        'group flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface transition',
+        hoverBorderClasses[color],
+    );
+
+    const content = (
+        <>
+            <div className={cn('p-2 rounded-lg transition shrink-0', iconBoxClasses[color])}>
+                <span className="[&>svg]:h-5 [&>svg]:w-5 block">{icon}</span>
+            </div>
+            <div className="min-w-0">
+                <p className="text-sm font-semibold text-navy">{title}</p>
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </div>
+        </>
+    );
+
+    if (external) {
+        return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+                {content}
+            </a>
+        );
+    }
+
+    return (
+        <Link href={href} prefetch={prefetch} className={className}>
+            {content}
+        </Link>
+    );
+}
+
 export function InputError({ message }: { message?: string }) {
     if (!message) return null;
     return <p className="mt-1 text-xs text-danger">{message}</p>;

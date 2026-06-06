@@ -6,16 +6,14 @@ import {
     CheckCircle,
     FileText,
     UserPlus,
-    TrendingUp,
-    TrendingDown,
     AlertTriangle,
-    BarChart3,
-    ArrowUpDown,
-    Trophy,
     Filter,
+    BarChart3,
+    Trophy,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardContent, StatCard, PageHeader, Container } from '@/components/ui/shared';
+import { Alert } from '@/components/ui/alert';
+import { Card, CardHeader, CardContent, StatCard, PageHeader, Container, MenuLink } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Stats = {
@@ -419,42 +417,27 @@ export default function AdminDashboard({
                 <Card>
                     <CardHeader>Aksi Cepat</CardHeader>
                     <CardContent className="space-y-3">
-                        <Link
+                        <MenuLink
                             href="/admin/siswa/create"
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface hover:border-primary transition"
-                        >
-                            <div className="p-2 bg-blue-100 text-primary rounded-lg">
-                                <UserPlus className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold">Tambah Siswa</p>
-                                <p className="text-xs text-muted-foreground">Daftarkan siswa baru</p>
-                            </div>
-                        </Link>
-                        <Link
+                            icon={<UserPlus />}
+                            title="Tambah Siswa"
+                            description="Daftarkan siswa baru"
+                            color="primary"
+                        />
+                        <MenuLink
                             href="/admin/guru/create"
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface hover:border-accent transition"
-                        >
-                            <div className="p-2 bg-sky-100 text-accent rounded-lg">
-                                <GraduationCap className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold">Tambah Guru</p>
-                                <p className="text-xs text-muted-foreground">Daftarkan guru baru</p>
-                            </div>
-                        </Link>
-                        <Link
+                            icon={<GraduationCap />}
+                            title="Tambah Guru"
+                            description="Daftarkan guru baru"
+                            color="accent"
+                        />
+                        <MenuLink
                             href="/admin/laporan"
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface hover:border-success transition"
-                        >
-                            <div className="p-2 bg-green-100 text-success rounded-lg">
-                                <FileText className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold">Cetak Laporan</p>
-                                <p className="text-xs text-muted-foreground">Generate laporan kelas</p>
-                            </div>
-                        </Link>
+                            icon={<FileText />}
+                            title="Cetak Laporan"
+                            description="Generate laporan kelas"
+                            color="success"
+                        />
                     </CardContent>
                 </Card>
             </div>
@@ -491,27 +474,21 @@ export default function AdminDashboard({
             </div>
 
             {stats.tidak_lulus > stats.lulus && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
-                    <TrendingDown className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-sm font-semibold text-rose-700">Tingkat kelulusan rendah</p>
-                        <p className="text-xs text-rose-600 mt-1">
-                            Jumlah siswa tidak lulus ({stats.tidak_lulus}) melebihi jumlah siswa lulus ({stats.lulus}). Pertimbangkan untuk melakukan evaluasi pembelajaran atau remedial.
-                        </p>
-                    </div>
-                </div>
+                <Alert variant="error">
+                    <p className="font-semibold mb-1">Tingkat kelulusan rendah</p>
+                    <p className="text-xs font-normal">
+                        Jumlah siswa tidak lulus ({stats.tidak_lulus}) melebihi jumlah siswa lulus ({stats.lulus}). Pertimbangkan untuk melakukan evaluasi pembelajaran atau remedial.
+                    </p>
+                </Alert>
             )}
 
             {stats.lulus > 0 && stats.lulus > stats.tidak_lulus && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
-                    <TrendingUp className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-sm font-semibold text-emerald-700">Performa akademik baik</p>
-                        <p className="text-xs text-emerald-600 mt-1">
-                            {stats.persentase_lulus}% siswa lulus dari total {stats.total_nilai} nilai yang diinput. Pertahankan kualitas pembelajaran.
-                        </p>
-                    </div>
-                </div>
+                <Alert variant="success">
+                    <p className="font-semibold mb-1">Performa akademik baik</p>
+                    <p className="text-xs font-normal">
+                        {stats.persentase_lulus}% siswa lulus dari total {stats.total_nilai} nilai yang diinput. Pertahankan kualitas pembelajaran.
+                    </p>
+                </Alert>
             )}
         </Container>
     );

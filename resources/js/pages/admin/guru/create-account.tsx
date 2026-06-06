@@ -1,5 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
-import { ArrowLeft, UserPlus, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,15 +36,12 @@ export default function GuruCreateAccount({ guru }: Props) {
                     >
                         {({ processing, errors }) => (
                             <>
-                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 flex items-start gap-2">
-                                    <UserPlus className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="font-medium">Akun ini akan dibuat dengan role Guru.</p>
-                                        <p className="text-xs text-blue-700 mt-0.5">
-                                            Guru akan bisa login ke sistem dengan username dan password di bawah.
-                                        </p>
-                                    </div>
-                                </div>
+                                <Alert variant="info">
+                                    <p className="font-semibold mb-1">Akun ini akan dibuat dengan role Guru.</p>
+                                    <p className="text-xs font-normal">
+                                        Guru akan bisa login ke sistem dengan username dan password di bawah.
+                                    </p>
+                                </Alert>
 
                                 <div>
                                     <label htmlFor="username" className="block text-sm font-medium text-secondary mb-2">

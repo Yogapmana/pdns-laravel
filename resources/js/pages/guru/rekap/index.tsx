@@ -134,9 +134,9 @@ return;
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <StatCard label="Lulus" value={stats.lulus} icon={<CheckCircle className="h-6 w-6" />} color="success" />
-                        <StatCard label="Tidak Lulus" value={stats.tidak_lulus} icon={<XCircle className="h-6 w-6" />} color="danger" />
-                        <StatCard label="Belum Dinilai" value={stats.belum} icon={<AlertCircle className="h-6 w-6" />} color="warning" />
+                        <StatCard label="Lulus" value={stats.lulus} icon={<CheckCircle />} color="success" variant="colored" />
+                        <StatCard label="Tidak Lulus" value={stats.tidak_lulus} icon={<XCircle />} color="danger" variant="colored" />
+                        <StatCard label="Belum Dinilai" value={stats.belum} icon={<AlertCircle />} color="warning" variant="colored" />
                     </div>
 
                     <Card className="p-0 overflow-hidden">

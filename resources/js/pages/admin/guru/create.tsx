@@ -1,5 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 type Props = {
     daftar_kelas: string[];
-    daftar_mapel: string[];
+    mapel_by_kelas: Record<string, string[]>;
 };
 
 type MengajarRow = {
@@ -17,22 +17,28 @@ type MengajarRow = {
     mata_pelajaran: string;
 };
 
-export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
+export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
     const [rows, setRows] = useState<MengajarRow[]>([
         { kelas: '', mata_pelajaran: '' },
     ]);
 
     function addRow() {
-        setRows([...rows, { kelas: '', mata_pelajaran: '' }]);
+        setRows((prev) => [...prev, { kelas: '', mata_pelajaran: '' }]);
     }
 
     function removeRow(index: number) {
-        setRows(rows.filter((_, i) => i !== index));
+        setRows((prev) => prev.filter((_, i) => i !== index));
     }
 
     function updateRow(index: number, field: keyof MengajarRow, value: string) {
-        setRows(rows.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+        setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
     }
+
+    function mapelForKelas(kelas: string): string[] {
+        return mapel_by_kelas[kelas] ?? [];
+    }
+
+    const emptyKelas = daftar_kelas.filter((k) => mapelForKelas(k).length === 0);
 
     return (
         <Container>
@@ -61,7 +67,7 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                         <div>
                                             <h3 className="text-sm font-bold text-secondary">Mengajar</h3>
                                             <p className="text-xs text-muted-foreground mt-0.5">
-                                                Tentukan kelas dan mata pelajaran yang diajar. Guru hanya bisa menilai siswa di kombinasi ini.
+                                                Pilih kelas, lalu mata pelajaran akan terfilter otomatis sesuai mapel yang diizinkan untuk kelas tersebut.
                                             </p>
                                         </div>
                                         <Button type="button" variant="outline" size="sm" onClick={addRow}>
@@ -73,57 +79,91 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel }: Props) {
                                     <InputError message={errors.mengajar} />
 
                                     <div className="space-y-3">
-                                        {rows.map((row, i) => (
-                                            <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-border bg-surface">
-                                                <div className="col-span-12 sm:col-span-5">
-                                                    <label className="block text-xs font-medium text-muted-foreground mb-1">
-                                                        Kelas <span className="text-danger">*</span>
-                                                    </label>
-                                                    <Select
-                                                        name={`mengajar[${i}][kelas]`}
-                                                        value={row.kelas}
-                                                        onChange={(e) => updateRow(i, 'kelas', e.target.value)}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Pilih kelas</option>
-                                                        {daftar_kelas.map((k) => (
-                                                            <option key={k} value={k}>{k}</option>
-                                                        ))}
-                                                    </Select>
-                                                    <InputError message={errors[`mengajar.${i}.kelas`]} />
-                                                </div>
-                                                <div className="col-span-10 sm:col-span-6">
-                                                    <label className="block text-xs font-medium text-muted-foreground mb-1">
-                                                        Mata Pelajaran <span className="text-danger">*</span>
-                                                    </label>
-                                                    <Select
-                                                        name={`mengajar[${i}][mata_pelajaran]`}
-                                                        value={row.mata_pelajaran}
-                                                        onChange={(e) => updateRow(i, 'mata_pelajaran', e.target.value)}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Pilih mata pelajaran</option>
-                                                        {daftar_mapel.map((m) => (
-                                                            <option key={m} value={m}>{m}</option>
-                                                        ))}
-                                                    </Select>
-                                                    <InputError message={errors[`mengajar.${i}.mata_pelajaran`]} />
-                                                </div>
-                                                <div className="col-span-2 sm:col-span-1 flex items-end justify-end h-full">
-                                                    {rows.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeRow(i)}
-                                                            className="p-2 text-danger hover:bg-red-50 rounded transition"
-                                                            aria-label="Hapus baris"
+                                        {rows.map((row, i) => {
+                                            const allowedMapel = mapelForKelas(row.kelas);
+                                            const kelasHasMapel = row.kelas !== '' && allowedMapel.length === 0;
+
+                                            return (
+                                                <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-border bg-surface">
+                                                    <div className="col-span-12 sm:col-span-5">
+                                                        <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                                            Kelas <span className="text-danger">*</span>
+                                                        </label>
+                                                        <Select
+                                                            name={`mengajar[${i}][kelas]`}
+                                                            value={row.kelas}
+                                                            onChange={(e) => {
+                                                                updateRow(i, 'kelas', e.target.value);
+
+                                                                if (e.target.value !== row.kelas) {
+                                                                    updateRow(i, 'mata_pelajaran', '');
+                                                                }
+                                                            }}
+                                                            required
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    )}
+                                                            <option value="" disabled>Pilih kelas</option>
+                                                            {daftar_kelas.map((k) => (
+                                                                <option key={k} value={k}>{k}</option>
+                                                            ))}
+                                                        </Select>
+                                                        <InputError message={errors[`mengajar.${i}.kelas`]} />
+                                                    </div>
+                                                    <div className="col-span-10 sm:col-span-6">
+                                                        <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                                            Mata Pelajaran <span className="text-danger">*</span>
+                                                        </label>
+                                                        <Select
+                                                            name={`mengajar[${i}][mata_pelajaran]`}
+                                                            value={row.mata_pelajaran}
+                                                            onChange={(e) => updateRow(i, 'mata_pelajaran', e.target.value)}
+                                                            required
+                                                            disabled={!row.kelas}
+                                                        >
+                                                            <option value="" disabled>
+                                                                {!row.kelas ? 'Pilih kelas dulu' : allowedMapel.length === 0 ? 'Tidak ada mapel diizinkan' : 'Pilih mata pelajaran'}
+                                                            </option>
+                                                            {allowedMapel.map((m) => (
+                                                                <option key={m} value={m}>{m}</option>
+                                                            ))}
+                                                        </Select>
+                                                        {kelasHasMapel && (
+                                                            <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
+                                                                <AlertTriangle className="h-3 w-3" />
+                                                                Kelas "{row.kelas}" belum punya mapel diizinkan.{' '}
+                                                                <Link href="/admin/kelas" className="underline">Atur di Manajemen Kelas</Link>.
+                                                            </p>
+                                                        )}
+                                                        <InputError message={errors[`mengajar.${i}.mata_pelajaran`]} />
+                                                    </div>
+                                                    <div className="col-span-2 sm:col-span-1 flex items-end justify-end h-full">
+                                                        {rows.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeRow(i)}
+                                                                className="p-2 text-danger hover:bg-red-50 rounded transition"
+                                                                aria-label="Hapus baris"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
+
+                                    {emptyKelas.length > 0 && (
+                                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex items-start gap-2">
+                                            <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="font-medium">Kelas berikut belum punya mata pelajaran yang diizinkan:</p>
+                                                <p className="text-xs mt-0.5">
+                                                    {emptyKelas.join(', ')}.{' '}
+                                                    <Link href="/admin/kelas" className="underline">Atur mata pelajaran di Manajemen Kelas</Link> agar bisa di-assign.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <p className="text-xs text-muted-foreground mt-3">
                                         Belum ada kelas atau mata pelajaran yang sesuai?{' '}
