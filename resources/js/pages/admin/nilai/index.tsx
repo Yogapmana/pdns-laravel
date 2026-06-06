@@ -279,9 +279,9 @@ export default function AdminNilaiIndex({
             </DataTable>
 
             <DataTable>
-                <div className="flex items-center gap-2 border-b border-border px-6 py-4">
+                <div className="flex items-center gap-2 border-b border-border px-4 py-3 bg-slate-50/50">
                     <History className="h-4 w-4 text-primary" />
-                    <h2 className="text-lg font-semibold text-navy">
+                    <h2 className="text-sm font-bold text-navy">
                         Log Pembukaan Kunci (10 Terbaru)
                     </h2>
                 </div>

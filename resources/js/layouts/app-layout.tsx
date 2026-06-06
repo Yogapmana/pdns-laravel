@@ -26,26 +26,26 @@ type PageProps = {
 };
 
 const NAV_ADMIN: NavItem[] = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-    { label: 'Manajemen Siswa', href: '/admin/siswa', icon: <Users className="h-4 w-4" /> },
-    { label: 'Manajemen Guru', href: '/admin/guru', icon: <GraduationCap className="h-4 w-4" /> },
-    { label: 'Manajemen Kelas', href: '/admin/kelas', icon: <School className="h-4 w-4" /> },
-    { label: 'Mata Pelajaran', href: '/admin/mata-pelajaran', icon: <Library className="h-4 w-4" /> },
-    { label: 'Manajemen Akun', href: '/admin/akun', icon: <UserCog className="h-4 w-4" /> },
-    { label: 'Manajemen Nilai', href: '/admin/nilai', icon: <ClipboardCheck className="h-4 w-4" /> },
-    { label: 'Laporan', href: '/admin/laporan', icon: <FileText className="h-4 w-4" /> },
+    { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Manajemen Siswa', href: '/admin/siswa', icon: <Users className="h-5 w-5" /> },
+    { label: 'Manajemen Guru', href: '/admin/guru', icon: <GraduationCap className="h-5 w-5" /> },
+    { label: 'Manajemen Kelas', href: '/admin/kelas', icon: <School className="h-5 w-5" /> },
+    { label: 'Mata Pelajaran', href: '/admin/mata-pelajaran', icon: <Library className="h-5 w-5" /> },
+    { label: 'Manajemen Akun', href: '/admin/akun', icon: <UserCog className="h-5 w-5" /> },
+    { label: 'Manajemen Nilai', href: '/admin/nilai', icon: <ClipboardCheck className="h-5 w-5" /> },
+    { label: 'Laporan', href: '/admin/laporan', icon: <FileText className="h-5 w-5" /> },
 ];
 
 const NAV_GURU: NavItem[] = [
-    { label: 'Dashboard', href: '/guru/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-    { label: 'Input Nilai', href: '/guru/input-nilai', icon: <ClipboardList className="h-4 w-4" /> },
-    { label: 'Rekap Nilai', href: '/guru/rekap', icon: <BarChart3 className="h-4 w-4" /> },
+    { label: 'Dashboard', href: '/guru/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Input Nilai', href: '/guru/input-nilai', icon: <ClipboardList className="h-5 w-5" /> },
+    { label: 'Rekap Nilai', href: '/guru/rekap', icon: <BarChart3 className="h-5 w-5" /> },
 ];
 
 const NAV_SISWA: NavItem[] = [
-    { label: 'Dashboard', href: '/siswa/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-    { label: 'Nilai Saya', href: '/siswa/nilai', icon: <BookOpenCheck className="h-4 w-4" /> },
-    { label: 'Statistik', href: '/siswa/statistik', icon: <BarChart3 className="h-4 w-4" /> },
+    { label: 'Dashboard', href: '/siswa/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Nilai Saya', href: '/siswa/nilai', icon: <BookOpenCheck className="h-5 w-5" /> },
+    { label: 'Statistik', href: '/siswa/statistik', icon: <BarChart3 className="h-5 w-5" /> },
 ];
 
 function getNav(role: string, currentPath: string): NavItem[] {
@@ -259,8 +259,8 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                                 onClick={closeMobileMenu}
                                 title={collapsed ? item.label : undefined}
                                 className={cn(
-                                    'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition',
-                                    collapsed ? 'justify-center gap-0 px-2' : 'gap-3',
+                                    'flex items-center px-3.5 py-3 rounded-lg text-[15px] font-medium transition',
+                                    collapsed ? 'justify-center gap-0 px-2.5' : 'gap-4',
                                     item.active
                                         ? 'bg-primary text-white'
                                         : 'text-navy-300 hover:bg-navy-light hover:text-white',
@@ -292,10 +292,10 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                                     type="button"
                                     onClick={logout}
                                     title="Keluar"
-                                    className="text-navy-300 hover:text-white transition p-1.5 rounded hover:bg-navy-light"
+                                    className="text-red-400 hover:text-red-300 transition p-2 rounded hover:bg-red-500/10 mt-1"
                                     aria-label="Keluar"
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-5 w-5" />
                                 </button>
                             </div>
                         ) : (
@@ -305,9 +305,9 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                                 <button
                                     type="button"
                                     onClick={logout}
-                                    className="w-full text-left text-xs text-navy-300 hover:text-white transition mt-3 flex items-center gap-1.5"
+                                    className="w-full text-left text-sm font-medium text-red-400 hover:text-red-300 transition mt-3 flex items-center gap-2 p-2 -ml-2 rounded hover:bg-red-500/10"
                                 >
-                                    <LogOut className="h-3 w-3" />
+                                    <LogOut className="h-4 w-4" />
                                     Keluar
                                 </button>
                             </>

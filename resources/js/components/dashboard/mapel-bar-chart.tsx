@@ -24,7 +24,7 @@ export function MapelBarChart({ data, kkm }: { data: RataRataMapel[]; kkm: numbe
     const maxVal = 100;
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-5">
             {data.map((m) => {
                 const pct = (m.rata_rata / maxVal) * 100;
                 const kkmPct = (kkm / maxVal) * 100;
@@ -38,15 +38,15 @@ export function MapelBarChart({ data, kkm }: { data: RataRataMapel[]; kkm: numbe
                         className="block group"
                         title={`Klik untuk lihat laporan ${m.mata_pelajaran}`}
                     >
-                        <div className="flex items-center justify-between mb-1 text-xs">
+                        <div className="flex items-center justify-between mb-2 text-sm">
                             <span className="font-semibold text-navy truncate group-hover:text-primary transition flex-1 mr-2">
                                 {m.mata_pelajaran}
                             </span>
-                            <span className={`font-mono font-bold flex-shrink-0 ${m.rata_rata >= kkm ? 'text-success' : 'text-warning'}`}>
+                            <span className={`font-mono text-base font-bold flex-shrink-0 ${m.rata_rata >= kkm ? 'text-success' : 'text-warning'}`}>
                                 {formatAvg(m.rata_rata)}
                             </span>
                         </div>
-                        <div className="relative h-4 w-full bg-slate-100 rounded overflow-hidden">
+                        <div className="relative h-5 w-full bg-slate-100 rounded-md overflow-hidden">
                             <div
                                 className={`absolute inset-y-0 left-0 ${barColor} group-hover:opacity-80 transition-all`}
                                 style={{ width: `${pct}%` }}
@@ -57,25 +57,25 @@ export function MapelBarChart({ data, kkm }: { data: RataRataMapel[]; kkm: numbe
                                 title={`KKM ${kkm}`}
                             />
                         </div>
-                        <div className="flex items-center justify-between mt-0.5 text-[10px] text-muted-foreground">
+                        <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
                             <span>{m.total_nilai} nilai</span>
-                            <span>
-                                Lulus <span className="text-success font-semibold">{m.lulus}</span> • Tidak{' '}
-                                <span className="text-danger font-semibold">{m.tidak_lulus}</span>
-                            </span>
+                            <div className="flex items-center gap-3">
+                                <span>Lulus <span className="text-success font-semibold">{m.lulus}</span></span>
+                                <span>Tidak <span className="text-danger font-semibold">{m.tidak_lulus}</span></span>
+                            </div>
                         </div>
                     </Link>
                 );
             })}
-            <div className="flex items-center gap-3 pt-2 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-0.5 bg-navy" /> KKM {kkm}
+            <div className="flex items-center gap-4 pt-3 mt-2 border-t border-border text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <span className="w-4 h-0.5 bg-navy" /> KKM {kkm}
                 </span>
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-2 bg-success rounded-sm" /> ≥ KKM
+                <span className="flex items-center gap-1.5">
+                    <span className="w-4 h-2.5 bg-success rounded-sm" /> ≥ KKM
                 </span>
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-2 bg-warning rounded-sm" /> &lt; KKM
+                <span className="flex items-center gap-1.5">
+                    <span className="w-4 h-2.5 bg-warning rounded-sm" /> &lt; KKM
                 </span>
             </div>
         </div>

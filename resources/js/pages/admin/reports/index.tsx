@@ -82,14 +82,14 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
             />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <Card>
-                    <CardContent>
-                        <div className="mb-3 flex items-center justify-between">
+                <Card className="shadow-sm border-slate-200/60">
+                    <CardContent className="p-4">
+                        <div className="mb-3 flex items-start justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-navy">
+                                <h3 className="text-base font-bold text-navy flex items-center gap-1.5">
                                     Kelas <span className="text-danger">*</span>
                                 </h3>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground mt-0.5">
                                     Pilih 1 atau lebih kelas.
                                 </p>
                             </div>
@@ -97,13 +97,14 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                 onClick={selectAllKelas}
                                 variant="outline"
                                 size="sm"
+                                className="text-xs h-8"
                             >
                                 {selectedKelas.length === daftar_kelas.length
                                     ? 'Hapus Semua'
                                     : 'Pilih Semua'}
                             </Button>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {daftar_kelas.map((k) => {
                                 const isSelected = selectedKelas.includes(k);
 
@@ -138,14 +139,14 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardContent>
-                        <div className="mb-3 flex items-center justify-between">
+                <Card className="shadow-sm border-slate-200/60">
+                    <CardContent className="p-4">
+                        <div className="mb-3 flex items-start justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-navy">
-                                    Mata Pelajaran (opsional)
+                                <h3 className="text-base font-bold text-navy">
+                                    Mata Pelajaran <span className="text-muted-foreground font-normal text-sm">(opsional)</span>
                                 </h3>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground mt-0.5">
                                     Kosongkan untuk semua mapel.
                                 </p>
                             </div>
@@ -153,13 +154,14 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                 onClick={selectAllMapel}
                                 variant="outline"
                                 size="sm"
+                                className="text-xs h-8"
                             >
                                 {selectedMapel.length === daftar_mapel.length
                                     ? 'Hapus Semua'
                                     : 'Pilih Semua'}
                             </Button>
                         </div>
-                        <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto">
+                        <div className="grid max-h-[300px] grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto pr-2 pb-1">
                             {daftar_mapel.map((m) => {
                                 const isSelected = selectedMapel.includes(m);
 
@@ -195,60 +197,51 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                 </Card>
             </div>
 
-            <Card>
-                <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            onClick={preview}
-                            disabled={selectedKelas.length === 0}
-                        >
-                            <Search className="h-4 w-4" />
-                            Generate Laporan
-                        </Button>
-                        <span className="mx-1 border-l border-border" />
-                        <Button
-                            onClick={() =>
-                                exportTo('/admin/laporan/export/pdf')
-                            }
-                            disabled={selectedKelas.length === 0}
-                            variant="success"
-                        >
-                            <FileDown className="h-4 w-4" />
-                            PDF
-                        </Button>
-                        <Button
-                            onClick={() =>
-                                exportTo('/admin/laporan/export/xlsx')
-                            }
-                            disabled={selectedKelas.length === 0}
-                            variant="primary"
-                        >
-                            <FileSpreadsheet className="h-4 w-4" />
-                            Excel
-                        </Button>
-                        <Button
-                            onClick={() =>
-                                exportTo('/admin/laporan/export/csv')
-                            }
-                            disabled={selectedKelas.length === 0}
-                            variant="outline"
-                        >
-                            <FileText className="h-4 w-4" />
-                            CSV
-                        </Button>
-                        <Button
-                            onClick={() =>
-                                exportTo('/admin/laporan/export/html')
-                            }
-                            disabled={selectedKelas.length === 0}
-                            variant="outline"
-                        >
-                            <Globe className="h-4 w-4" />
-                            HTML
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+                <Button
+                    onClick={preview}
+                    disabled={selectedKelas.length === 0}
+                >
+                    <Search className="h-4 w-4 mr-1.5" />
+                    Generate Laporan
+                </Button>
+                
+                <span className="mx-1 border-l border-slate-300 h-6" />
+
+                <Button
+                    onClick={() =>
+                        exportTo('/admin/laporan/export/pdf')
+                    }
+                    disabled={selectedKelas.length === 0}
+                    variant="danger"
+                    className="shadow-sm"
+                >
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    PDF
+                </Button>
+                <Button
+                    onClick={() =>
+                        exportTo('/admin/laporan/export/csv')
+                    }
+                    disabled={selectedKelas.length === 0}
+                    variant="success"
+                    className="shadow-sm"
+                >
+                    <FileText className="h-4 w-4 mr-1.5" />
+                    CSV
+                </Button>
+                <Button
+                    onClick={() =>
+                        exportTo('/admin/laporan/export/html')
+                    }
+                    disabled={selectedKelas.length === 0}
+                    variant="outline"
+                    className="shadow-sm bg-white"
+                >
+                    <Globe className="h-4 w-4 mr-1.5" />
+                    HTML
+                </Button>
+            </div>
         </Container>
     );
 }

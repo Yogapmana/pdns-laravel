@@ -69,19 +69,14 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <a href={buildExportUrl('/admin/laporan/export/pdf', exportParams)} target="_blank" rel="noopener">
-                        <Button variant="success">
+                        <Button variant="danger">
                             <FileDown className="h-4 w-4" />
                             PDF
                         </Button>
                     </a>
-                    <a href={buildExportUrl('/admin/laporan/export/xlsx', exportParams)} target="_blank" rel="noopener">
-                        <Button variant="primary">
-                            <FileSpreadsheet className="h-4 w-4" />
-                            Excel
-                        </Button>
-                    </a>
+
                     <a href={buildExportUrl('/admin/laporan/export/csv', exportParams)} target="_blank" rel="noopener">
-                        <Button variant="outline">
+                        <Button variant="success">
                             <FileText className="h-4 w-4" />
                             CSV
                         </Button>
@@ -120,9 +115,7 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
                         </div>
 
                         <DataTable>
-                            <div className="text-[10px] text-muted-foreground bg-slate-50 px-4 py-1.5 border-b border-border flex items-center gap-1.5">
-                                <span>← Geser horizontal untuk melihat mata pelajaran lainnya →</span>
-                            </div>
+
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[1000px] text-sm border-collapse table-fixed">
                                     <colgroup>

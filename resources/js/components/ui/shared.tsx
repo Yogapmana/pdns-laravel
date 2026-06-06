@@ -84,18 +84,18 @@ export function StatCard({
 
     if (variant === 'colored') {
         return (
-            <div className={cn('p-4 rounded-lg', tileBgClasses[color], className)}>
+            <div className={cn('p-5 rounded-xl', tileBgClasses[color], className)}>
                 {icon && (
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                         <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>
-                        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                        <p className="text-sm font-medium text-muted-foreground">{label}</p>
                     </div>
                 )}
                 {!icon && (
-                    <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">{label}</p>
                 )}
                 <p className="text-3xl font-bold">{value}</p>
-                {description && <p className="text-[11px] text-muted-foreground mt-1">{description}</p>}
+                {description && <p className="text-xs text-muted-foreground mt-2">{description}</p>}
             </div>
         );
     }
@@ -110,7 +110,7 @@ export function StatCard({
             <div className="min-w-0">
                 <p className="text-3xl font-bold text-navy">{value}</p>
                 <p className="text-sm text-muted-foreground mt-0.5">{label}</p>
-                {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
+                {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
             </div>
         </div>
     );

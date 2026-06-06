@@ -310,16 +310,7 @@ export default function SiswaNilai({
     return (
         <Container>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <PageHeader
-                    title="Nilai Saya"
-                    description={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span>{siswa.nama_siswa}</span>
-                            <Badge variant="neutral">NIS: {siswa.nis}</Badge>
-                            <Badge variant="info">Kelas: {siswa.kelas}</Badge>
-                        </div>
-                    }
-                />
+                <PageHeader title="Nilai Saya" />
                 {hasData && (
                     <a
                         href="/siswa/rapor/pdf"

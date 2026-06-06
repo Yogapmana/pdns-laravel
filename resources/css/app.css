@@ -71,6 +71,9 @@
 }
 
 @layer base {
+    html {
+        font-size: 106.25%; /* Scales up 1rem to 17px, making all Tailwind classes slightly larger */
+    }
     * {
         @apply border-border;
     }

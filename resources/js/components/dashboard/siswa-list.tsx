@@ -56,17 +56,17 @@ export function SiswaList({
                 <button
                     type="button"
                     onClick={() => onSortChange(sortKey === 'rank' ? 'alpha' : 'rank')}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-secondary border border-border rounded hover:bg-surface transition"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-secondary border border-border rounded-md hover:bg-surface transition"
                     title={sortKey === 'rank' ? 'Urutkan A-Z' : 'Urutkan berdasarkan ranking'}
                 >
-                    <ArrowUpDown className="h-3 w-3" />
+                    <ArrowUpDown className="h-3.5 w-3.5" />
                     {sortKey === 'rank' ? 'Ranking' : 'A-Z'}
                 </button>
             </div>
             {sorted.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">{emptyMessage}</p>
             ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-border border-t border-border mt-2">
                     {sorted.map((s, i) => {
                         const ratio = showRatio && s.rasio_tidak_lulus !== undefined ? s.rasio_tidak_lulus : null;
                         const barPct = colorScheme === 'success' ? s.rata_rata : (ratio ?? 0);
@@ -76,34 +76,34 @@ export function SiswaList({
                                 key={s.nis}
                                 href={`/admin/siswa/${s.nis}/edit`}
                                 prefetch
-                                className="flex items-center gap-3 p-2 rounded-lg border border-border hover:border-primary hover:bg-blue-50/50 transition group"
+                                className="flex items-center gap-4 py-4 hover:bg-slate-50/50 transition group px-2 -mx-2 rounded-lg"
                             >
                                 <span
-                                    className={`flex-shrink-0 w-6 h-6 rounded-full ${colorScheme === 'success' ? 'bg-emerald-100' : 'bg-rose-100'} ${accentColor} text-xs font-bold flex items-center justify-center`}
+                                    className={`flex-shrink-0 w-8 h-8 rounded-full ${colorScheme === 'success' ? 'bg-emerald-100' : 'bg-rose-100'} ${accentColor} text-sm font-bold flex items-center justify-center`}
                                 >
                                     {sortKey === 'rank' ? i + 1 : s.nama_siswa.charAt(0).toUpperCase()}
                                 </span>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-baseline justify-between gap-2">
-                                        <p className="text-sm font-semibold text-navy truncate group-hover:text-primary transition">
+                                        <p className="text-sm font-bold text-navy truncate group-hover:text-primary transition">
                                             {s.nama_siswa}
                                         </p>
-                                        <span className={`text-sm font-mono font-bold flex-shrink-0 ${accentColor}`}>
+                                        <span className={`text-base font-mono font-bold flex-shrink-0 ${accentColor}`}>
                                             {colorScheme === 'success' ? formatAvg(s.rata_rata) : `${ratio}%`}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[10px] text-muted-foreground">{s.kelas}</span>
-                                        <span className="text-[10px] text-muted-foreground">•</span>
-                                        <span className="text-[10px] text-muted-foreground">
+                                        <span className="text-xs text-muted-foreground font-medium">{s.kelas}</span>
+                                        <span className="text-[10px] text-slate-300">•</span>
+                                        <span className="text-xs text-muted-foreground">
                                             {colorScheme === 'success'
                                                 ? `${s.total_mapel} mapel • Lulus ${s.lulus}/${s.total_mapel}`
                                                 : `${s.tidak_lulus}/${s.total_mapel} mapel tidak lulus`}
                                         </span>
                                     </div>
-                                    <div className="relative h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mt-1">
+                                    <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden mt-2.5">
                                         <div
-                                            className={`absolute inset-y-0 left-0 ${barColor}`}
+                                            className={`absolute inset-y-0 left-0 rounded-full ${barColor}`}
                                             style={{ width: `${Math.min(100, barPct)}%` }}
                                         />
                                     </div>

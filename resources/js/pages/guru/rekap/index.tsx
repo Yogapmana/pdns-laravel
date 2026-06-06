@@ -89,14 +89,7 @@ export default function RekapIndex({
 
     return (
         <Container>
-            <PageHeader
-                title="Rekap Nilai"
-                description={
-                    <div className="flex items-center gap-2">
-                        <span>{guru.nama_guru}</span>
-                    </div>
-                }
-            />
+            <PageHeader title="Rekap Nilai" />
 
             {!has_mengajar && (
                 <Alert variant="warning">

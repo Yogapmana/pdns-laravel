@@ -106,7 +106,7 @@ function ComponentBar({
     return (
         <div>
             <div className="mb-1 flex items-baseline justify-between">
-                <span className="text-xs font-semibold text-secondary">
+                <span className="text-sm font-semibold text-secondary">
                     {label}{' '}
                     <span className="font-normal text-muted-foreground">
                         ({weight})
@@ -128,8 +128,8 @@ function ComponentBar({
                 />
             </div>
             {isBelowKkm && (
-                <p className="mt-1 flex items-center gap-1 text-[10px] text-rose-600">
-                    <AlertTriangle className="h-3 w-3" />
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600">
+                    <AlertTriangle className="h-3.5 w-3.5" />
                     Di bawah KKM
                 </p>
             )}
@@ -234,8 +234,8 @@ function PerMapelChart({ perMapel }: { perMapel: PerMapel[] }) {
                         {weakest &&
                             weakest.value !== null &&
                             weakest.value < kkm && (
-                                <p className="mt-2 flex items-center gap-1 text-[10px] text-rose-600">
-                                    <AlertTriangle className="h-3 w-3" />
+                                <p className="mt-3 flex items-center gap-1.5 text-xs text-rose-600">
+                                    <AlertTriangle className="h-3.5 w-3.5" />
                                     Komponen terlemah:{' '}
                                     <strong>
                                         {weakest.key === 'T'
@@ -269,17 +269,15 @@ function MiniBar({
 
     return (
         <div>
-            <div className="mb-0.5 flex items-baseline justify-between">
-                <span className="text-[10px] font-medium text-muted-foreground">
+            <div className="mb-1 flex items-baseline justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">
                     {label}
                 </span>
-                <span
-                    className={`font-mono text-[10px] font-bold ${textColor}`}
-                >
+                <span className={`font-mono text-xs font-bold ${textColor}`}>
                     {formatNumber(value)}
                 </span>
             </div>
-            <div className="relative h-3 w-full overflow-hidden rounded bg-slate-100">
+            <div className="relative h-4 w-full overflow-hidden rounded bg-slate-100">
                 <div
                     className={`absolute inset-y-0 left-0 ${barColor}`}
                     style={{ width: `${pct}%` }}
@@ -309,19 +307,8 @@ export default function SiswaStatistik({
     return (
         <Container>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <PageHeader
-                    title="Statistik Akademik"
-                    description={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span>{siswa.nama_siswa}</span>
-                            <Badge variant="neutral">NIS: {siswa.nis}</Badge>
-                            <Badge variant="info">Kelas: {siswa.kelas}</Badge>
-                        </div>
-                    }
-                />
+                <PageHeader title="Statistik Akademik" />
             </div>
-
-
 
             {hasData && (
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -448,18 +435,12 @@ export default function SiswaStatistik({
                                 Performa per Mata Pelajaran
                             </span>
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Setiap baris menunjukkan perbandingan nilai Tugas,
-                            UTS, dan UAS untuk satu mata pelajaran.
-                        </p>
                     </CardHeader>
                     <CardContent>
                         <PerMapelChart perMapel={chart_data.per_mapel} />
                     </CardContent>
                 </Card>
             )}
-
-
         </Container>
     );
 }

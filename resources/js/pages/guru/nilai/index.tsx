@@ -1,5 +1,13 @@
 import { Form, router } from '@inertiajs/react';
-import { Save, Lock, AlertCircle, Info, Search, Filter, FileSpreadsheet } from 'lucide-react';
+import {
+    Save,
+    Lock,
+    AlertCircle,
+    Info,
+    Search,
+    Filter,
+    FileSpreadsheet,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -79,14 +87,7 @@ export default function NilaiIndex({
 
     return (
         <Container>
-            <PageHeader
-                title="Input Nilai"
-                description={
-                    <div className="flex items-center gap-2">
-                        <span>{guru.nama_guru}</span>
-                    </div>
-                }
-            />
+            <PageHeader title="Input Nilai" />
 
             {!has_mengajar && (
                 <Alert variant="warning">
@@ -103,11 +104,11 @@ export default function NilaiIndex({
                         </h3>
                     </div>
                     <div className="p-5">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
                             <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="kelas"
-                                    className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                                    className="mb-1.5 block text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Kelas
                                 </label>
@@ -130,7 +131,7 @@ export default function NilaiIndex({
                             <div className="w-full sm:flex-1">
                                 <label
                                     htmlFor="mapel"
-                                    className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                                    className="mb-1.5 block text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Mata Pelajaran
                                 </label>
@@ -165,7 +166,7 @@ export default function NilaiIndex({
                             <Button
                                 onClick={applyFilter}
                                 disabled={!selectedKelas || !selectedMapel}
-                                className="w-full sm:w-auto h-10 px-6 shrink-0"
+                                className="h-10 w-full shrink-0 px-6 sm:w-auto"
                             >
                                 <Search className="mr-2 h-4 w-4" />
                                 Tampilkan
@@ -180,9 +181,13 @@ export default function NilaiIndex({
                     <div className="rounded-full bg-slate-100 p-4">
                         <FileSpreadsheet className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold text-secondary">Belum Ada Data yang Ditampilkan</h3>
-                    <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-                        Silakan pilih <strong>Kelas</strong> dan <strong>Mata Pelajaran</strong> terlebih dahulu pada filter di atas untuk mulai menginput nilai.
+                    <h3 className="mt-4 text-lg font-semibold text-secondary">
+                        Belum Ada Data yang Ditampilkan
+                    </h3>
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                        Silakan pilih <strong>Kelas</strong> dan{' '}
+                        <strong>Mata Pelajaran</strong> terlebih dahulu pada
+                        filter di atas untuk mulai menginput nilai.
                     </p>
                 </div>
             )}
@@ -327,9 +332,9 @@ export default function NilaiIndex({
                             />
                             <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
                                 <CardContent className="p-4 sm:px-5">
-                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                                         <div className="flex-1 text-center sm:text-left">
-                                            <h3 className="flex justify-center sm:justify-start items-center gap-2 text-base font-bold text-emerald-800">
+                                            <h3 className="flex items-center justify-center gap-2 text-base font-bold text-emerald-800 sm:justify-start">
                                                 <Lock className="h-4 w-4" />
                                                 Validasi Final
                                             </h3>
@@ -337,11 +342,19 @@ export default function NilaiIndex({
                                                 Mengunci semua nilai{' '}
                                                 {mata_pelajaran} di kelas{' '}
                                                 {kelas} yang masih berstatus
-                                                Draft. <strong className="font-semibold">Nilai Final tidak dapat diubah kembali.</strong>
+                                                Draft.{' '}
+                                                <strong className="font-semibold">
+                                                    Nilai Final tidak dapat
+                                                    diubah kembali.
+                                                </strong>
                                             </p>
                                         </div>
-                                        <Button type="submit" variant="success" className="shrink-0 w-full sm:w-auto h-9 px-4 text-xs">
-                                            <Lock className="h-3.5 w-3.5 mr-1.5" />
+                                        <Button
+                                            type="submit"
+                                            variant="success"
+                                            className="h-11 w-full shrink-0 px-5 text-xs sm:w-auto"
+                                        >
+                                            <Lock className="mr-1.5 h-3.5 w-3.5" />
                                             Validasi Semua Nilai
                                         </Button>
                                     </div>
@@ -431,7 +444,8 @@ function NilaiRow({
     const akhir = calculateNilaiAkhir(tugas, uts, uas);
     const status = calculateStatusLulus(akhir);
 
-    const hasInvalid = isInvalidScore(tugas) || isInvalidScore(uts) || isInvalidScore(uas);
+    const hasInvalid =
+        isInvalidScore(tugas) || isInvalidScore(uts) || isInvalidScore(uas);
 
     const inputDisabled = disabled || (rowLocked ?? false);
 
