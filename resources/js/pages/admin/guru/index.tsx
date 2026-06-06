@@ -5,12 +5,9 @@ import {
     Trash2,
     Search,
     X,
-    Power,
     Loader2,
-    Info,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,10 +50,6 @@ type Props = {
         mapel: string | null;
     };
 };
-
-function toggleActive(g: Guru) {
-    router.patch(`/admin/guru/${g.id}/toggle-active`);
-}
 
 export default function GuruIndex({
     guru,
@@ -265,27 +258,6 @@ export default function GuruIndex({
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </Link>
-                                                {g.user && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            toggleActive(g)
-                                                        }
-                                                        className={`rounded p-1.5 transition ${g.user.is_active ? 'text-warning hover:bg-yellow-100' : 'text-success hover:bg-green-100'}`}
-                                                        aria-label={
-                                                            g.user.is_active
-                                                                ? `Nonaktifkan ${g.nama_guru}`
-                                                                : `Aktifkan ${g.nama_guru}`
-                                                        }
-                                                        title={
-                                                            g.user.is_active
-                                                                ? 'Nonaktifkan Akun'
-                                                                : 'Aktifkan Akun'
-                                                        }
-                                                    >
-                                                        <Power className="h-4 w-4" />
-                                                    </button>
-                                                )}
                                                 <button
                                                     type="button"
                                                     onClick={() =>
