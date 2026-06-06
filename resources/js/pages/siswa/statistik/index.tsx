@@ -178,7 +178,7 @@ function PerMapelChart({ perMapel }: { perMapel: PerMapel[] }) {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col divide-y divide-border">
             {perMapel.map((m) => {
                 const kkm = m.kkm;
                 const weakest = [
@@ -192,7 +192,7 @@ function PerMapelChart({ perMapel }: { perMapel: PerMapel[] }) {
                 return (
                     <div
                         key={`${m.kelas}|${m.mapel}`}
-                        className="rounded-lg border border-slate-200 p-3"
+                        className="group py-4 first:pt-0 last:pb-0"
                     >
                         <div className="mb-2 flex items-center justify-between">
                             <div className="flex min-w-0 items-center gap-2">
@@ -475,9 +475,7 @@ function WeakComponents({
         <div className="space-y-3">
             {below.length > 0 && (
                 <Alert variant="error">
-                    <p className="mb-2 text-xs font-bold">
-                        ⚠️ Perlu Ditingkatkan
-                    </p>
+                    <p className="mb-2 text-xs font-bold">Perlu Ditingkatkan</p>
                     <ul className="space-y-1 text-sm font-normal">
                         {below.map((c) => (
                             <li
@@ -495,9 +493,7 @@ function WeakComponents({
             )}
             {above.length > 0 && (
                 <Alert variant="success">
-                    <p className="mb-2 text-xs font-bold">
-                        ✓ Sudah Di Atas KKM
-                    </p>
+                    <p className="mb-2 text-xs font-bold">Sudah Di Atas KKM</p>
                     <ul className="space-y-1 text-sm font-normal">
                         {above.map((c) => (
                             <li
@@ -516,7 +512,7 @@ function WeakComponents({
             {below.length === 0 && (
                 <Alert variant="success">
                     <p className="text-center font-semibold">
-                        🎉 Semua komponen di atas KKM!
+                        Semua komponen di atas KKM!
                     </p>
                 </Alert>
             )}
