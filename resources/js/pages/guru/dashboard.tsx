@@ -3,7 +3,7 @@ import { Users, FileEdit, CheckCircle, XCircle, BookOpen, AlertCircle, ChevronRi
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { PageHeader, Container } from '@/components/ui/shared';
+import { PageHeader, Container, StatCard } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
 type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
@@ -160,38 +160,38 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                 <CardHeader>Ringkasan Nilai</CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Users className="h-4 w-4 text-primary" />
-                                <p className="text-xs text-muted-foreground">Total Siswa</p>
-                            </div>
-                            <p className="text-3xl font-bold text-primary">{stats.total_siswa}</p>
-                            <p className="text-[11px] text-muted-foreground mt-1">Siswa di kelas yang Anda ajar</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                                <FileEdit className="h-4 w-4 text-secondary" />
-                                <p className="text-xs text-muted-foreground">Total Nilai</p>
-                            </div>
-                            <p className="text-3xl font-bold text-secondary">{stats.total_nilai}</p>
-                            <p className="text-[11px] text-muted-foreground mt-1">Baris nilai yang tersimpan</p>
-                        </div>
-                        <div className="p-4 bg-yellow-50 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Edit3 className="h-4 w-4 text-warning" />
-                                <p className="text-xs text-muted-foreground">Status Draft</p>
-                            </div>
-                            <p className="text-3xl font-bold text-warning">{stats.draft}</p>
-                            <p className="text-[11px] text-muted-foreground mt-1">Nilai yang masih bisa diedit</p>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Lock className="h-4 w-4 text-success" />
-                                <p className="text-xs text-muted-foreground">Status Final</p>
-                            </div>
-                            <p className="text-3xl font-bold text-success">{stats.final}</p>
-                            <p className="text-[11px] text-muted-foreground mt-1">Nilai yang sudah dikunci</p>
-                        </div>
+                        <StatCard
+                            label="Total Siswa"
+                            value={stats.total_siswa}
+                            icon={<Users className="h-4 w-4" />}
+                            color="primary"
+                            variant="colored"
+                            description="Siswa di kelas yang Anda ajar"
+                        />
+                        <StatCard
+                            label="Total Nilai"
+                            value={stats.total_nilai}
+                            icon={<FileEdit className="h-4 w-4" />}
+                            color="neutral"
+                            variant="colored"
+                            description="Baris nilai yang tersimpan"
+                        />
+                        <StatCard
+                            label="Status Draft"
+                            value={stats.draft}
+                            icon={<Edit3 className="h-4 w-4" />}
+                            color="warning"
+                            variant="colored"
+                            description="Nilai yang masih bisa diedit"
+                        />
+                        <StatCard
+                            label="Status Final"
+                            value={stats.final}
+                            icon={<Lock className="h-4 w-4" />}
+                            color="success"
+                            variant="colored"
+                            description="Nilai yang sudah dikunci"
+                        />
                     </div>
                 </CardContent>
             </Card>
@@ -201,27 +201,27 @@ export default function GuruDashboard({ guru, stats, per_combo_stats, notifikasi
                     <CardHeader>Ringkasan Kelulusan</CardHeader>
                     <CardContent>
                         <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                                <CheckCircle className="h-5 w-5 text-success shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Lulus (≥ KKM 70)</p>
-                                    <p className="text-2xl font-bold text-success">{stats.lulus}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                                <XCircle className="h-5 w-5 text-danger shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Tidak Lulus (&lt; KKM 70)</p>
-                                    <p className="text-2xl font-bold text-danger">{stats.tidak_lulus}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                                <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Rata-rata Nilai</p>
-                                    <p className="text-2xl font-bold text-primary">{stats.rata_rata}</p>
-                                </div>
-                            </div>
+                            <StatCard
+                                label="Lulus (≥ KKM 70)"
+                                value={stats.lulus}
+                                icon={<CheckCircle className="h-4 w-4" />}
+                                color="success"
+                                variant="colored"
+                            />
+                            <StatCard
+                                label="Tidak Lulus (< KKM 70)"
+                                value={stats.tidak_lulus}
+                                icon={<XCircle className="h-4 w-4" />}
+                                color="danger"
+                                variant="colored"
+                            />
+                            <StatCard
+                                label="Rata-rata Nilai"
+                                value={stats.rata_rata}
+                                icon={<TrendingUp className="h-4 w-4" />}
+                                color="primary"
+                                variant="colored"
+                            />
                         </div>
                     </CardContent>
                 </Card>
