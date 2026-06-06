@@ -96,9 +96,9 @@ export default function ReportsPreview({ kelas_list, sections, mapel_list, stats
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard label={isMulti ? 'Total Siswa (Semua)' : 'Total Siswa'} value={stats.jumlah_siswa} icon={<BarChart3 className="h-6 w-6" />} color="primary" />
-                <StatCard label="Lulus" value={stats.jumlah_lulus} icon={<CheckCircle className="h-6 w-6" />} color="success" />
-                <StatCard label="Tidak Lulus" value={stats.jumlah_tidak_lulus} icon={<XCircle className="h-6 w-6" />} color="danger" />
+                <StatCard label={isMulti ? 'Total Siswa (Semua)' : 'Total Siswa'} value={stats.jumlah_siswa} icon={<BarChart3 />} color="primary" variant="colored" description={isMulti ? 'Gabungan seluruh kelas' : 'Seluruh siswa di kelas'} />
+                <StatCard label="Lulus" value={stats.jumlah_lulus} icon={<CheckCircle />} color="success" variant="colored" description="Nilai ≥ KKM (70)" />
+                <StatCard label="Tidak Lulus" value={stats.jumlah_tidak_lulus} icon={<XCircle />} color="danger" variant="colored" description="Nilai < KKM (70)" />
             </div>
 
             {sections.length === 0 ? (
