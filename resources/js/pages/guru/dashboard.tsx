@@ -141,9 +141,9 @@ export default function GuruDashboard({
             />
 
             {adaNotifikasi && (
-                <div className="space-y-3">
+                <div className="mb-6 flex flex-col gap-4">
                     {belumDiinput.length > 0 && (
-                        <Alert variant="warning" className="mb-0">
+                        <Alert variant="warning">
                             <div className="flex flex-col gap-2">
                                 <p>
                                     Nilai {belumDiinput.length} kelas (
@@ -177,7 +177,7 @@ export default function GuruDashboard({
                     )}
 
                     {masihDraft.length > 0 && (
-                        <Alert variant="error" className="mb-0">
+                        <Alert variant="error">
                             <div className="flex flex-col gap-2">
                                 <p>
                                     Nilai {masihDraft.length} kelas (
@@ -286,7 +286,7 @@ export default function GuruDashboard({
                 </Card>
 
                 <DataTable className="lg:col-span-2">
-                    <CardHeader>Status per Mengajar</CardHeader>
+                    <CardHeader>Status Mengajar</CardHeader>
                     <CardContent>
                         {per_combo_stats.length === 0 ? (
                             <p className="py-4 text-center text-sm text-muted-foreground">

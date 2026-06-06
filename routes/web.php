@@ -84,6 +84,7 @@ Route::prefix('guru')->middleware(['auth', 'role:guru'])->name('guru.')->group(f
 Route::prefix('siswa')->middleware(['auth', 'role:siswa'])->name('siswa.')->group(function () {
     Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
     Route::get('/nilai', [SiswaNilaiController::class, 'index'])->name('nilai.index');
+    Route::get('/statistik', [SiswaNilaiController::class, 'statistik'])->name('statistik.index');
     Route::get('/rapor/pdf', [SiswaRaporController::class, 'pdf'])->name('rapor.pdf');
 });
 

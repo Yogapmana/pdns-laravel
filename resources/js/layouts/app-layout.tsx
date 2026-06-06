@@ -45,6 +45,7 @@ const NAV_GURU: NavItem[] = [
 const NAV_SISWA: NavItem[] = [
     { label: 'Dashboard', href: '/siswa/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
     { label: 'Nilai Saya', href: '/siswa/nilai', icon: <BookOpenCheck className="h-4 w-4" /> },
+    { label: 'Statistik', href: '/siswa/statistik', icon: <BarChart3 className="h-4 w-4" /> },
 ];
 
 function getNav(role: string, currentPath: string): NavItem[] {

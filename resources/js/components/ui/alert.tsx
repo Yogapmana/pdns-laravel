@@ -34,10 +34,10 @@ const variantConfig: Record<Variant, { bg: string; border: string; text: string;
 export function Alert({ children, variant = 'info', className }: { children: ReactNode; variant?: Variant; className?: string }) {
     const config = variantConfig[variant];
     return (
-        <div className={cn('border-l-4 p-4 rounded-lg mb-4', config.bg, config.border, config.text, className)}>
-            <div className="flex items-start gap-2">
+        <div className={cn('border-y border-r border-l-4 p-4 rounded-xl shadow-sm', config.bg, config.border, config.text, className)}>
+            <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-0.5">{config.icon}</div>
-                <div className="text-sm font-medium flex-1">{children}</div>
+                <div className="text-sm font-medium flex-1 leading-relaxed">{children}</div>
             </div>
         </div>
     );
