@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Guru;
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
 use App\Models\Nilai;
+use App\Models\Notification;
 use App\Models\Siswa;
+use App\Notifications\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -168,7 +170,7 @@ class NilaiController extends Controller
      * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran`.
      * @return RedirectResponse Redirect back with a success flash message containing the number of affected rows.
      */
-    public function validateFinal(Request $request): RedirectResponse
+    public function validateFinal(Request $request, NotificationDispatcher $dispatcher): RedirectResponse
     {
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
 
@@ -181,11 +183,39 @@ class NilaiController extends Controller
             abort(403);
         }
 
+        $rows = Nilai::where('id_guru', $guru->id)
+            ->where('kelas', $validated['kelas'])
+            ->where('mata_pelajaran', $validated['mata_pelajaran'])
+            ->whereNotNull('nilai_akhir')
+            ->get();
+
         $updated = Nilai::where('id_guru', $guru->id)
             ->where('kelas', $validated['kelas'])
             ->where('mata_pelajaran', $validated['mata_pelajaran'])
             ->whereNotNull('nilai_akhir')
             ->update(['status_validasi' => Nilai::STATUS_FINAL]);
+
+        if ($updated > 0) {
+            $siswaList = Siswa::where('kelas', $validated['kelas'])
+                ->whereNotNull('user_id')
+                ->get(['nis', 'user_id']);
+
+            $users = $siswaList->map(fn (Siswa $s) => $s->user)->filter();
+
+            if ($users->isNotEmpty()) {
+                $dispatcher->sendMany(
+                    $users,
+                    Notification::TYPE_NILAI_SUDAH_FINAL,
+                    'Nilai '.$validated['mata_pelajaran'].' sudah Final',
+                    sprintf(
+                        'Nilai %s kelas %s telah divalidasi oleh guru. Silakan cek halaman Nilai Saya.',
+                        $validated['mata_pelajaran'],
+                        $validated['kelas'],
+                    ),
+                    '/siswa/nilai?combo='.urlencode($validated['kelas'].'|'.$validated['mata_pelajaran']),
+                );
+            }
+        }
 
         return back()->with('success', "Nilai berhasil dikunci (Final). {$updated} baris nilai di-finalisasi.");
     }

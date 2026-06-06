@@ -172,3 +172,70 @@ duration: ~28s
 - `vendor/bin/pint --dirty --format agent` → **passed** ✓
 - `npm run lint` → **0 errors** ✓
 - `npm run build` → **built in 6.32s** ✓
+
+---
+
+## Phase 2: Notifikasi (Bell Header + 4 endpoint + observer + scheduler)
+
+Tanggal: 2026-06-06. Lingkup: sistem notifikasi in-app di header (3 role) — **silent** (no Notification API / no sound), click item → auto mark as read + navigate, 60s polling (pause saat `document.visibilityState !== 'visible'`), auto-delete read rows > 30 hari.
+
+### Data model
+- `database/migrations/2026_06_06_000002_create_notifications_table.php` — kolom: `id, user_id (FK users cascadeOnDelete), type, title, body, link (nullable), read_at (nullable), created_at`. Index `idx_user_unread_recent (user_id, read_at, created_at)` + `idx_user_recent (user_id, created_at)`.
+- `app/Models/Notification.php` — `UPDATED_AT = null`, `$fillable = [user_id, type, title, body, link, read_at]`, `$casts` datetime, `user()` BelongsTo, konstanta 6 TYPE_*.
+- `app/Models/User.php` — tambah `notifications()` HasMany.
+
+### Service + Observer
+- `app/Notifications/NotificationDispatcher.php` — `send()` (de-dup via `updateOrCreate` key `(user_id, type, link)`) + `sendMany()`.
+- `app/Observers/GradeObserver.php` — listener `updated` (Draft→Final transition → `nilai_sudah_final` ke semua siswa combo) + `saved` (apabila masih ada Draft row di combo → `nilai_masih_draft` ke guru). Observer pertama di codebase.
+- `app/Providers/AppServiceProvider.php` — register `Nilai::observe(GradeObserver::class)` di `boot()`.
+
+### Controller + Routes
+- `app/Http/Controllers/NotificationController.php` — 4 method: `index` (paginate 20), `unreadCount`, `markRead` (404-if-not-owner), `markAllRead`.
+- `routes/web.php` — 4 route baru di bawah `auth`+`role:admin,guru,siswa`: `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/{id}/read`, `POST /notifications/read-all`.
+
+### Wiring ke controllers existing
+- `app/Http/Controllers/Guru/NilaiController.php::validateFinal` — inject dispatcher, panggil `sendMany` ke siswa combo (bulk `->update()` tidak fire Eloquent event, jadi observasi manual di controller).
+- `app/Http/Controllers/Siswa/RaporController.php::pdf` — inject dispatcher, push `rapor_tersedia` ke siswa setelah PDF download.
+- `app/Http/Controllers/Admin/AccountController.php::{toggleActive,resetPassword}` — inject dispatcher, push `akun_diubah` ke user target.
+
+### Artisan commands + Scheduler
+- `app/Console/Commands/NotificationsCleanup.php` — `php artisan notifications:cleanup {--days=30}` — hapus `read_at IS NOT NULL AND created_at < cutoff`.
+- `app/Console/Commands/NotificationsGenerateUninputed.php` — `php artisan notifications:generate-uninputed` — scan `guru_mengajar` tanpa nilai rows → push `nilai_belum_diinput` ke guru. Skip guru tanpa user account. De-dup via composite key.
+- `routes/console.php` — `Schedule::command(NotificationsCleanup::class)->daily()->at('00:05')->withoutOverlapping()` + `Schedule::command(NotificationsGenerateUninputed::class)->daily()->at('07:00')->withoutOverlapping()`.
+
+### Frontend
+- `resources/js/hooks/use-notification-polling.ts` — 60s interval, pause saat hidden, refetch on `visibilitychange→visible`. Methods: `refresh`, `markRead`, `markAllRead`, `handleClick` (mark + `router.visit`).
+- `resources/js/components/notification-bell.tsx` — Bell + badge unread count (clamp 99+) + dropdown 20 terbaru + "Tandai semua dibaca" + click-item handler (POST read + `router.visit(link)`). Click-outside close.
+- `resources/js/layouts/app-layout.tsx` — replace Bell button statis dengan `<NotificationBell />` (Bell icon import dihapus dari app-layout, dipakai di component).
+
+### Test (17 test baru di `tests/Feature/AcceptanceNotificationTest.php`)
+1. Draft save → 1× `nilai_masih_draft` notif ke guru
+2. Validating Final → 1× `nilai_sudah_final` notif per siswa in combo
+3. Save same combo 2× → 1 notif (de-dup)
+4. `GET /notifications/unread-count` → return count yg benar
+5. `GET /notifications` → return 20 terbaru, ordered desc by created_at
+6. `POST /notifications/{id}/read` → mark read + 404 for other users
+7. `POST /notifications/read-all` → only mark own rows
+8. Endpoints require auth
+9. `notifications:cleanup` → delete read+old, keep unread+old, keep recent+read
+10. `notifications:cleanup --days=N` custom option
+11. `notifications:generate-uninputed` → only for combos with no nilai rows
+12. `generate-uninputed` → skip gurus without user account
+13. Rapor download → `rapor_tersedia` notif
+14. Admin reset-password → `akun_diubah` notif
+15. Admin toggle-active → `akun_diubah` notif
+16. Dispatcher `send()` insert row
+17. Dispatcher `send()` de-dup by (user_id, type, link)
+
+### Hasil verifikasi
+- `php artisan migrate --no-interaction` → **DONE** (table created)
+- `vendor/bin/pest --compact` → **167/167 passed** (150 baseline + 17 baru) dalam 32.6s
+- `vendor/bin/pint --dirty --format agent` → **passed** (auto-fixed `GradeObserver.php`: ordered_imports + not_operator_with_successor_space + single_line_empty_body)
+- `npx tsc --noEmit` → **0 errors** untuk file baru; pre-existing errors di `resources/js/actions/.../GuruController.ts` adalah Wayfinder auto-gen (bukan dari perubahan)
+- `npm run build` → **built in 9.31s** ✓
+
+### Catatan desain
+- Bulk update case: `Nilai::where(...)->update(...)` di `validateFinal` tidak fire Eloquent `updated` event. Solusi: panggil dispatcher secara manual di controller (satu call `sendMany` daripada N observasi). Observer `updated()` tetap ada untuk save single-row case.
+- Dedup key: `updateOrCreate(['user_id', 'type', 'link'], [...])` — link mengandung query param combo atau path unik, jadi 1 row per user+type+target.
+- `rapor_tersedia` link adalah `'/siswa/rapor/pdf'` (statis) sehingga de-dup membuat 1 row per siswa per "session" — di-reset setiap kali user re-download karena composite key conflict.
+- `User::notifications` HasMany is **NOT** eager-loaded by default; bell only uses `unreadCount` + dedicated `index` endpoint, no N+1 risk.

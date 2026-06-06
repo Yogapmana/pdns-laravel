@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -72,6 +73,19 @@ class User extends Authenticatable
     public function guru(): HasOne
     {
         return $this->hasOne(Guru::class);
+    }
+
+    /**
+     * The 1:N collection of in-app notification rows owned by this user.
+     *
+     * Surfaced by the header bell; ordered newest-first in the UI but
+     * un-ordered here so callers can apply their own sort/paginate.
+     *
+     * @return HasMany<Notification>
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 
     /**

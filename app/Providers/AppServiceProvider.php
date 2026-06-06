@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\Nilai;
+use App\Observers\GradeObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerObservers();
+    }
+
+    /**
+     * Register the application model observers.
+     *
+     * `GradeObserver` watches `Nilai` writes and turns them into
+     * `nilai_masih_draft` and `nilai_sudah_final` notification rows.
+     */
+    protected function registerObservers(): void
+    {
+        Nilai::observe(GradeObserver::class);
     }
 
     /**

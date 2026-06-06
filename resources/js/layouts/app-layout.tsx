@@ -1,9 +1,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Bell, Search, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Search, Calendar } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/notification-bell';
 
 type NavItem = {
     label: string;
@@ -342,12 +343,9 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                             <button type="button" className="md:hidden text-muted-foreground hover:text-navy transition p-2 rounded-full hover:bg-slate-100" aria-label="Cari" title="Cari">
                                 <Search className="h-4 w-4" />
                             </button>
-                            
-                            <button type="button" className="relative text-muted-foreground hover:text-navy transition p-2 rounded-full hover:bg-slate-100 mr-2 md:mr-0" aria-label="Notifikasi" title="Notifikasi">
-                                <Bell className="h-4 w-4 md:h-5 md:w-5" />
-                                <span className="absolute top-1.5 right-1.5 h-2 w-2 md:h-2.5 md:w-2.5 rounded-full bg-danger border border-white md:border-2"></span>
-                            </button>
-                            
+
+                            <NotificationBell />
+
                             <div className="w-px h-6 bg-border hidden md:block mx-1"></div>
                             
                             <div className="hidden md:flex items-center gap-2 text-sm text-navy font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">

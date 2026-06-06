@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Siswa;
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
 use App\Models\Nilai;
+use App\Models\Notification;
 use App\Models\Siswa;
+use App\Notifications\NotificationDispatcher;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 
@@ -20,9 +22,13 @@ class RaporController extends Controller
      * hidden until the guru locks them, so the printed rapor matches
      * what the siswa sees in the nilai page.
      *
+     * After a successful generation, pushes a `rapor_tersedia`
+     * notification to the siswa (deduped by `(user_id, type, link)`
+     * so the bell only shows the event once per semester).
+     *
      * @return Response A download response with `Content-Type: application/pdf` and a per-siswa filename.
      */
-    public function pdf(): Response
+    public function pdf(NotificationDispatcher $dispatcher): Response
     {
         $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
 
@@ -85,6 +91,14 @@ class RaporController extends Controller
         $pdf = Pdf::loadView('reports.rapor-pdf', $data)->setPaper('a4', 'portrait');
 
         $filename = 'Rapor_'.str_replace(' ', '_', $siswa->nama_siswa).'_'.$siswa->nis.'.pdf';
+
+        $dispatcher->send(
+            $siswa->user,
+            Notification::TYPE_RAPOR_TERSEDIA,
+            'Rapor semester '.$tahunAjaran.' tersedia',
+            'Rapor '.$siswa->nama_siswa.' untuk tahun ajaran '.$tahunAjaran.' telah berhasil dicetak. Silakan unduh dari menu Rapor.',
+            '/siswa/rapor/pdf',
+        );
 
         return $pdf->download($filename);
     }
