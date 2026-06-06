@@ -359,10 +359,10 @@ export default function AdminDashboard({
             />
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Siswa" value={stats.total_siswa} icon={<Users className="h-6 w-6" />} color="primary" />
-                <StatCard label="Total Guru" value={stats.total_guru} icon={<GraduationCap className="h-6 w-6" />} color="accent" />
-                <StatCard label="Mata Pelajaran" value={stats.total_mapel} icon={<BookOpen className="h-6 w-6" />} color="warning" />
-                <StatCard label="Persentase Lulus" value={`${stats.persentase_lulus}%`} icon={<CheckCircle className="h-6 w-6" />} color="success" />
+                <StatCard label="Total Siswa" value={stats.total_siswa} icon={<Users className="h-4 w-4" />} color="primary" variant="colored" description="Seluruh siswa aktif" />
+                <StatCard label="Total Guru" value={stats.total_guru} icon={<GraduationCap className="h-4 w-4" />} color="accent" variant="colored" description="Termasuk non-aktif" />
+                <StatCard label="Mata Pelajaran" value={stats.total_mapel} icon={<BookOpen className="h-4 w-4" />} color="warning" variant="colored" description="Total mapel terdaftar" />
+                <StatCard label="Persentase Lulus" value={`${stats.persentase_lulus}%`} icon={<CheckCircle className="h-4 w-4" />} color="success" variant="colored" description="Siswa dengan nilai ≥ KKM" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -17,9 +17,9 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard label="NIS" value={siswa.nis} icon={<GraduationCap className="h-6 w-6" />} color="primary" />
-                <StatCard label="Kelas" value={siswa.kelas} icon={<GraduationCap className="h-6 w-6" />} color="accent" />
-                <StatCard label="Username" value={siswa.user?.username ?? '—'} icon={<GraduationCap className="h-6 w-6" />} color="warning" />
+                <StatCard label="NIS" value={siswa.nis} icon={<GraduationCap className="h-4 w-4" />} color="primary" variant="colored" description="Nomor Induk Siswa" />
+                <StatCard label="Kelas" value={siswa.kelas} icon={<GraduationCap className="h-4 w-4" />} color="accent" variant="colored" description="Kelas saat ini" />
+                <StatCard label="Username" value={siswa.user?.username ?? '—'} icon={<GraduationCap className="h-4 w-4" />} color="warning" variant="colored" description="Username login" />
             </div>
 
             <ActionCard
