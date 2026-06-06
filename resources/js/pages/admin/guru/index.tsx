@@ -6,10 +6,11 @@ import {
     Search,
     X,
     Power,
-    UserPlus,
     Loader2,
+    Info,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,6 +107,14 @@ export default function GuruIndex({
                     </Link>
                 }
             />
+
+            <Alert variant="info" className="mb-4">
+                <span className="flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    Akun login untuk guru otomatis dibuat saat <strong>Tambah Guru</strong>. Untuk reset-password atau nonaktifkan akun, buka&nbsp;
+                    <Link href="/admin/akun" className="font-medium underline">Manajemen Akun</Link>.
+                </span>
+            </Alert>
 
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm md:flex-row">
                 <div className="relative flex-1">
@@ -264,16 +273,6 @@ export default function GuruIndex({
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </Link>
-                                                {!g.user && (
-                                                    <Link
-                                                        href={`/admin/guru/${g.id}/create-account`}
-                                                        className="rounded p-1.5 text-success transition hover:bg-green-100"
-                                                        aria-label={`Buat akun untuk ${g.nama_guru}`}
-                                                        title="Buat Akun Login"
-                                                    >
-                                                        <UserPlus className="h-4 w-4" />
-                                                    </Link>
-                                                )}
                                                 {g.user && (
                                                     <button
                                                         type="button"

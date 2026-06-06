@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->seedKelasMataPelajaran();
 });
 
-test('Admin buat guru baru TANPA akun login (akun dibuat terpisah di halaman Manajemen Akun)', function () {
+test('Admin buat guru baru OTOMATIS membuat akun User (username=derived dari nama)', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)->post('/admin/guru', [
@@ -23,6 +23,8 @@ test('Admin buat guru baru TANPA akun login (akun dibuat terpisah di halaman Man
         'mengajar' => [
             ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ]);
 
     $response->assertRedirect('/admin/guru');
@@ -30,10 +32,17 @@ test('Admin buat guru baru TANPA akun login (akun dibuat terpisah di halaman Man
 
     $guru = Guru::where('nama_guru', 'Ibu Test Guru')->first();
     expect($guru)->not->toBeNull();
-    expect($guru->user_id)->toBeNull();
+    expect($guru->user_id)->not->toBeNull();
     expect($guru->mengajar()->count())->toBe(1);
     expect($guru->mengajar()->first()->kelas)->toBe('X-A');
     expect($guru->mengajar()->first()->mata_pelajaran)->toBe('Matematika');
+
+    $user = User::find($guru->user_id);
+    expect($user->username)->toBe('testguru');
+    expect($user->name)->toBe('Ibu Test Guru');
+    expect($user->role)->toBe('guru');
+    expect($user->is_active)->toBeTrue();
+    expect(Hash::check('rahasia123', $user->password))->toBeTrue();
 });
 
 test('Admin buat guru dengan multiple kombinasi mengajar tersimpan', function () {
@@ -46,6 +55,8 @@ test('Admin buat guru dengan multiple kombinasi mengajar tersimpan', function ()
             ['kelas' => 'X-B', 'mata_pelajaran' => 'Matematika'],
             ['kelas' => 'XI-A', 'mata_pelajaran' => 'Matematika'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ]);
 
     $response->assertRedirect('/admin/guru');
@@ -60,48 +71,89 @@ test('Admin tidak bisa buat guru tanpa mengajar (validasi min:1)', function () {
     $response = $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Tanpa Mengajar',
         'mengajar' => [],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ]);
 
     $response->assertSessionHasErrors('mengajar');
     expect(Guru::where('nama_guru', 'Ibu Tanpa Mengajar')->count())->toBe(0);
 });
 
-test('Admin buat akun untuk guru yang sudah ada (tanpa akun)', function () {
+test('Admin buat guru dengan nama duplikat → username auto-increment counter', function () {
     $admin = User::factory()->admin()->create();
-    $guru = Guru::create(['nama_guru' => 'Ibu Lama']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Biologi']);
-    expect($guru->user_id)->toBeNull();
 
-    $response = $this->actingAs($admin)->post("/admin/guru/{$guru->id}/create-account", [
-        'username' => 'guru.lama',
+    User::factory()->guru()->create(['username' => 'sariwahyuni', 'name' => 'Ibu Sari Wahyuni']);
+
+    $this->actingAs($admin)->post('/admin/guru', [
+        'nama_guru' => 'Ibu Sari Wahyuni',
+        'mengajar' => [
+            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+        ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
-    ]);
+    ])->assertRedirect('/admin/guru');
 
-    $response->assertRedirect('/admin/guru');
-    $response->assertSessionHas('success');
-
-    $guru->refresh();
-    expect($guru->user_id)->not->toBeNull();
-    $user = User::find($guru->user_id);
-    expect($user->username)->toBe('guru.lama');
-    expect($user->role)->toBe('guru');
+    $guru = Guru::where('nama_guru', 'Ibu Sari Wahyuni')->where('user_id', '!=', null)->first();
+    expect($guru)->not->toBeNull();
+    expect(User::find($guru->user_id)->username)->toBe('sariwahyuni2');
 });
 
-test('Guru yang sudah punya akun tidak dapat dibuatkan akun lagi', function () {
+test('Admin buat guru dengan password < 6 karakter ditolak', function () {
     $admin = User::factory()->admin()->create();
-    $userGuru = User::factory()->guru()->create();
-    $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Punya Akun']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Kimia']);
 
-    $response = $this->actingAs($admin)->get("/admin/guru/{$guru->id}/create-account");
-    $response->assertNotFound();
+    $response = $this->actingAs($admin)->post('/admin/guru', [
+        'nama_guru' => 'Ibu Pass Lemah',
+        'mengajar' => [
+            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+        ],
+        'password' => 'abc',
+        'password_confirmation' => 'abc',
+    ]);
 
-    $this->actingAs($admin)->post("/admin/guru/{$guru->id}/create-account", [
-        'username' => 'guru.lain',
+    $response->assertSessionHasErrors('password');
+    expect(Guru::where('nama_guru', 'Ibu Pass Lemah')->count())->toBe(0);
+});
+
+test('Admin buat guru dengan konfirmasi password tidak cocok ditolak', function () {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->post('/admin/guru', [
+        'nama_guru' => 'Ibu Mismatch',
+        'mengajar' => [
+            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+        ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia999',
+    ]);
+
+    $response->assertSessionHasErrors('password');
+    expect(Guru::where('nama_guru', 'Ibu Mismatch')->count())->toBe(0);
+});
+
+test('Guru yang baru dibuat bisa login dengan username dan password', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->post('/admin/guru', [
+        'nama_guru' => 'Ibu Login Test',
+        'mengajar' => [
+            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+        ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
-    ])->assertNotFound();
+    ])->assertRedirect('/admin/guru');
+
+    $guru = Guru::where('nama_guru', 'Ibu Login Test')->first();
+    $username = User::find($guru->user_id)->username;
+
+    auth()->logout();
+
+    $this->post('/login', [
+        'username' => $username,
+        'password' => 'rahasia123',
+    ])->assertRedirect();
+
+    expect(auth()->check())->toBeTrue();
+    expect(auth()->user()->role)->toBe('guru');
 });
 
 test('Hapus guru juga menghapus user account terkait (kalau tidak punya nilai)', function () {

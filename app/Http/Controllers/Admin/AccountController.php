@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\AccountRequest;
 use App\Models\Guru;
 use App\Models\Notification;
 use App\Models\Siswa;
@@ -14,6 +13,8 @@ use App\Notifications\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -55,56 +56,46 @@ class AccountController extends Controller
     }
 
     /**
-     * Show the form to create a new user account, listing siswa and guru
-     * records that do not yet have a linked account.
+     * Show the form to create a new admin account.
      *
-     * @return Response Inertia response rendering `admin/accounts/create`.
+     * Only the `admin` role is creatable from this form. Guru and siswa
+     * accounts are created automatically as part of their respective
+     * Tambah Guru / Tambah Siswa flows.
+     *
+     * @return Response Inertia response rendering `admin/accounts/create-admin`.
      */
-    public function create(): Response
+    public function showCreateAdmin(): Response
     {
-        $siswa = Siswa::whereNull('user_id')
-            ->orderBy('nama_siswa')
-            ->get(['nis', 'nama_siswa', 'kelas']);
-
-        $guru = Guru::whereNull('user_id')
-            ->with('mengajar:id_guru,kelas,mata_pelajaran')
-            ->orderBy('nama_guru')
-            ->get();
-
-        return Inertia::render('admin/accounts/create', [
-            'siswa_tanpa_akun' => $siswa,
-            'guru_tanpa_akun' => $guru,
-        ]);
+        return Inertia::render('admin/accounts/create-admin');
     }
 
     /**
-     * Persist a new user account, optionally linking it to an existing
-     * siswa or guru profile (depending on the chosen role).
+     * Persist a new admin account. The admin supplies `username`,
+     * `name`, and `password` directly (no auto-generation).
      *
-     * @param  AccountRequest  $request  The validated form-request.
+     * @param  Request  $request  Current HTTP request; reads `username`, `name`, `password`, and `password_confirmation`.
      * @return RedirectResponse Redirect to the accounts index with a success flash message.
      */
-    public function store(AccountRequest $request): RedirectResponse
+    public function createAdmin(Request $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->validate([
+            'username' => ['required', 'string', 'max:255', Rule::unique(User::class, 'username')],
+            'name' => ['nullable', 'string', 'max:255'],
+            'password' => ['required', 'string', Password::min(6), 'confirmed'],
+        ]);
 
         $user = User::create([
             'username' => $data['username'],
-            'name' => $data['name'],
-            'role' => $data['role'],
+            'name' => $data['name'] ?? null,
+            'role' => User::ROLE_ADMIN,
             'is_active' => true,
             'password' => Hash::make($data['password']),
         ]);
 
-        if ($data['role'] === User::ROLE_SISWA && ! empty($data['nis'])) {
-            Siswa::where('nis', $data['nis'])->update(['user_id' => $user->id]);
-        }
-
-        if ($data['role'] === User::ROLE_GURU && ! empty($data['guru_id'])) {
-            Guru::where('id', $data['guru_id'])->update(['user_id' => $user->id]);
-        }
-
-        return redirect()->route('admin.accounts.index')->with('success', 'Akun berhasil dibuat.');
+        return redirect()->route('admin.accounts.index')->with(
+            'success',
+            "Akun admin {$user->username} berhasil dibuat."
+        );
     }
 
     /**

@@ -1,5 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
-import { ArrowLeft, Save, UserPlus, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -215,18 +215,6 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                     </Form>
                 </CardContent>
             </Card>
-
-            {!hasAccount && (
-                <div className="max-w-3xl mt-4">
-                    <Link
-                        href={`/admin/guru/${guru.id}/create-account`}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary hover:text-white transition"
-                    >
-                        <UserPlus className="h-4 w-4" />
-                        Buat Akun Login untuk {guru.nama_guru}
-                    </Link>
-                </div>
-            )}
         </Container>
     );
 }

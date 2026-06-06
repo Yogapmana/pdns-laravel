@@ -40,17 +40,18 @@ class SiswaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $nis = $this->route('siswa')?->nis;
+        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
             'nis' => [
                 'required',
                 'string',
                 'max:20',
-                Rule::unique(Siswa::class, 'nis')->ignore($nis, 'nis'),
+                Rule::unique(Siswa::class, 'nis')->ignore($this->route('siswa')?->nis, 'nis'),
             ],
             'nama_siswa' => ['required', 'string', 'max:255'],
             'kelas' => ['nullable', 'string', Rule::exists(Kelas::class, 'nama')],
+            'password' => [$isUpdate ? 'nullable' : 'required', 'string', 'min:6', 'confirmed'],
         ];
     }
 
@@ -66,6 +67,9 @@ class SiswaRequest extends FormRequest
             'nis.required' => 'NIS wajib diisi.',
             'nama_siswa.required' => 'Nama siswa wajib diisi.',
             'kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ];
     }
 

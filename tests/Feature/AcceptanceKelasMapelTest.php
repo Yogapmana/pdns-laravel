@@ -180,6 +180,8 @@ test('Siswa form: kelas tidak ada di master ditolak dengan 422', function () {
             'nis' => '00001',
             'nama_siswa' => 'Ahmad',
             'kelas' => 'KELAS-FAKTA-99',
+            'password' => 'rahasia123',
+            'password_confirmation' => 'rahasia123',
         ])
         ->assertSessionHasErrors('kelas');
 });
@@ -193,6 +195,8 @@ test('Guru form mengajar: mata pelajaran tidak ada di master ditolak dengan 422'
             'mengajar' => [
                 ['kelas' => 'X-A', 'mata_pelajaran' => 'MAPEL-FAKTA-99'],
             ],
+            'password' => 'rahasia123',
+            'password_confirmation' => 'rahasia123',
         ])
         ->assertSessionHasErrors('mengajar.0.mata_pelajaran');
 });
@@ -206,6 +210,8 @@ test('Guru form mengajar: kelas tidak ada di master ditolak dengan 422', functio
             'mengajar' => [
                 ['kelas' => 'KELAS-FAKTA-99', 'mata_pelajaran' => 'Matematika'],
             ],
+            'password' => 'rahasia123',
+            'password_confirmation' => 'rahasia123',
         ])
         ->assertSessionHasErrors('mengajar.0.kelas');
 });

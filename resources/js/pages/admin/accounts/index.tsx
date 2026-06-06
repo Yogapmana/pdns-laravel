@@ -90,10 +90,10 @@ export default function AccountsIndex({ accounts, filters }: Props) {
                 title="Manajemen Akun"
                 description={`${accounts.total} akun`}
                 action={
-                    <Link href="/admin/akun/create">
+                    <Link href="/admin/akun/create-admin">
                         <Button>
                             <Plus className="h-4 w-4" />
-                            Buat Akun
+                            Buat Akun Admin
                         </Button>
                     </Link>
                 }

@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
-import { Plus, Edit, Trash2, Search, X, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, Loader2, Info } from 'lucide-react';
 import { useState } from 'react';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,14 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                     </Link>
                 }
             />
+
+            <Alert variant="info" className="mb-4">
+                <span className="flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    Akun login untuk siswa otomatis dibuat saat <strong>Tambah Siswa</strong> (username = NIS). Untuk reset-password atau nonaktifkan akun, buka&nbsp;
+                    <Link href="/admin/akun" className="font-medium underline">Manajemen Akun</Link>.
+                </span>
+            </Alert>
 
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm md:flex-row">
                 <div className="relative flex-1">

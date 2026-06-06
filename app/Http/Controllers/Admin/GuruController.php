@@ -14,8 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -82,24 +80,47 @@ class GuruController extends Controller
     }
 
     /**
-     * Persist a new guru record together with their mengajar combinations.
+     * Persist a new guru record together with their mengajar combinations and
+     * a freshly-generated login account.
      *
-     * Wraps the two writes (`guru` insert and `guru_mengajar` sync) in a
-     * database transaction so that a failure on either side rolls back both.
+     * All three writes (User, Guru, guru_mengajar) are wrapped in a single
+     * database transaction so a failure on any side rolls everything back.
+     * The username is auto-generated from the guru's name (lowercase, with
+     * honorifics stripped and a numeric suffix appended when the chosen
+     * username is already taken). The admin-supplied password is hashed
+     * before storage. The created user is `is_active = true` by default.
      *
-     * @param  GuruRequest  $request  The validated form-request.
-     * @return RedirectResponse Redirect to the guru index with a success flash message.
+     * @param  GuruRequest  $request  The validated form-request (includes `password`).
+     * @return RedirectResponse Redirect to the guru index with a success flash message containing the new username.
      */
     public function store(GuruRequest $request): RedirectResponse
     {
-        $guru = DB::transaction(function () use ($request) {
-            $guru = Guru::create(['nama_guru' => $request->validated()['nama_guru']]);
-            $this->syncMengajar($guru, $request->getMengajar());
+        $data = $request->validated();
+        $username = $this->generateUniqueUsername($data['nama_guru']);
 
-            return $guru;
+        DB::transaction(function () use ($data, $username, $request) {
+            $user = User::create([
+                'username' => $username,
+                'name' => $data['nama_guru'],
+                'role' => User::ROLE_GURU,
+                'is_active' => true,
+                'password' => Hash::make($data['password']),
+            ]);
+
+            $guru = Guru::create([
+                'user_id' => $user->id,
+                'nama_guru' => $data['nama_guru'],
+            ]);
+
+            $this->syncMengajar($guru, $request->getMengajar());
         });
 
-        return redirect()->route('admin.guru.index')->with('success', "Guru {$guru->nama_guru} berhasil ditambahkan dengan ".count($request->getMengajar()).' kombinasi mengajar.');
+        $jumlahMengajar = count($request->getMengajar());
+
+        return redirect()->route('admin.guru.index')->with(
+            'success',
+            "Guru {$data['nama_guru']} berhasil ditambahkan dengan {$jumlahMengajar} kombinasi mengajar. Akun login otomatis dibuat dengan username: {$username}."
+        );
     }
 
     /**
@@ -126,7 +147,9 @@ class GuruController extends Controller
      *
      * Both writes are wrapped in a database transaction. The sync helper
      * deletes the previous `guru_mengajar` rows and recreates them from the
-     * submitted (deduplicated) pairs.
+     * submitted (deduplicated) pairs. The associated login account is not
+     * touched; password resets and account activation are handled in
+     * `Admin/AccountController`.
      *
      * @param  GuruRequest  $request  The validated form-request.
      * @param  Guru  $guru  The guru to update, resolved by route-model binding.
@@ -216,54 +239,42 @@ class GuruController extends Controller
     }
 
     /**
-     * Show the form to create a user account for a guru who does not yet have one.
+     * Generate a unique `users.username` from the guru's display name.
      *
-     * Aborts with 404 when the guru already has a `user_id` set.
+     * Strategy (mirrors `DatabaseSeeder::generateGuruUsername`):
+     *   - lowercase the input
+     *   - split on whitespace
+     *   - drop honorifics (`ibu`, `pak`, `bu`, `bpk`, `bapak`, `ibu.`)
+     *   - concatenate the remaining tokens
      *
-     * @param  Guru  $guru  The guru receiving a new account, resolved by route-model binding.
-     * @return Response Inertia response rendering `admin/guru/create-account`.
+     * If the resulting base is already taken, append `2`, `3`, ... until
+     * a free username is found. Falls back to `guru` when the cleaned
+     * name is empty.
+     *
+     * @param  string  $namaGuru  The display name to derive a username from.
+     * @return string The unique username to insert.
      */
-    public function createAccountForm(Guru $guru): Response
+    private function generateUniqueUsername(string $namaGuru): string
     {
-        abort_if($guru->user_id !== null, 404, 'Guru ini sudah memiliki akun.');
+        $honorifics = ['ibu', 'pak', 'bu', 'bpk', 'bapak', 'ibu.'];
+        $parts = preg_split('/\s+/', strtolower(trim($namaGuru))) ?: [];
+        $parts = array_values(array_filter(
+            $parts,
+            fn (string $p): bool => ! in_array(rtrim($p, '.'), $honorifics, true) && $p !== ''
+        ));
+        $base = implode('', $parts);
+        if ($base === '') {
+            $base = 'guru';
+        }
 
-        return Inertia::render('admin/guru/create-account', [
-            'guru' => $guru,
-        ]);
-    }
+        $username = $base;
+        $counter = 1;
+        while (User::where('username', $username)->exists()) {
+            $counter++;
+            $username = $base.$counter;
+        }
 
-    /**
-     * Persist a new user account for the guru and link it to the guru row.
-     *
-     * Aborts with 404 when the guru already has a `user_id`. The password
-     * is hashed before storage and the new user is created with the
-     * `guru` role and `is_active = true` by default.
-     *
-     * @param  Request  $request  Current HTTP request; reads `username`, `name`, `password`, and `password_confirmation`.
-     * @param  Guru  $guru  The guru receiving a new account, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the guru index with a success flash message containing the new username.
-     */
-    public function createAccount(Request $request, Guru $guru): RedirectResponse
-    {
-        abort_if($guru->user_id !== null, 404, 'Guru ini sudah memiliki akun.');
-
-        $data = $request->validate([
-            'username' => ['required', 'string', 'max:255', Rule::unique(User::class, 'username')],
-            'name' => ['nullable', 'string', 'max:255'],
-            'password' => ['required', 'string', Password::min(6), 'confirmed'],
-        ]);
-
-        $user = User::create([
-            'username' => $data['username'],
-            'name' => $data['name'] ?? $guru->nama_guru,
-            'role' => User::ROLE_GURU,
-            'is_active' => true,
-            'password' => Hash::make($data['password']),
-        ]);
-
-        $guru->update(['user_id' => $user->id]);
-
-        return redirect()->route('admin.guru.index')->with('success', "Akun untuk guru {$guru->nama_guru} berhasil dibuat (username: {$data['username']}).");
+        return $username;
     }
 
     /**

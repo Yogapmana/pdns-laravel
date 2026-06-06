@@ -6,38 +6,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
-type Props = {
-    guru: {
-        id: number;
-        nama_guru: string;
-        mata_pelajaran: string;
-    };
-};
-
-export default function GuruCreateAccount({ guru }: Props) {
+export default function AccountCreateAdmin() {
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/guru" className="text-muted-foreground hover:text-foreground">
+                <Link href="/admin/akun" className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader
-                    title="Buat Akun Login"
-                    description={`Guru: ${guru.nama_guru} (${guru.mata_pelajaran})`}
+                    title="Buat Akun Admin"
+                    description="Daftarkan administrator baru dengan username dan password pilihan Anda"
                 />
             </div>
 
             <Card className="max-w-2xl">
                 <CardContent>
-                    <Form
-                        action={`/admin/guru/${guru.id}/create-account`}
-                        method="post"
-                        className="space-y-4"
-                    >
+                    <Form action="/admin/akun/create-admin" method="post" className="space-y-4">
                         {({ processing, errors }) => (
                             <>
                                 <Alert variant="info">
-                                    Guru dapat login menggunakan username dan password yang dibuat di bawah.
+                                    Username dan password ditentukan oleh admin. Akun akan dibuat dengan role Admin dan status aktif.
                                 </Alert>
 
                                 <div>
@@ -48,7 +36,7 @@ export default function GuruCreateAccount({ guru }: Props) {
                                         id="username"
                                         name="username"
                                         required
-                                        placeholder="contoh: guru.matematika"
+                                        placeholder="contoh: admin.kepsek"
                                         autoComplete="off"
                                     />
                                     <InputError message={errors.username} />
@@ -61,7 +49,7 @@ export default function GuruCreateAccount({ guru }: Props) {
                                     <Input
                                         id="name"
                                         name="name"
-                                        placeholder="Kosongkan jika sama dengan nama guru"
+                                        placeholder="Contoh: Kepala Sekolah"
                                         autoComplete="off"
                                     />
                                     <InputError message={errors.name} />
@@ -102,7 +90,7 @@ export default function GuruCreateAccount({ guru }: Props) {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Membuat Akun...' : 'Buat Akun'}
                                     </Button>
-                                    <Link href="/admin/guru">
+                                    <Link href="/admin/akun">
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>
@@ -115,4 +103,4 @@ export default function GuruCreateAccount({ guru }: Props) {
     );
 }
 
-GuruCreateAccount.layout = { title: 'Buat Akun Guru' };
+AccountCreateAdmin.layout = { title: 'Buat Akun Admin' };

@@ -8,8 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiswaRequest;
 use App\Models\Kelas;
 use App\Models\Siswa;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,21 +72,44 @@ class SiswaController extends Controller
     }
 
     /**
-     * Persist a new siswa record.
+     * Persist a new siswa record together with a freshly-generated login
+     * account.
      *
-     * Validation is delegated to `SiswaRequest` which enforces the unique-NIS
-     * rule and that `kelas` references an existing row in the `kelas` table.
+     * Both writes (User, Siswa) are wrapped in a single database transaction
+     * so a failure on either side rolls back both. The `username` is the
+     * `nis` (mirroring the seeder), `name` is the siswa's display name,
+     * and the `password` is the admin-supplied value from the form. The
+     * new user is `is_active = true` by default.
      *
-     * @param  SiswaRequest  $request  The validated form-request.
-     * @return RedirectResponse Redirect to the siswa index with a success flash message.
+     * @param  SiswaRequest  $request  The validated form-request (includes `password`).
+     * @return RedirectResponse Redirect to the siswa index with a success flash message containing the new username.
      */
     public function store(SiswaRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $nis = $data['nis'];
 
-        Siswa::create($data);
+        DB::transaction(function () use ($data, $nis) {
+            $user = User::create([
+                'username' => $nis,
+                'name' => $data['nama_siswa'],
+                'role' => User::ROLE_SISWA,
+                'is_active' => true,
+                'password' => Hash::make($data['password']),
+            ]);
 
-        return redirect()->route('admin.siswa.index')->with('success', 'Siswa berhasil ditambahkan.');
+            Siswa::create([
+                'nis' => $nis,
+                'user_id' => $user->id,
+                'nama_siswa' => $data['nama_siswa'],
+                'kelas' => $data['kelas'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('admin.siswa.index')->with(
+            'success',
+            "Siswa {$data['nama_siswa']} berhasil ditambahkan. Akun login otomatis dibuat dengan username: {$nis}."
+        );
     }
 
     /**
@@ -106,10 +132,12 @@ class SiswaController extends Controller
     }
 
     /**
-     * Update an existing siswa record.
+     * Update an existing siswa record. The `nis` field is immutable: the
+     * form-request removes it from the payload on PUT/PATCH.
      *
-     * The `nis` field is immutable: `SiswaRequest::validated()` removes it
-     * from the payload when the request method is `PUT`/`PATCH`.
+     * When a non-empty `password` is supplied, the linked login account's
+     * password is reset in the same transaction. Passing an empty password
+     * leaves the existing password unchanged.
      *
      * @param  SiswaRequest  $request  The validated form-request.
      * @param  Siswa  $siswa  The siswa to update, resolved by route-model binding.
@@ -118,8 +146,15 @@ class SiswaController extends Controller
     public function update(SiswaRequest $request, Siswa $siswa): RedirectResponse
     {
         $data = $request->validated();
+        $password = $data['password'] ?? null;
+        unset($data['password']);
 
-        $siswa->update($data);
+        DB::transaction(function () use ($siswa, $data, $password) {
+            $siswa->update($data);
+            if ($password !== null && $siswa->user) {
+                $siswa->user->update(['password' => Hash::make($password)]);
+            }
+        });
 
         return redirect()->route('admin.siswa.index')->with('success', 'Data siswa berhasil diperbarui.');
     }
@@ -133,7 +168,10 @@ class SiswaController extends Controller
      */
     public function destroy(Siswa $siswa): RedirectResponse
     {
-        $siswa->delete();
+        DB::transaction(function () use ($siswa) {
+            $siswa->user?->delete();
+            $siswa->delete();
+        });
 
         return redirect()->route('admin.siswa.index')->with('success', 'Siswa dan seluruh nilai terkait berhasil dihapus.');
     }

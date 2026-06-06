@@ -1,5 +1,5 @@
 import { Form, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,44 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                         </Link>
                                     </p>
                                     <InputError message={errors.kelas} />
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-secondary">
+                                        <Info className="h-4 w-4 text-primary" />
+                                        Akun Login Otomatis
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Username akun akan sama dengan NIS siswa. Anda hanya perlu menentukan password di bawah.
+                                    </p>
+                                    <div>
+                                        <label htmlFor="password" className="block text-sm font-medium text-secondary mb-2">
+                                            Password <span className="text-danger">*</span>
+                                        </label>
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            required
+                                            placeholder="Minimal 6 karakter"
+                                            autoComplete="new-password"
+                                        />
+                                        <InputError message={errors.password} />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="password_confirmation" className="block text-sm font-medium text-secondary mb-2">
+                                            Konfirmasi Password <span className="text-danger">*</span>
+                                        </label>
+                                        <Input
+                                            id="password_confirmation"
+                                            name="password_confirmation"
+                                            type="password"
+                                            required
+                                            placeholder="Ulangi password"
+                                            autoComplete="new-password"
+                                        />
+                                        <InputError message={errors.password_confirmation} />
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-2 pt-4 border-t border-border">

@@ -47,12 +47,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
     Route::delete('/guru/{guru}', [GuruController::class, 'destroy'])->name('guru.destroy');
     Route::patch('/guru/{guru}/toggle-active', [GuruController::class, 'toggleActive'])->name('guru.toggle-active');
-    Route::get('/guru/{guru}/create-account', [GuruController::class, 'createAccountForm'])->name('guru.create-account');
-    Route::post('/guru/{guru}/create-account', [GuruController::class, 'createAccount'])->name('guru.create-account.store');
-
     Route::get('/akun', [AccountController::class, 'index'])->name('accounts.index');
-    Route::get('/akun/create', [AccountController::class, 'create'])->name('accounts.create');
-    Route::post('/akun', [AccountController::class, 'store'])->name('accounts.store');
+    Route::get('/akun/create-admin', [AccountController::class, 'showCreateAdmin'])->name('accounts.create-admin');
+    Route::post('/akun/create-admin', [AccountController::class, 'createAdmin'])->name('accounts.create-admin.store');
     Route::patch('/akun/{user}/toggle-active', [AccountController::class, 'toggleActive'])->name('accounts.toggle-active');
     Route::post('/akun/{user}/reset-password', [AccountController::class, 'resetPassword'])->name('accounts.reset-password');
 

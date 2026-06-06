@@ -163,6 +163,8 @@ test('AC-GM-01: Guru form: kombinasi (kelas, mapel) yang ada di master diterima'
         'mengajar' => [
             ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ])->assertRedirect('/admin/guru');
 
     expect(Guru::where('nama_guru', 'Pak Joko')->first()->mengajar()->count())->toBe(1);
@@ -178,6 +180,8 @@ test('AC-GM-02: Guru form: kombinasi (kelas, mapel) yang TIDAK ada di master DIT
         'mengajar' => [
             ['kelas' => 'X-A', 'mata_pelajaran' => 'Sejarah'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ])->assertSessionHasErrors('mengajar.0.mata_pelajaran');
 
     expect(Guru::where('nama_guru', 'Pak Sejarah')->count())->toBe(0);
@@ -193,6 +197,8 @@ test('AC-GM-03: Guru form: jika kelas belum punya mapel diizinkan, semua mengaja
         'mengajar' => [
             ['kelas' => 'XII-C', 'mata_pelajaran' => 'Matematika'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ])->assertSessionHasErrors('mengajar.0.kelas');
 });
 
@@ -253,6 +259,8 @@ test('AC-GM-07: Kombinasi yang ada di master + duplikat tetap kena error duplika
             ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
             ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
         ],
+        'password' => 'rahasia123',
+        'password_confirmation' => 'rahasia123',
     ])->assertSessionHasErrors('mengajar.1.mata_pelajaran');
 });
 

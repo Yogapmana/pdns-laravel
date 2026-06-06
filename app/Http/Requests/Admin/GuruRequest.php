@@ -48,33 +48,24 @@ class GuruRequest extends FormRequest
      */
     public function rules(): array
     {
-        $guruId = $this->route('guru')?->id;
-        $existingPairs = $guruId
-            ? GuruMengajar::where('id_guru', $guruId)
-                ->get(['kelas', 'mata_pelajaran'])
-                ->map(fn ($m) => $m->kelas.'|'.$m->mata_pelajaran)
-                ->all()
-            : [];
+        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         $rules = [
             'nama_guru' => ['required', 'string', 'max:255'],
             'mengajar' => ['required', 'array', 'min:1'],
+            'password' => [$isUpdate ? 'nullable' : 'required', 'string', 'min:6', 'confirmed'],
         ];
 
-        foreach (range(0, 50) as $i) {
-            $input = $this->input("mengajar.$i");
-            if ($input === null && ! $this->has("mengajar.$i")) {
+        foreach ($this->input('mengajar', []) as $i => $row) {
+            if (! is_array($row)) {
                 continue;
             }
-
             $kelasKey = "mengajar.$i.kelas";
             $mapelKey = "mengajar.$i.mata_pelajaran";
 
             $rules[$kelasKey] = ['required', 'string', Rule::exists(Kelas::class, 'nama')];
             $rules[$mapelKey] = ['required', 'string', Rule::exists(MataPelajaran::class, 'nama')];
         }
-
-        $this->existingMengajarPairs = $existingPairs;
 
         return $rules;
     }
@@ -95,6 +86,9 @@ class GuruRequest extends FormRequest
             'mengajar.*.kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
             'mengajar.*.mata_pelajaran.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
             'mengajar.*.mata_pelajaran.required' => 'Mata pelajaran wajib dipilih.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ];
     }
 
