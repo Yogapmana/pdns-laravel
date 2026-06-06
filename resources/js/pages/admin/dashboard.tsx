@@ -10,6 +10,7 @@ import {
     Filter,
     BarChart3,
     Trophy,
+    ArrowUpDown,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Alert } from '@/components/ui/alert';
