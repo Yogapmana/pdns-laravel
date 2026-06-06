@@ -1,5 +1,13 @@
 import { router } from '@inertiajs/react';
-import { Search, FileDown, Globe, FileSpreadsheet, FileText, CheckSquare, Square } from 'lucide-react';
+import {
+    Search,
+    FileDown,
+    Globe,
+    FileSpreadsheet,
+    FileText,
+    CheckSquare,
+    Square,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -19,7 +27,11 @@ function buildUrl(endpoint: string, kelas: string[], mapel: string[]) {
 }
 
 function toggle(list: string[], setter: (v: string[]) => void, value: string) {
-    setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+    setter(
+        list.includes(value)
+            ? list.filter((v) => v !== value)
+            : [...list, value],
+    );
 }
 
 export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
@@ -28,17 +40,25 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
     const [selectedMapel, setSelectedMapel] = useState<string[]>([]);
 
     function selectAllKelas() {
-        setSelectedKelas(selectedKelas.length === daftar_kelas.length ? [] : [...daftar_kelas]);
+        setSelectedKelas(
+            selectedKelas.length === daftar_kelas.length
+                ? []
+                : [...daftar_kelas],
+        );
     }
 
     function selectAllMapel() {
-        setSelectedMapel(selectedMapel.length === daftar_mapel.length ? [] : [...daftar_mapel]);
+        setSelectedMapel(
+            selectedMapel.length === daftar_mapel.length
+                ? []
+                : [...daftar_mapel],
+        );
     }
 
     function preview() {
         if (selectedKelas.length === 0) {
-return;
-}
+            return;
+        }
 
         router.get('/admin/laporan/preview', {
             kelas: selectedKelas,
@@ -48,26 +68,39 @@ return;
 
     function exportTo(endpoint: string) {
         if (selectedKelas.length === 0) {
-return;
-}
+            return;
+        }
 
         window.location.href = buildUrl(endpoint, selectedKelas, selectedMapel);
     }
 
     return (
         <Container>
-            <PageHeader title="Laporan Nilai" description="Generate rekapitulasi nilai per kelas & mata pelajaran" />
+            <PageHeader
+                title="Laporan Nilai"
+                description="Generate rekapitulasi nilai per kelas & mata pelajaran"
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card>
                     <CardContent>
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3 flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-navy">Kelas <span className="text-danger">*</span></h3>
-                                <p className="text-xs text-muted-foreground">Pilih 1 atau lebih kelas.</p>
+                                <h3 className="text-sm font-semibold text-navy">
+                                    Kelas <span className="text-danger">*</span>
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Pilih 1 atau lebih kelas.
+                                </p>
                             </div>
-                            <Button onClick={selectAllKelas} variant="outline" size="sm">
-                                {selectedKelas.length === daftar_kelas.length ? 'Hapus Semua' : 'Pilih Semua'}
+                            <Button
+                                onClick={selectAllKelas}
+                                variant="outline"
+                                size="sm"
+                            >
+                                {selectedKelas.length === daftar_kelas.length
+                                    ? 'Hapus Semua'
+                                    : 'Pilih Semua'}
                             </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -78,40 +111,55 @@ return;
                                     <button
                                         key={k}
                                         type="button"
-                                        onClick={() => toggle(selectedKelas, setSelectedKelas, k)}
+                                        onClick={() =>
+                                            toggle(
+                                                selectedKelas,
+                                                setSelectedKelas,
+                                                k,
+                                            )
+                                        }
                                         className={cn(
-                                            'flex items-center gap-2 p-2.5 rounded-lg border text-sm transition text-left',
+                                            'flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm transition',
                                             isSelected
-                                                ? 'border-primary bg-blue-50 text-primary font-semibold'
+                                                ? 'border-primary bg-blue-50 font-semibold text-primary'
                                                 : 'border-border hover:bg-surface',
                                         )}
                                     >
-                                        {isSelected ? <CheckSquare className="h-4 w-4 flex-shrink-0" /> : <Square className="h-4 w-4 flex-shrink-0" />}
+                                        {isSelected ? (
+                                            <CheckSquare className="h-4 w-4 flex-shrink-0" />
+                                        ) : (
+                                            <Square className="h-4 w-4 flex-shrink-0" />
+                                        )}
                                         {k}
                                     </button>
                                 );
                             })}
                         </div>
-                        {selectedKelas.length > 0 && (
-                            <p className="text-xs text-muted-foreground mt-3">
-                                Dipilih: {selectedKelas.join(', ')}
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent>
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3 flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-navy">Mata Pelajaran (opsional)</h3>
-                                <p className="text-xs text-muted-foreground">Kosongkan untuk semua mapel.</p>
+                                <h3 className="text-sm font-semibold text-navy">
+                                    Mata Pelajaran (opsional)
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Kosongkan untuk semua mapel.
+                                </p>
                             </div>
-                            <Button onClick={selectAllMapel} variant="outline" size="sm">
-                                {selectedMapel.length === daftar_mapel.length ? 'Hapus Semua' : 'Pilih Semua'}
+                            <Button
+                                onClick={selectAllMapel}
+                                variant="outline"
+                                size="sm"
+                            >
+                                {selectedMapel.length === daftar_mapel.length
+                                    ? 'Hapus Semua'
+                                    : 'Pilih Semua'}
                             </Button>
                         </div>
-                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                        <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto">
                             {daftar_mapel.map((m) => {
                                 const isSelected = selectedMapel.includes(m);
 
@@ -119,25 +167,30 @@ return;
                                     <button
                                         key={m}
                                         type="button"
-                                        onClick={() => toggle(selectedMapel, setSelectedMapel, m)}
+                                        onClick={() =>
+                                            toggle(
+                                                selectedMapel,
+                                                setSelectedMapel,
+                                                m,
+                                            )
+                                        }
                                         className={cn(
-                                            'flex items-center gap-2 p-2.5 rounded-lg border text-sm transition text-left',
+                                            'flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm transition',
                                             isSelected
-                                                ? 'border-primary bg-blue-50 text-primary font-semibold'
+                                                ? 'border-primary bg-blue-50 font-semibold text-primary'
                                                 : 'border-border hover:bg-surface',
                                         )}
                                     >
-                                        {isSelected ? <CheckSquare className="h-4 w-4 flex-shrink-0" /> : <Square className="h-4 w-4 flex-shrink-0" />}
+                                        {isSelected ? (
+                                            <CheckSquare className="h-4 w-4 flex-shrink-0" />
+                                        ) : (
+                                            <Square className="h-4 w-4 flex-shrink-0" />
+                                        )}
                                         {m}
                                     </button>
                                 );
                             })}
                         </div>
-                        {selectedMapel.length > 0 && (
-                            <p className="text-xs text-muted-foreground mt-3">
-                                Dipilih: {selectedMapel.join(', ')}
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -145,38 +198,57 @@ return;
             <Card>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
-                        <Button onClick={preview} disabled={selectedKelas.length === 0}>
+                        <Button
+                            onClick={preview}
+                            disabled={selectedKelas.length === 0}
+                        >
                             <Search className="h-4 w-4" />
                             Generate Laporan
                         </Button>
-                        <span className="border-l border-border mx-1" />
-                        <Button onClick={() => exportTo('/admin/laporan/export/pdf')} disabled={selectedKelas.length === 0} variant="success">
+                        <span className="mx-1 border-l border-border" />
+                        <Button
+                            onClick={() =>
+                                exportTo('/admin/laporan/export/pdf')
+                            }
+                            disabled={selectedKelas.length === 0}
+                            variant="success"
+                        >
                             <FileDown className="h-4 w-4" />
                             PDF
                         </Button>
-                        <Button onClick={() => exportTo('/admin/laporan/export/xlsx')} disabled={selectedKelas.length === 0} variant="primary">
+                        <Button
+                            onClick={() =>
+                                exportTo('/admin/laporan/export/xlsx')
+                            }
+                            disabled={selectedKelas.length === 0}
+                            variant="primary"
+                        >
                             <FileSpreadsheet className="h-4 w-4" />
                             Excel
                         </Button>
-                        <Button onClick={() => exportTo('/admin/laporan/export/csv')} disabled={selectedKelas.length === 0} variant="outline">
+                        <Button
+                            onClick={() =>
+                                exportTo('/admin/laporan/export/csv')
+                            }
+                            disabled={selectedKelas.length === 0}
+                            variant="outline"
+                        >
                             <FileText className="h-4 w-4" />
                             CSV
                         </Button>
-                        <Button onClick={() => exportTo('/admin/laporan/export/html')} disabled={selectedKelas.length === 0} variant="outline">
+                        <Button
+                            onClick={() =>
+                                exportTo('/admin/laporan/export/html')
+                            }
+                            disabled={selectedKelas.length === 0}
+                            variant="outline"
+                        >
                             <Globe className="h-4 w-4" />
                             HTML
                         </Button>
                     </div>
                 </CardContent>
             </Card>
-
-            <Alert variant="info">
-                <ul className="list-disc list-inside space-y-1 text-xs font-normal">
-                    <li>Pilih ≥1 kelas. Pilih mapel jika perlu (kosongkan = semua).</li>
-                    <li>Klik <strong>Generate Laporan</strong> untuk pratinjau tabel interaktif.</li>
-                    <li>Gunakan tombol <strong>Ekspor</strong> untuk mengunduh laporan PDF/Excel/CSV/HTML.</li>
-                </ul>
-            </Alert>
         </Container>
     );
 }

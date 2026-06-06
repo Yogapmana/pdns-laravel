@@ -8,6 +8,7 @@ import {
     AlertTriangle,
     BarChart3,
     Inbox,
+    FileSpreadsheet,
 } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -332,24 +333,15 @@ export default function SiswaNilai({
                 )}
             </div>
 
-            <Alert variant="info">
-                <span className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Halaman ini hanya dapat dilihat, tidak dapat diubah.
-                </span>
-            </Alert>
-
-
-
             {!hasData ? (
-                <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-24 shadow-sm">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-primary ring-8 ring-blue-50/50">
-                        <Inbox className="h-8 w-8" />
+                <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-slate-50/50 py-16 text-center">
+                    <div className="rounded-full bg-slate-100 p-4">
+                        <FileSpreadsheet className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="mb-1 text-lg font-bold text-navy">
+                    <h3 className="mt-4 text-lg font-semibold text-secondary">
                         Belum Ada Nilai
                     </h3>
-                    <p className="max-w-sm text-center text-sm text-muted-foreground">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                         Saat ini belum ada nilai mata pelajaran yang diinput
                         oleh guru untuk Anda. Silakan periksa kembali nanti.
                     </p>

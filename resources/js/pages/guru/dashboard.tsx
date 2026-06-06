@@ -259,28 +259,34 @@ export default function GuruDashboard({
                 <Card>
                     <CardHeader>Ringkasan Kelulusan</CardHeader>
                     <CardContent>
-                        <div className="space-y-3">
-                            <StatCard
-                                label="Lulus (≥ KKM 70)"
-                                value={stats.lulus}
-                                icon={<CheckCircle className="h-4 w-4" />}
-                                color="success"
-                                variant="colored"
-                            />
-                            <StatCard
-                                label="Tidak Lulus (< KKM 70)"
-                                value={stats.tidak_lulus}
-                                icon={<XCircle className="h-4 w-4" />}
-                                color="danger"
-                                variant="colored"
-                            />
-                            <StatCard
-                                label="Rata-rata Nilai"
-                                value={stats.rata_rata}
-                                icon={<TrendingUp className="h-4 w-4" />}
-                                color="primary"
-                                variant="colored"
-                            />
+                        <div className="flex flex-col divide-y divide-slate-100">
+                            <div className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                        <CheckCircle className="h-4 w-4" />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-600">Lulus (≥ KKM 70)</span>
+                                </div>
+                                <span className="text-xl font-bold text-emerald-600">{stats.lulus}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                                        <XCircle className="h-4 w-4" />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-600">Tidak Lulus (&lt; KKM 70)</span>
+                                </div>
+                                <span className="text-xl font-bold text-rose-600">{stats.tidak_lulus}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                        <TrendingUp className="h-4 w-4" />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-600">Rata-rata Nilai</span>
+                                </div>
+                                <span className="text-xl font-bold text-blue-600">{stats.rata_rata}</span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

@@ -154,12 +154,6 @@ export default function AdminNilaiIndex({
         <div className="space-y-6">
             <PageHeader title="Manajemen Nilai" />
 
-            <Alert variant="info">
-                Fitur ini mengubah status <strong>Final</strong> menjadi{' '}
-                <strong>Draft</strong> agar guru dapat mengedit nilai kembali.
-                Tindakan ini tidak menghapus data dan tercatat di log audit.
-            </Alert>
-
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm md:flex-row">
                 <div className="relative flex-1">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

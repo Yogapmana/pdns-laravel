@@ -108,14 +108,6 @@ export default function GuruIndex({
                 }
             />
 
-            <Alert variant="info" className="mb-4">
-                <span className="flex items-center gap-2">
-                    <Info className="h-4 w-4" />
-                    Akun login untuk guru otomatis dibuat saat <strong>Tambah Guru</strong>. Untuk reset-password atau nonaktifkan akun, buka&nbsp;
-                    <Link href="/admin/akun" className="font-medium underline">Manajemen Akun</Link>.
-                </span>
-            </Alert>
-
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm md:flex-row">
                 <div className="relative flex-1">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
