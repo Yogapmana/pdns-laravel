@@ -6,10 +6,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
-use App\Models\Notification;
 use App\Models\Siswa;
 use App\Models\User;
-use App\Notifications\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -107,7 +105,7 @@ class AccountController extends Controller
      * @param  User  $user  The target account, resolved by route-model binding.
      * @return RedirectResponse Redirect back with a success or error flash message.
      */
-    public function toggleActive(User $user, NotificationDispatcher $dispatcher): RedirectResponse
+    public function toggleActive(User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
@@ -116,14 +114,6 @@ class AccountController extends Controller
         $user->update(['is_active' => ! $user->is_active]);
 
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
-
-        $dispatcher->send(
-            $user,
-            Notification::TYPE_AKUN_DIUBAH,
-            'Status akun Anda telah diubah',
-            sprintf('Akun Anda saat ini berstatus %s. Silakan hubungi admin jika ini bukan permintaan Anda.', $status),
-            null,
-        );
 
         return back()->with('success', "Akun berhasil {$status}.");
     }
@@ -135,21 +125,13 @@ class AccountController extends Controller
      * @param  User  $user  The target account, resolved by route-model binding.
      * @return RedirectResponse Redirect back with a success flash message naming the affected username.
      */
-    public function resetPassword(Request $request, User $user, NotificationDispatcher $dispatcher): RedirectResponse
+    public function resetPassword(Request $request, User $user): RedirectResponse
     {
         $request->validate([
             'password' => ['required', 'string', 'min:6'],
         ]);
 
         $user->update(['password' => Hash::make($request->input('password'))]);
-
-        $dispatcher->send(
-            $user,
-            Notification::TYPE_AKUN_DIUBAH,
-            'Password Anda telah direset',
-            'Password akun Anda baru saja direset oleh administrator. Jika ini bukan permintaan Anda, segera hubungi admin.',
-            null,
-        );
 
         return back()->with('success', "Password untuk {$user->username} berhasil direset.");
     }

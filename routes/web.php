@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
 use App\Http\Controllers\Guru\NilaiController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\Siswa\NilaiController as SiswaNilaiController;
 use App\Http\Controllers\Siswa\RaporController as SiswaRaporController;
@@ -82,22 +81,4 @@ Route::prefix('siswa')->middleware(['auth', 'role:siswa'])->name('siswa.')->grou
     Route::get('/nilai', [SiswaNilaiController::class, 'index'])->name('nilai.index');
     Route::get('/statistik', [SiswaNilaiController::class, 'statistik'])->name('statistik.index');
     Route::get('/rapor/pdf', [SiswaRaporController::class, 'pdf'])->name('rapor.pdf');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Notification bell endpoints
-|--------------------------------------------------------------------------
-|
-| JSON endpoints used by the header bell. All three roles can hit
-| them, so they sit outside the admin/guru/siswa prefix groups.
-| `GET /notifications/unread-count` is polled every 60s by the
-| frontend (paused while the tab is hidden).
-*/
-
-Route::middleware(['auth', 'role:admin,guru,siswa'])->group(function () {
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
-    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
 });

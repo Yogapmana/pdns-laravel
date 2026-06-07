@@ -4,7 +4,6 @@ import { useState, useSyncExternalStore } from 'react';
 import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
-import { NotificationBell } from '@/components/notification-bell';
 
 type NavItem = {
     label: string;
@@ -346,8 +345,6 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                             <button type="button" className="md:hidden text-muted-foreground hover:text-navy transition p-2 rounded-full hover:bg-slate-100" aria-label="Cari" title="Cari">
                                 <Search className="h-4 w-4" />
                             </button>
-
-                            <NotificationBell />
 
                             <div className="w-px h-6 bg-border hidden md:block mx-1"></div>
                             

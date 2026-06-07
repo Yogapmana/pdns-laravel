@@ -20,12 +20,9 @@ class DashboardController extends Controller
      *
      * Aggregates the guru's mengajar combinations, the total siswa taught,
      * overall nilai counters (total, draft, final, lulus, tidak_lulus, average),
-     * a per-combo breakdown (jumlah_siswa, jumlah_input, jumlah_final,
+     * and a per-combo breakdown (jumlah_siswa, jumlah_input, jumlah_final,
      * jumlah_draft) so the guru can see exactly which (kelas, mapel) pairs
-     * still need work, and two notifikasi lists surfaced as alert cards at
-     * the top of the page: combos that have not been fully inputed yet, and
-     * combos that are complete but still in Draft status (i.e. awaiting
-     * Validasi Final).
+     * still need work.
      *
      * @return Response Inertia response rendering `guru/dashboard`.
      */
@@ -47,7 +44,6 @@ class DashboardController extends Controller
 
         $mengajarList = $guru->mengajar()->orderBy('kelas')->orderBy('mata_pelajaran')->get();
         $perComboStats = $this->buildPerComboStats($guru);
-        $notifikasi = $this->buildNotifikasi($guru, $perComboStats);
 
         return Inertia::render('guru/dashboard', [
             'guru' => $guru,
@@ -62,7 +58,6 @@ class DashboardController extends Controller
             ],
             'mengajar' => $mengajarList,
             'per_combo_stats' => $perComboStats,
-            'notifikasi' => $notifikasi,
         ]);
     }
 
@@ -118,44 +113,5 @@ class DashboardController extends Controller
         }
 
         return $stats;
-    }
-
-    /**
-     * Build the two notifikasi lists for the guru's mengajar combos.
-     *
-     * A combo is considered:
-     *   - "belum_diinput" (yellow) when at least one siswa has no nilai row yet.
-     *   - "masih_draft"   (red)    when all siswa have a nilai row but the
-     *                                 combo has not been validated to Final
-     *                                 (i.e. any row still has status_validasi = Draft).
-     *
-     * Combos with no siswa at all (e.g. brand-new empty kelas) are
-     * suppressed from both lists because there is nothing to input.
-     *
-     * @param  Guru  $guru  The authenticated guru.
-     * @param  array<int, array<string, mixed>>  $perComboStats  Output of {@see self::buildPerComboStats()}.
-     * @return array{belum_diinput: array<int, array<string, mixed>>, masih_draft: array<int, array<string, mixed>>}
-     */
-    private function buildNotifikasi(Guru $guru, array $perComboStats): array
-    {
-        $belumDiinput = [];
-        $masihDraft = [];
-
-        foreach ($perComboStats as $combo) {
-            if ($combo['jumlah_siswa'] === 0) {
-                continue;
-            }
-
-            if ($combo['jumlah_input'] < $combo['jumlah_siswa']) {
-                $belumDiinput[] = $combo + ['sisa' => $combo['jumlah_siswa'] - $combo['jumlah_input']];
-            } elseif ($combo['jumlah_draft'] > 0) {
-                $masihDraft[] = $combo;
-            }
-        }
-
-        return [
-            'belum_diinput' => $belumDiinput,
-            'masih_draft' => $masihDraft,
-        ];
     }
 }

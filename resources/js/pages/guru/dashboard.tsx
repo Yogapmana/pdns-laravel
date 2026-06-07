@@ -11,7 +11,6 @@ import {
     Edit3,
     Lock,
 } from 'lucide-react';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -47,24 +46,12 @@ type PerCombo = {
     jumlah_draft: number;
 };
 
-type NotifikasiItem = PerCombo & { sisa?: number };
-
-type Notifikasi = {
-    belum_diinput: NotifikasiItem[];
-    masih_draft: NotifikasiItem[];
-};
-
 type Props = {
     guru: Guru;
     stats: Stats;
     mengajar: Mengajar[];
     per_combo_stats: PerCombo[];
-    notifikasi: Notifikasi;
 };
-
-function formatComboList(items: NotifikasiItem[]): string {
-    return items.map((it) => `${it.mata_pelajaran} ${it.kelas}`).join(', ');
-}
 
 function comboStateLabel(combo: PerCombo): {
     label: string;
@@ -98,17 +85,12 @@ export default function GuruDashboard({
     guru,
     stats,
     per_combo_stats,
-    notifikasi,
 }: Props) {
     useFlashToast();
 
     const mengajar = guru.mengajar ?? [];
     const totalKelas = new Set(mengajar.map((m) => m.kelas)).size;
     const totalMapel = new Set(mengajar.map((m) => m.mata_pelajaran)).size;
-
-    const belumDiinput = notifikasi?.belum_diinput ?? [];
-    const masihDraft = notifikasi?.masih_draft ?? [];
-    const adaNotifikasi = belumDiinput.length > 0 || masihDraft.length > 0;
 
     const comboFinal = per_combo_stats.filter(
         (c) => c.jumlah_siswa > 0 && c.jumlah_final === c.jumlah_siswa,
@@ -139,81 +121,6 @@ export default function GuruDashboard({
                     </Link>
                 }
             />
-
-            {adaNotifikasi && (
-                <div className="mb-6 flex flex-col gap-4">
-                    {belumDiinput.length > 0 && (
-                        <Alert variant="warning">
-                            <div className="flex flex-col gap-2">
-                                <p>
-                                    Nilai {belumDiinput.length} kelas (
-                                    {formatComboList(belumDiinput)}){' '}
-                                    <strong>belum lengkap diinput</strong>.
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {belumDiinput.map((it) => (
-                                        <Link
-                                            key={it.id_mengajar}
-                                            href={`/guru/input-nilai?kelas=${encodeURIComponent(it.kelas)}&mata_pelajaran=${encodeURIComponent(it.mata_pelajaran)}`}
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-yellow-300 bg-white px-2.5 py-1 text-xs font-medium text-yellow-900 transition hover:bg-yellow-100"
-                                        >
-                                            <Badge
-                                                variant="info"
-                                                className="!px-1.5 !py-0 !text-[10px]"
-                                            >
-                                                {it.kelas}
-                                            </Badge>
-                                            <span>{it.mata_pelajaran}</span>
-                                            <span className="text-yellow-700">
-                                                ({it.jumlah_input}/
-                                                {it.jumlah_siswa})
-                                            </span>
-                                            <ChevronRight className="h-3 w-3" />
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </Alert>
-                    )}
-
-                    {masihDraft.length > 0 && (
-                        <Alert variant="error">
-                            <div className="flex flex-col gap-2">
-                                <p>
-                                    Nilai {masihDraft.length} kelas (
-                                    {formatComboList(masihDraft)}) sudah lengkap
-                                    namun <strong>masih Draft</strong>. Silakan
-                                    lakukan Validasi Final.
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {masihDraft.map((it) => (
-                                        <Link
-                                            key={it.id_mengajar}
-                                            href={`/guru/input-nilai?kelas=${encodeURIComponent(it.kelas)}&mata_pelajaran=${encodeURIComponent(it.mata_pelajaran)}`}
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-900 transition hover:bg-red-100"
-                                        >
-                                            <Badge
-                                                variant="info"
-                                                className="!px-1.5 !py-0 !text-[10px]"
-                                            >
-                                                {it.kelas}
-                                            </Badge>
-                                            <span>{it.mata_pelajaran}</span>
-                                            <Badge
-                                                variant="warning"
-                                                className="!px-1.5 !py-0 !text-[10px]"
-                                            >
-                                                {it.jumlah_draft} Draft
-                                            </Badge>
-                                            <ChevronRight className="h-3 w-3" />
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </Alert>
-                    )}
-                </div>
-            )}
 
             <Card>
                 <CardHeader>Ringkasan Nilai</CardHeader>
