@@ -86,6 +86,14 @@ class RaporController extends Controller
             'kkm' => Nilai::KKM,
             'tanggal_cetak' => now()->translatedFormat('d F Y'),
             'tahun_ajaran' => $tahunAjaran,
+            'semester' => $this->guessSemester(),
+            'logo_base64' => $this->getLogoBase64(),
+            'npsn' => config('pdns.sekolah.npsn', '20312345'),
+            'alamat_sekolah' => config('pdns.sekolah.alamat', 'Jl. Ir. Sutami No. 17, Surakarta'),
+            'kepala_sekolah' => config('pdns.sekolah.kepala', 'Drs. H. Kepala Sekolah, M.Pd.'),
+            'nip_kepsek' => config('pdns.sekolah.nip_kepsek', '—'),
+            'wali_kelas' => '—',
+            'next_kelas' => $this->guessNextKelas($siswa->kelas),
         ];
 
         $pdf = Pdf::loadView('reports.rapor-pdf', $data)->setPaper('a4', 'portrait');
@@ -122,5 +130,71 @@ class RaporController extends Controller
         }
 
         return ($year - 1).'/'.$year;
+    }
+
+    /**
+     * Guess the active semester (Ganjil = Jul-Jan, Genap = Feb-Jun).
+     *
+     * @return string Either `Ganjil` or `Genap`.
+     */
+    private function guessSemester(): string
+    {
+        $month = (int) now()->format('n');
+
+        return $month >= 7 || $month <= 1 ? 'Ganjil' : 'Genap';
+    }
+
+    /**
+     * Read the rapor-sized logo and return its base64 string for inline
+     * embedding in the PDF (avoids DomPDF remote/file path issues).
+     *
+     * @return string|null The base64 payload, or null when the file is missing.
+     */
+    private function getLogoBase64(): ?string
+    {
+        $path = public_path('brand/logo-sman7-rapor.png');
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        return base64_encode(file_get_contents($path));
+    }
+
+    /**
+     * Compute the next kelas label (e.g. `X-A` -> `XI-A`, `XII-A` -> `LULUS`).
+     *
+     * @return string The next kelas label, or `LULUS` for grade-12.
+     */
+    private function guessNextKelas(?string $kelas): string
+    {
+        if (! is_string($kelas) || $kelas === '') {
+            return '—';
+        }
+
+        $romanMap = [
+            'X' => 'XI',
+            'XI' => 'XII',
+            'XII' => null,
+        ];
+
+        if (preg_match('/^([X]+|XI{0,2})\s*[-]?\s*(.*)$/u', $kelas, $m) === 1) {
+            $current = strtoupper($m[1]);
+            $suffix = $m[2] ?? '';
+
+            if (! array_key_exists($current, $romanMap)) {
+                return '—';
+            }
+
+            $next = $romanMap[$current];
+
+            if ($next === null) {
+                return 'LULUS';
+            }
+
+            return $next.($suffix !== '' ? '-'.$suffix : '');
+        }
+
+        return '—';
     }
 }
