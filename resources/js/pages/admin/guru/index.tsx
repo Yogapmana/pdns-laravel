@@ -7,9 +7,10 @@ import {
     X,
     Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Drawer } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
@@ -74,6 +75,7 @@ export default function GuruIndex({
         only: ['guru', 'filters'],
     });
 
+    const [selected, setSelected] = useState<Guru | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Guru | null>(null);
 
     function doDelete() {
@@ -85,6 +87,29 @@ export default function GuruIndex({
             onSuccess: () => setDeleteTarget(null),
         });
     }
+
+    function closeDrawer() {
+        setSelected(null);
+    }
+
+    const mengajarByKelas = useMemo(() => {
+        if (!selected) {
+            return [];
+        }
+        const groups = new Map<string, string[]>();
+        for (const m of selected.mengajar) {
+            if (!groups.has(m.kelas)) {
+                groups.set(m.kelas, []);
+            }
+            groups.get(m.kelas)?.push(m.mata_pelajaran);
+        }
+        return Array.from(groups.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([kelas, mapels]) => ({
+                kelas,
+                mapels: mapels.sort((a, b) => a.localeCompare(b)),
+            }));
+    }, [selected]);
 
     return (
         <Container>
@@ -187,99 +212,96 @@ export default function GuruIndex({
                                     colSpan={5}
                                 />
                             ) : (
-                                guru.data.map((g, i) => (
-                                    <tr
-                                        key={g.id}
-                                        className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} transition-colors hover:bg-blue-50`}
-                                    >
-                                        <td className="px-4 py-3">
-                                            <div className="font-medium">
-                                                {g.nama_guru}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-1">
+                                guru.data.map((g, i) => {
+                                    const kelasCount = new Set(g.mengajar.map((m) => m.kelas)).size;
+                                    const mapelCount = new Set(g.mengajar.map((m) => m.mata_pelajaran)).size;
+
+                                    return (
+                                        <tr
+                                            key={g.id}
+                                            onClick={() => setSelected(g)}
+                                            className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} cursor-pointer transition-colors hover:bg-blue-50`}
+                                        >
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium">
+                                                    {g.nama_guru}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
                                                 {g.mengajar.length === 0 ? (
                                                     <span className="text-xs text-muted-foreground">
                                                         Belum ada
                                                     </span>
                                                 ) : (
-                                                    g.mengajar.map((m) => (
-                                                        <div
-                                                            key={m.id}
-                                                            className="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700"
-                                                        >
-                                                            <Badge
-                                                                variant="neutral"
-                                                                className="py-0 text-[10px]"
-                                                            >
-                                                                {m.kelas}
-                                                            </Badge>
-                                                            <span>
-                                                                {
-                                                                    m.mata_pelajaran
-                                                                }
-                                                            </span>
+                                                    <div>
+                                                        <div className="text-sm font-medium text-navy">
+                                                            {g.mengajar.length} mengajar
                                                         </div>
-                                                    ))
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {kelasCount} kelas · {mapelCount} mapel
+                                                        </div>
+                                                    </div>
                                                 )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center font-mono text-xs">
-                                            {g.user?.username ?? (
-                                                <span className="text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {g.user ? (
-                                                g.user.is_active ? (
-                                                    <Badge variant="success">
-                                                        Aktif
-                                                    </Badge>
+                                            </td>
+                                            <td className="px-4 py-3 text-center font-mono text-xs">
+                                                {g.user?.username ?? (
+                                                    <span className="text-muted-foreground">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {g.user ? (
+                                                    g.user.is_active ? (
+                                                        <Badge variant="success">
+                                                            Aktif
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="warning">
+                                                            Nonaktif
+                                                        </Badge>
+                                                    )
                                                 ) : (
-                                                    <Badge variant="warning">
-                                                        Nonaktif
+                                                    <Badge variant="neutral">
+                                                        Tanpa Akun
                                                     </Badge>
-                                                )
-                                            ) : (
-                                                <Badge variant="neutral">
-                                                    Tanpa Akun
-                                                </Badge>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <Link
-                                                    href={`/admin/guru/${g.id}/edit`}
-                                                    className="rounded p-1.5 text-primary transition hover:bg-blue-100"
-                                                    aria-label={`Edit ${g.nama_guru}`}
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div
+                                                    className="flex items-center justify-center gap-1"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <Edit className="h-4 w-4" />
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setDeleteTarget(g)
-                                                    }
-                                                    className="rounded p-1.5 text-danger transition hover:bg-red-100"
-                                                    aria-label={`Hapus ${g.nama_guru}`}
-                                                    title={
-                                                        g.nilai_count > 0
-                                                            ? 'Tidak dapat dihapus (sudah punya nilai)'
-                                                            : 'Hapus'
-                                                    }
-                                                    disabled={g.nilai_count > 0}
-                                                >
-                                                    <Trash2
-                                                        className={`h-4 w-4 ${g.nilai_count > 0 ? 'opacity-30' : ''}`}
-                                                    />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                                    <Link
+                                                        href={`/admin/guru/${g.id}/edit`}
+                                                        className="rounded p-1.5 text-primary transition hover:bg-blue-100"
+                                                        aria-label={`Edit ${g.nama_guru}`}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setDeleteTarget(g)
+                                                        }
+                                                        className="rounded p-1.5 text-danger transition hover:bg-red-100"
+                                                        aria-label={`Hapus ${g.nama_guru}`}
+                                                        title={
+                                                            g.nilai_count > 0
+                                                                ? 'Tidak dapat dihapus (sudah punya nilai)'
+                                                                : 'Hapus'
+                                                        }
+                                                        disabled={g.nilai_count > 0}
+                                                    >
+                                                        <Trash2
+                                                            className={`h-4 w-4 ${g.nilai_count > 0 ? 'opacity-30' : ''}`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -292,6 +314,114 @@ export default function GuruIndex({
                     links={guru.links}
                 />
             </DataTable>
+
+            <Drawer
+                open={!!selected}
+                onClose={closeDrawer}
+                title="Detail Guru"
+                description={selected?.nama_guru}
+                footer={
+                    selected && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={closeDrawer}
+                            >
+                                Tutup
+                            </Button>
+                            <Link href={`/admin/guru/${selected.id}/edit`}>
+                                <Button>
+                                    <Edit className="h-4 w-4" />
+                                    Edit
+                                </Button>
+                            </Link>
+                            <Button
+                                variant="danger"
+                                onClick={() => {
+                                    setDeleteTarget(selected);
+                                    closeDrawer();
+                                }}
+                                disabled={selected.nilai_count > 0}
+                                title={
+                                    selected.nilai_count > 0
+                                        ? 'Tidak dapat dihapus (sudah punya nilai)'
+                                        : undefined
+                                }
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Hapus
+                            </Button>
+                        </>
+                    )
+                }
+            >
+                {selected && (
+                    <div className="space-y-6">
+                        <section>
+                            <h4 className="mb-3 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                Informasi Akun
+                            </h4>
+                            <dl className="space-y-2.5 text-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-muted-foreground">Username</dt>
+                                    <dd className="font-mono text-xs">
+                                        {selected.user?.username ?? (
+                                            <span className="text-muted-foreground">—</span>
+                                        )}
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-muted-foreground">Status</dt>
+                                    <dd>
+                                        {selected.user ? (
+                                            selected.user.is_active ? (
+                                                <Badge variant="success">Aktif</Badge>
+                                            ) : (
+                                                <Badge variant="warning">Nonaktif</Badge>
+                                            )
+                                        ) : (
+                                            <Badge variant="neutral">Tanpa Akun</Badge>
+                                        )}
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-muted-foreground">Total nilai diinput</dt>
+                                    <dd className="font-medium text-navy">
+                                        {selected.nilai_count} baris
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section>
+                            <h4 className="mb-3 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                Mengajar ({selected.mengajar.length})
+                            </h4>
+                            {selected.mengajar.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Guru ini belum memiliki kombinasi mengajar.
+                                </p>
+                            ) : (
+                                <ul className="divide-y divide-slate-100 rounded-lg border border-border">
+                                    {mengajarByKelas.map(({ kelas, mapels }) => (
+                                        <li
+                                            key={kelas}
+                                            className="flex flex-col gap-1.5 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3"
+                                        >
+                                            <Badge variant="info" className="self-start sm:self-center">
+                                                {kelas}
+                                            </Badge>
+                                            <span className="text-sm text-navy">
+                                                {mapels.join(', ')}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+                    </div>
+                )}
+            </Drawer>
 
             <Modal
                 open={!!deleteTarget}

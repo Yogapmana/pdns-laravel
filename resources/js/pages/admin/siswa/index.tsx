@@ -1,9 +1,9 @@
 import { Link, router } from '@inertiajs/react';
-import { Plus, Edit, Trash2, Search, X, Loader2, Info } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Drawer } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
@@ -16,7 +16,8 @@ type Siswa = {
     nis: string;
     nama_siswa: string;
     kelas: string;
-    user: { username: string } | null;
+    nilai_count: number;
+    user: { username: string; is_active: boolean; created_at: string | null } | null;
 };
 
 type Paginated<T> = {
@@ -33,6 +34,12 @@ type Props = {
     filters: { search: string | null; kelas: string | null };
 };
 
+const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+});
+
 export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
     useFlashToast();
     const {
@@ -47,6 +54,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
         only: ['siswa', 'filters'],
     });
 
+    const [selected, setSelected] = useState<Siswa | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Siswa | null>(null);
 
     function doDelete() {
@@ -57,6 +65,21 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
         router.delete(`/admin/siswa/${deleteTarget.nis}`, {
             onSuccess: () => setDeleteTarget(null),
         });
+    }
+
+    function closeDrawer() {
+        setSelected(null);
+    }
+
+    function formatCreatedAt(iso: string | null | undefined): string {
+        if (!iso) {
+            return '—';
+        }
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) {
+            return '—';
+        }
+        return DATE_FORMATTER.format(d);
     }
 
     return (
@@ -151,7 +174,8 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                                 siswa.data.map((s, i) => (
                                     <tr
                                         key={s.nis}
-                                        className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} transition-colors hover:bg-blue-50`}
+                                        onClick={() => setSelected(s)}
+                                        className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} cursor-pointer transition-colors hover:bg-blue-50`}
                                     >
                                         <td className="px-4 py-3 font-mono text-sm">
                                             {s.nis}
@@ -172,7 +196,10 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-2">
+                                            <div
+                                                className="flex items-center justify-center gap-2"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
                                                 <Link
                                                     href={`/admin/siswa/${s.nis}/edit`}
                                                     className="rounded p-1.5 text-primary transition hover:bg-blue-100"
@@ -206,6 +233,111 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                     links={siswa.links}
                 />
             </DataTable>
+
+            <Drawer
+                open={!!selected}
+                onClose={closeDrawer}
+                title="Detail Siswa"
+                description={selected?.nama_siswa}
+                footer={
+                    selected && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={closeDrawer}
+                            >
+                                Tutup
+                            </Button>
+                            <Link href={`/admin/siswa/${selected.nis}/edit`}>
+                                <Button>
+                                    <Edit className="h-4 w-4" />
+                                    Edit
+                                </Button>
+                            </Link>
+                            <Button
+                                variant="danger"
+                                onClick={() => {
+                                    setDeleteTarget(selected);
+                                    closeDrawer();
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Hapus
+                            </Button>
+                        </>
+                    )
+                }
+            >
+                {selected && (
+                    <div className="space-y-6">
+                        <section>
+                            <h4 className="mb-3 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                Profil
+                            </h4>
+                            <dl className="space-y-2.5 text-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-muted-foreground">NIS</dt>
+                                    <dd className="font-mono text-navy">{selected.nis}</dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-muted-foreground">Kelas</dt>
+                                    <dd>
+                                        <Badge variant="info">{selected.kelas}</Badge>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section>
+                            <h4 className="mb-3 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                Informasi Akun
+                            </h4>
+                            {selected.user ? (
+                                <dl className="space-y-2.5 text-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <dt className="text-muted-foreground">Username</dt>
+                                        <dd className="font-mono text-xs">
+                                            {selected.user.username}
+                                        </dd>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <dt className="text-muted-foreground">Status</dt>
+                                        <dd>
+                                            {selected.user.is_active ? (
+                                                <Badge variant="success">Aktif</Badge>
+                                            ) : (
+                                                <Badge variant="warning">Nonaktif</Badge>
+                                            )}
+                                        </dd>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <dt className="text-muted-foreground">Akun dibuat</dt>
+                                        <dd className="text-navy">
+                                            {formatCreatedAt(selected.user.created_at)}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    Siswa ini belum memiliki akun login.
+                                </p>
+                            )}
+                        </section>
+
+                        <section>
+                            <h4 className="mb-3 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                Statistik
+                            </h4>
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                                <span className="text-muted-foreground">Total nilai</span>
+                                <span className="font-medium text-navy">
+                                    {selected.nilai_count} baris
+                                </span>
+                            </div>
+                        </section>
+                    </div>
+                )}
+            </Drawer>
 
             <Modal
                 open={!!deleteTarget}

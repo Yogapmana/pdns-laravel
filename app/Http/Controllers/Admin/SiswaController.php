@@ -21,9 +21,10 @@ class SiswaController extends Controller
     /**
      * Display the paginated siswa list with optional search and class filters.
      *
-     * Eager-loads the related `user` account (`id`, `username`, `is_active`)
-     * to avoid N+1 queries when rendering the list. Query string parameters
-     * are preserved across pagination links via `withQueryString()`.
+     * Eager-loads the related `user` account (`id`, `username`, `is_active`,
+     * `created_at`) and a `nilai_count` aggregate to avoid N+1 queries when
+     * rendering the list and the detail drawer. Query string parameters are
+     * preserved across pagination links via `withQueryString()`.
      *
      * @param  Request  $request  Current HTTP request. Reads `search` and `kelas` query parameters.
      * @return Response Inertia response rendering `admin/siswa/index`.
@@ -34,7 +35,8 @@ class SiswaController extends Controller
         $kelas = $request->input('kelas');
 
         $siswa = Siswa::query()
-            ->with('user:id,username,is_active')
+            ->with('user:id,username,is_active,created_at')
+            ->withCount('nilai')
             ->when($search, fn ($q) => $q->where(function ($qq) use ($search) {
                 $qq->where('nis', 'like', "%{$search}%")
                     ->orWhere('nama_siswa', 'like', "%{$search}%");
