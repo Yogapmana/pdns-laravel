@@ -1,0 +1,21 @@
+{
+    "name": "SMAN 7 Solo - Sistem Informasi Akademik",
+    "short_name": "SMAN 7 Solo",
+    "description": "Sistem Informasi Akademik SMAN 7 Solo",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1E3A5F",
+    "theme_color": "#1E3A5F",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
