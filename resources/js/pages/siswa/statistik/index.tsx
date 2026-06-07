@@ -1,19 +1,17 @@
+import { useState } from 'react';
 import {
-    Lock,
     CheckCircle,
     XCircle,
-    BookOpen,
-    Printer,
-    TrendingUp,
-    AlertTriangle,
     BarChart3,
-    Inbox,
+    Filter,
+    RotateCcw,
 } from 'lucide-react';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Container, DataTable, PageHeader } from '@/components/ui/shared';
+import { Container, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
+import { cn } from '@/lib/utils';
 
 type Siswa = { nis: string; nama_siswa: string; kelas: string };
 type Guru = { id: number; nama_guru: string };
@@ -43,13 +41,6 @@ type PerMapel = {
 };
 
 type ChartData = {
-    overall: {
-        tugas: number | null;
-        uts: number | null;
-        uas: number | null;
-        akhir: number | null;
-        count: number;
-    };
     per_mapel: PerMapel[];
     kkm: number;
     stats: { total_mapel: number; lulus: number; tidak_lulus: number };
@@ -63,21 +54,18 @@ type Props = {
     chart_data: ChartData;
 };
 
-function formatNumber(v: number | null): string {
-    if (v === null || v === undefined) {
-        return '—';
-    }
+type KomponenKey = 'tugas' | 'uts' | 'uas' | 'akhir';
+type KomponenSet = Record<KomponenKey, boolean>;
+type StatusFilter = 'semua' | 'lulus' | 'tidak_lulus';
 
-    return Number(v).toFixed(2);
-}
+const COMPONENT_META: Record<KomponenKey, { label: string; full: string }> = {
+    tugas: { label: 'Tgs', full: 'Tugas' },
+    uts: { label: 'UTS', full: 'UTS' },
+    uas: { label: 'UAS', full: 'UAS' },
+    akhir: { label: 'Akhir', full: 'Nilai Akhir' },
+};
 
-function nilaiColor(v: number | null, kkm: number): string {
-    if (v === null) {
-        return 'bg-slate-200';
-    }
-
-    return v >= kkm ? 'bg-emerald-500' : 'bg-rose-500';
-}
+const Y_TICKS = [0, 25, 50, 75, 100] as const;
 
 function nilaiTextColor(v: number | null, kkm: number): string {
     if (v === null) {
@@ -87,89 +75,28 @@ function nilaiTextColor(v: number | null, kkm: number): string {
     return v >= kkm ? 'text-emerald-700' : 'text-rose-700';
 }
 
-function ComponentBar({
-    value,
-    kkm,
-    label,
-    weight,
-}: {
-    value: number | null;
-    kkm: number;
-    label: string;
-    weight: string;
-}) {
-    const pct = value === null ? 0 : Math.max(0, Math.min(100, value));
-    const barColor = nilaiColor(value, kkm);
-    const textColor = nilaiTextColor(value, kkm);
-    const isBelowKkm = value !== null && value < kkm;
-
-    return (
-        <div>
-            <div className="mb-1 flex items-baseline justify-between">
-                <span className="text-sm font-semibold text-secondary">
-                    {label}{' '}
-                    <span className="font-normal text-muted-foreground">
-                        ({weight})
-                    </span>
-                </span>
-                <span className={`font-mono text-sm font-bold ${textColor}`}>
-                    {formatNumber(value)}
-                </span>
-            </div>
-            <div className="relative h-6 w-full overflow-hidden rounded-md bg-slate-100">
-                <div
-                    className={`absolute inset-y-0 left-0 ${barColor} transition-all`}
-                    style={{ width: `${pct}%` }}
-                />
-                <div
-                    className="absolute inset-y-0 w-0.5 bg-navy"
-                    style={{ left: `${kkm}%` }}
-                    title={`KKM ${kkm}`}
-                />
-            </div>
-            {isBelowKkm && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    Di bawah KKM
-                </p>
-            )}
-        </div>
+function describeDataSelection(komponen: KomponenSet): string {
+    const selected = (Object.keys(komponen) as KomponenKey[]).filter(
+        (k) => komponen[k],
     );
+
+    if (selected.length === 0) {
+        return '—';
+    }
+
+    return selected.map((k) => COMPONENT_META[k].full).join(', ');
 }
 
-function OverallChart({
-    overall,
+function BarChart({
+    data,
+    components,
     kkm,
 }: {
-    overall: ChartData['overall'];
+    data: PerMapel[];
+    components: KomponenKey[];
     kkm: number;
 }) {
-    return (
-        <div className="space-y-3">
-            <ComponentBar
-                value={overall.tugas}
-                kkm={kkm}
-                label="Tugas"
-                weight="30%"
-            />
-            <ComponentBar
-                value={overall.uts}
-                kkm={kkm}
-                label="UTS"
-                weight="30%"
-            />
-            <ComponentBar
-                value={overall.uas}
-                kkm={kkm}
-                label="UAS"
-                weight="40%"
-            />
-        </div>
-    );
-}
-
-function PerMapelChart({ perMapel }: { perMapel: PerMapel[] }) {
-    if (perMapel.length === 0) {
+    if (data.length === 0) {
         return (
             <p className="py-4 text-center text-sm text-muted-foreground">
                 Belum ada data untuk divisualisasikan.
@@ -177,132 +104,309 @@ function PerMapelChart({ perMapel }: { perMapel: PerMapel[] }) {
         );
     }
 
+    const W = 800;
+    const H = 320;
+    const padL = 40;
+    const padR = 14;
+    const padT = 14;
+    const padB = 48;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const valueToY = (v: number) => padT + chartH - (v / 100) * chartH;
+
+    const groupCount = data.length;
+    const groupWidth = chartW / Math.max(1, groupCount);
+    const barCount = components.length;
+    const maxBarWidth = 40;
+    const barWidth = Math.max(
+        2.5,
+        Math.min(maxBarWidth, (groupWidth * 0.7) / Math.max(1, barCount)),
+    );
+    const groupInnerWidth = barWidth * barCount;
+    const groupCenterX = (i: number) => padL + groupWidth * i + groupWidth / 2;
+
     return (
-        <div className="flex flex-col divide-y divide-border">
-            {perMapel.map((m) => {
-                const kkm = m.kkm;
-                const weakest = [
-                    { key: 'T', value: m.tugas },
-                    { key: 'U', value: m.uts },
-                    { key: 'A', value: m.uas },
-                ]
-                    .filter((c) => c.value !== null)
-                    .sort((a, b) => (a.value ?? 0) - (b.value ?? 0))[0];
-
-                return (
-                    <div
-                        key={`${m.kelas}|${m.mapel}`}
-                        className="group py-4 first:pt-0 last:pb-0"
+        <div className="w-full">
+            <svg
+                viewBox={`0 0 ${W} ${H}`}
+                className="w-full"
+                style={{ maxHeight: 360 }}
+                preserveAspectRatio="xMidYMid meet"
+            >
+                <defs>
+                    <linearGradient
+                        id="grad-pass"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
                     >
-                        <div className="mb-2 flex items-center justify-between">
-                            <div className="flex min-w-0 items-center gap-2">
-                                <span className="truncate text-sm font-semibold text-navy">
-                                    {m.mapel}
-                                </span>
-                                <Badge variant="neutral">{m.kelas}</Badge>
-                            </div>
-                            <div className="flex flex-shrink-0 items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                    Akhir:
-                                </span>
-                                <span
-                                    className={`font-mono text-sm font-bold ${nilaiTextColor(m.akhir, kkm)}`}
-                                >
-                                    {formatNumber(m.akhir)}
-                                </span>
-                                {m.status === 'Lulus' && (
-                                    <Badge variant="success">
-                                        <CheckCircle className="mr-1 h-3 w-3" />
-                                        Lulus
-                                    </Badge>
-                                )}
-                                {m.status === 'Tidak Lulus' && (
-                                    <Badge variant="danger">
-                                        <XCircle className="mr-1 h-3 w-3" />
-                                        Tidak Lulus
-                                    </Badge>
-                                )}
-                            </div>
-                        </div>
+                        <stop offset="0%" stopColor="#6ee7b7" />
+                        <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                    <linearGradient
+                        id="grad-fail"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop offset="0%" stopColor="#fda4af" />
+                        <stop offset="100%" stopColor="#f43f5e" />
+                    </linearGradient>
+                </defs>
 
-                        <div className="grid grid-cols-3 gap-2">
-                            <MiniBar label="Tgs" value={m.tugas} kkm={kkm} />
-                            <MiniBar label="UTS" value={m.uts} kkm={kkm} />
-                            <MiniBar label="UAS" value={m.uas} kkm={kkm} />
-                        </div>
+                {Y_TICKS.map((v) => (
+                    <g key={v}>
+                        <line
+                            x1={padL}
+                            x2={W - padR}
+                            y1={valueToY(v)}
+                            y2={valueToY(v)}
+                            stroke="#e2e8f0"
+                            strokeDasharray="2,3"
+                        />
+                        <text
+                            x={padL - 6}
+                            y={valueToY(v) + 3}
+                            fontSize="10"
+                            fill="#94a3b8"
+                            textAnchor="end"
+                        >
+                            {v}
+                        </text>
+                    </g>
+                ))}
 
-                        {weakest &&
-                            weakest.value !== null &&
-                            weakest.value < kkm && (
-                                <p className="mt-3 flex items-center gap-1.5 text-xs text-rose-600">
-                                    <AlertTriangle className="h-3.5 w-3.5" />
-                                    Komponen terlemah:{' '}
-                                    <strong>
-                                        {weakest.key === 'T'
-                                            ? 'Tugas'
-                                            : weakest.key === 'U'
-                                              ? 'UTS'
-                                              : 'UAS'}
-                                    </strong>{' '}
-                                    ({formatNumber(weakest.value)})
-                                </p>
-                            )}
-                    </div>
+                {data.map((d, gi) => {
+                    const cx = groupCenterX(gi);
+
+                    return (
+                        <g key={`${d.kelas}|${d.mapel}`}>
+                            {components.map((comp, bi) => {
+                                const v =
+                                    comp === 'akhir' ? d.akhir : d[comp];
+                                if (v === null) {
+                                    return null;
+                                }
+                                const pass = v >= kkm;
+                                const barX =
+                                    cx -
+                                    groupInnerWidth / 2 +
+                                    bi * barWidth;
+                                const barH = (v / 100) * chartH;
+                                const barY = valueToY(v);
+
+                                return (
+                                    <g key={comp}>
+                                        <rect
+                                            x={barX}
+                                            y={barY}
+                                            width={Math.max(1, barWidth - 1.5)}
+                                            height={barH}
+                                            fill={
+                                                pass
+                                                    ? 'url(#grad-pass)'
+                                                    : 'url(#grad-fail)'
+                                            }
+                                            rx="2"
+                                        />
+                                        <title>{`${COMPONENT_META[comp].full}: ${Number(v).toFixed(2)}`}</title>
+                                    </g>
+                                );
+                            })}
+
+                            <text
+                                x={cx}
+                                y={H - padB + 18}
+                                fontSize="10"
+                                fill="#475569"
+                                textAnchor="middle"
+                            >
+                                {d.mapel}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                <line
+                    x1={padL}
+                    x2={W - padR}
+                    y1={valueToY(kkm)}
+                    y2={valueToY(kkm)}
+                    stroke="#f43f5e"
+                    strokeDasharray="4,3"
+                    strokeWidth={1.5}
+                />
+                <rect
+                    x={W - padR - 42}
+                    y={valueToY(kkm) - 9}
+                    width="40"
+                    height="14"
+                    rx="3"
+                    fill="#f43f5e"
+                />
+                <text
+                    x={W - padR - 22}
+                    y={valueToY(kkm) + 1}
+                    fontSize="9"
+                    fontWeight="bold"
+                    fill="white"
+                    textAnchor="middle"
+                >
+                    KKM {kkm}
+                </text>
+            </svg>
+
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-gradient-to-b from-emerald-300 to-emerald-500" />
+                    ≥ KKM (Lulus)
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-gradient-to-b from-rose-300 to-rose-500" />
+                    &lt; KKM (Tidak Lulus)
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <span className="h-0.5 w-4 border-t-2 border-dashed border-rose-500" />
+                    Garis KKM
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function FilterCheckboxRow({
+    label,
+    checked,
+    onToggle,
+    onSelectAll,
+    isAll,
+}: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+    onSelectAll?: () => void;
+    isAll?: boolean;
+}) {
+    return (
+        <label
+            className={cn(
+                'inline-flex cursor-pointer select-none items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition',
+                checked
+                    ? 'border-navy bg-navy text-white'
+                    : 'border-border bg-white text-secondary hover:bg-surface',
+            )}
+        >
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={isAll ? onSelectAll : onToggle}
+                className="h-3.5 w-3.5 cursor-pointer accent-navy"
+            />
+            {label}
+        </label>
+    );
+}
+
+function SegmentedControl<T extends string>({
+    value,
+    onChange,
+    options,
+}: {
+    value: T;
+    onChange: (v: T) => void;
+    options: { value: T; label: string }[];
+}) {
+    return (
+        <div className="inline-flex overflow-hidden rounded-md border border-border">
+            {options.map((opt) => {
+                const active = opt.value === value;
+                return (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => onChange(opt.value)}
+                        className={cn(
+                            'border-r border-border px-3 py-1 text-xs font-medium transition last:border-r-0',
+                            active
+                                ? 'bg-navy text-white'
+                                : 'bg-white text-secondary hover:bg-surface',
+                        )}
+                    >
+                        {opt.label}
+                    </button>
                 );
             })}
         </div>
     );
 }
 
-function MiniBar({
-    label,
-    value,
-    kkm,
-}: {
-    label: string;
-    value: number | null;
-    kkm: number;
-}) {
-    const pct = value === null ? 0 : Math.max(0, Math.min(100, value));
-    const barColor = nilaiColor(value, kkm);
-    const textColor = nilaiTextColor(value, kkm);
-
-    return (
-        <div>
-            <div className="mb-1 flex items-baseline justify-between">
-                <span className="text-xs font-semibold text-muted-foreground">
-                    {label}
-                </span>
-                <span className={`font-mono text-xs font-bold ${textColor}`}>
-                    {formatNumber(value)}
-                </span>
-            </div>
-            <div className="relative h-4 w-full overflow-hidden rounded bg-slate-100">
-                <div
-                    className={`absolute inset-y-0 left-0 ${barColor}`}
-                    style={{ width: `${pct}%` }}
-                />
-                <div
-                    className="absolute inset-y-0 w-px bg-navy"
-                    style={{ left: `${kkm}%` }}
-                />
-            </div>
-        </div>
-    );
-}
-
-export default function SiswaStatistik({
-    siswa,
-    nilai,
-    mapel_list,
-    guru_map,
-    chart_data,
-}: Props) {
+export default function SiswaStatistik({ mapel_list, chart_data }: Props) {
     useFlashToast();
 
     const hasData = mapel_list.length > 0;
-    const overallAkhir = chart_data.overall.akhir;
-    const isPassing = overallAkhir !== null && overallAkhir >= chart_data.kkm;
+
+    const [komponen, setKomponen] = useState<KomponenSet>({
+        tugas: true,
+        uts: true,
+        uas: true,
+        akhir: true,
+    });
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('semua');
+    const [mapelSet, setMapelSet] = useState<Set<string>>(new Set());
+
+    const activeKomponen = (Object.keys(komponen) as KomponenKey[]).filter(
+        (k) => komponen[k],
+    );
+    const isKomponenAll =
+        komponen.tugas &&
+        komponen.uts &&
+        komponen.uas &&
+        komponen.akhir;
+    const isMapelAll = mapelSet.size === 0;
+    const hasFilter =
+        !isKomponenAll || statusFilter !== 'semua' || !isMapelAll;
+
+    const filteredMapel = chart_data.per_mapel.filter((m) => {
+        if (statusFilter === 'lulus' && m.status !== 'Lulus') {
+            return false;
+        }
+        if (statusFilter === 'tidak_lulus' && m.status !== 'Tidak Lulus') {
+            return false;
+        }
+        if (!isMapelAll && !mapelSet.has(m.mapel)) {
+            return false;
+        }
+        return true;
+    });
+
+    function toggleKomponen(key: KomponenKey) {
+        setKomponen((prev) => ({ ...prev, [key]: !prev[key] }));
+    }
+
+    function selectAllKomponen() {
+        setKomponen({ tugas: true, uts: true, uas: true, akhir: true });
+    }
+
+    function toggleMapel(mapel: string) {
+        setMapelSet((prev) => {
+            const next = new Set(prev);
+            if (next.has(mapel)) {
+                next.delete(mapel);
+            } else {
+                next.add(mapel);
+            }
+            return next;
+        });
+    }
+
+    function resetAll() {
+        setKomponen({ tugas: true, uts: true, uas: true, akhir: true });
+        setStatusFilter('semua');
+        setMapelSet(new Set());
+    }
 
     return (
         <Container>
@@ -311,133 +415,211 @@ export default function SiswaStatistik({
             </div>
 
             {hasData && (
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-primary" />
-                                <span className="font-semibold">
-                                    Rata-rata Keseluruhan
-                                </span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <OverallChart
-                                overall={chart_data.overall}
-                                kkm={chart_data.kkm}
-                            />
-                            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                                <span className="text-xs text-muted-foreground">
-                                    Nilai Akhir Rata-rata
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className={`font-mono text-2xl font-bold ${nilaiTextColor(overallAkhir, chart_data.kkm)}`}
-                                    >
-                                        {formatNumber(overallAkhir)}
-                                    </span>
-                                    {overallAkhir !== null && (
-                                        <Badge
-                                            variant={
-                                                isPassing ? 'success' : 'danger'
-                                            }
-                                        >
-                                            {isPassing
-                                                ? 'Lulus'
-                                                : 'Tidak Lulus'}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                    <span className="h-0.5 w-3 bg-navy" />
-                                    KKM {chart_data.kkm}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <span className="h-2 w-3 rounded-sm bg-emerald-500" />
-                                    ≥ KKM
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <span className="h-2 w-3 rounded-sm bg-rose-500" />
-                                    &lt; KKM
-                                </span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <BarChart3 className="h-4 w-4 text-primary" />
-                                <span className="font-semibold">
-                                    Ringkasan Akademik
-                                </span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
-                                    <span className="text-sm text-secondary">
-                                        Total Mata Pelajaran
-                                    </span>
-                                    <span className="text-2xl font-bold text-primary">
-                                        {chart_data.stats.total_mapel}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
-                                    <span className="flex items-center gap-1.5 text-sm text-secondary">
-                                        <CheckCircle className="h-4 w-4 text-emerald-600" />
-                                        Lulus
-                                    </span>
-                                    <span className="text-2xl font-bold text-emerald-600">
-                                        {chart_data.stats.lulus}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg bg-rose-50 p-3">
-                                    <span className="flex items-center gap-1.5 text-sm text-secondary">
-                                        <XCircle className="h-4 w-4 text-rose-600" />
-                                        Tidak Lulus
-                                    </span>
-                                    <span className="text-2xl font-bold text-rose-600">
-                                        {chart_data.stats.tidak_lulus}
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4 text-warning" />
-                                <span className="font-semibold">
-                                    Komponen Perlu Perhatian
-                                </span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <WeakComponents
-                                overall={chart_data.overall}
-                                kkm={chart_data.kkm}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {hasData && (
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
                             <BarChart3 className="h-4 w-4 text-primary" />
                             <span className="font-semibold">
-                                Performa per Mata Pelajaran
+                                Ringkasan Akademik
                             </span>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <PerMapelChart perMapel={chart_data.per_mapel} />
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
+                                <span className="text-sm text-secondary">
+                                    Total Mata Pelajaran
+                                </span>
+                                <span className="text-2xl font-bold text-primary">
+                                    {chart_data.stats.total_mapel}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
+                                <span className="flex items-center gap-1.5 text-sm text-secondary">
+                                    <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                    Lulus
+                                </span>
+                                <span className="text-2xl font-bold text-emerald-600">
+                                    {chart_data.stats.lulus}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-rose-50 p-3">
+                                <span className="flex items-center gap-1.5 text-sm text-secondary">
+                                    <XCircle className="h-4 w-4 text-rose-600" />
+                                    Tidak Lulus
+                                </span>
+                                <span className="text-2xl font-bold text-rose-600">
+                                    {chart_data.stats.tidak_lulus}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {hasData && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-primary" />
+                                <span className="font-semibold">
+                                    Performa per Mata Pelajaran
+                                </span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                                Menampilkan {filteredMapel.length} dari{' '}
+                                {chart_data.per_mapel.length} mata pelajaran
+                            </span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mb-4 space-y-3 rounded-lg border border-border bg-surface/40 p-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-xs font-semibold text-secondary">
+                                        Komponen:
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <FilterCheckboxRow
+                                        label="Semua"
+                                        checked={isKomponenAll}
+                                        onSelectAll={selectAllKomponen}
+                                        isAll
+                                    />
+                                    <FilterCheckboxRow
+                                        label="Tugas"
+                                        checked={komponen.tugas}
+                                        onToggle={() =>
+                                            toggleKomponen('tugas')
+                                        }
+                                    />
+                                    <FilterCheckboxRow
+                                        label="UTS"
+                                        checked={komponen.uts}
+                                        onToggle={() => toggleKomponen('uts')}
+                                    />
+                                    <FilterCheckboxRow
+                                        label="UAS"
+                                        checked={komponen.uas}
+                                        onToggle={() => toggleKomponen('uas')}
+                                    />
+                                    <FilterCheckboxRow
+                                        label="Nilai Akhir"
+                                        checked={komponen.akhir}
+                                        onToggle={() =>
+                                            toggleKomponen('akhir')
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+                                <span className="text-xs font-semibold text-secondary">
+                                    Status:
+                                </span>
+                                <SegmentedControl<StatusFilter>
+                                    value={statusFilter}
+                                    onChange={setStatusFilter}
+                                    options={[
+                                        { value: 'semua', label: 'Semua' },
+                                        { value: 'lulus', label: 'Lulus' },
+                                        {
+                                            value: 'tidak_lulus',
+                                            label: 'Tidak Lulus',
+                                        },
+                                    ]}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:gap-x-2 sm:gap-y-2">
+                                <span className="text-xs font-semibold text-secondary">
+                                    Mapel:
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setMapelSet(new Set())}
+                                    className={cn(
+                                        'inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-medium transition',
+                                        isMapelAll
+                                            ? 'border-navy bg-navy text-white'
+                                            : 'border-border bg-white text-secondary hover:bg-surface',
+                                    )}
+                                >
+                                    Semua
+                                </button>
+                                {mapel_list.map((m) => {
+                                    const active = mapelSet.has(m);
+                                    return (
+                                        <button
+                                            key={m}
+                                            type="button"
+                                            onClick={() => toggleMapel(m)}
+                                            className={cn(
+                                                'inline-flex cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-medium transition',
+                                                active
+                                                    ? 'border-navy bg-navy text-white'
+                                                    : 'border-border bg-white text-secondary hover:bg-surface',
+                                            )}
+                                        >
+                                            {m}
+                                        </button>
+                                    );
+                                })}
+                                {hasFilter && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={resetAll}
+                                        className="ml-auto h-7 px-2.5 text-xs"
+                                    >
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                        Reset
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {activeKomponen.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <Filter className="mb-2 h-6 w-6 text-muted-foreground" />
+                                <p className="text-sm font-medium text-secondary">
+                                    Pilih minimal 1 komponen untuk
+                                    ditampilkan.
+                                </p>
+                            </div>
+                        ) : filteredMapel.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <Filter className="mb-2 h-6 w-6 text-muted-foreground" />
+                                <p className="text-sm font-medium text-secondary">
+                                    Tidak ada mata pelajaran yang sesuai
+                                    filter.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    onClick={resetAll}
+                                    className="mt-3"
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                    Reset Filter
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="mb-3 text-center text-sm text-muted-foreground">
+                                    Menampilkan data:{' '}
+                                    <span className="font-semibold text-secondary">
+                                        {describeDataSelection(komponen)}
+                                    </span>
+                                </div>
+                                <BarChart
+                                    data={filteredMapel}
+                                    components={activeKomponen}
+                                    kkm={chart_data.kkm}
+                                />
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             )}
@@ -446,76 +628,3 @@ export default function SiswaStatistik({
 }
 
 SiswaStatistik.layout = { title: 'Statistik Nilai' };
-
-function WeakComponents({
-    overall,
-    kkm,
-}: {
-    overall: ChartData['overall'];
-    kkm: number;
-}) {
-    const components = [
-        { name: 'Tugas', value: overall.tugas, weight: 'Bobot 30%' },
-        { name: 'UTS', value: overall.uts, weight: 'Bobot 30%' },
-        { name: 'UAS', value: overall.uas, weight: 'Bobot 40%' },
-    ];
-
-    const below = components.filter((c) => c.value !== null && c.value < kkm);
-    const above = components.filter((c) => c.value !== null && c.value >= kkm);
-
-    if (overall.count === 0) {
-        return (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-                Belum ada data.
-            </p>
-        );
-    }
-
-    return (
-        <div className="space-y-3">
-            {below.length > 0 && (
-                <Alert variant="error">
-                    <p className="mb-2 text-xs font-bold">Perlu Ditingkatkan</p>
-                    <ul className="space-y-1 text-sm font-normal">
-                        {below.map((c) => (
-                            <li
-                                key={c.name}
-                                className="flex items-center justify-between"
-                            >
-                                <span>{c.name}</span>
-                                <span className="font-mono font-bold">
-                                    {formatNumber(c.value)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </Alert>
-            )}
-            {above.length > 0 && (
-                <Alert variant="success">
-                    <p className="mb-2 text-xs font-bold">Sudah Di Atas KKM</p>
-                    <ul className="space-y-1 text-sm font-normal">
-                        {above.map((c) => (
-                            <li
-                                key={c.name}
-                                className="flex items-center justify-between"
-                            >
-                                <span>{c.name}</span>
-                                <span className="font-mono font-bold">
-                                    {formatNumber(c.value)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </Alert>
-            )}
-            {below.length === 0 && (
-                <Alert variant="success">
-                    <p className="text-center font-semibold">
-                        Semua komponen di atas KKM!
-                    </p>
-                </Alert>
-            )}
-        </div>
-    );
-}
