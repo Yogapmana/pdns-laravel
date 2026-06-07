@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
+import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import {
     DataTable,
@@ -46,8 +47,16 @@ type Log = {
     created_at: string | null;
 };
 
+type Paginated<T> = {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    from: number;
+    to: number;
+    total: number;
+};
+
 type Props = {
-    combos: Combo[];
+    combos: Paginated<Combo>;
     logs: Log[];
     kelas_options: string[];
     filters: { search: string | null; kelas: string | null };
@@ -153,7 +162,10 @@ export default function AdminNilaiIndex({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Manajemen Nilai" />
+            <PageHeader
+                title="Manajemen Nilai"
+                description={`${combos.total} combo nilai Final`}
+            />
 
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm md:flex-row">
                 <div className="relative flex-1">
@@ -224,7 +236,7 @@ export default function AdminNilaiIndex({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {combos.length === 0 ? (
+                            {combos.data.length === 0 ? (
                                 <TableEmpty
                                     message={
                                         hasFilter
@@ -234,7 +246,7 @@ export default function AdminNilaiIndex({
                                     colSpan={6}
                                 />
                             ) : (
-                                combos.map((c, i) => (
+                                combos.data.map((c, i) => (
                                     <tr
                                         key={`${c.id_guru}-${c.kelas}-${c.mata_pelajaran}`}
                                         className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} transition-colors hover:bg-blue-50`}
@@ -277,10 +289,16 @@ export default function AdminNilaiIndex({
                         </tbody>
                     </table>
                 </div>
+                <PaginationFooter
+                    from={combos.from ?? 0}
+                    to={combos.to ?? 0}
+                    total={combos.total}
+                    links={combos.links}
+                />
             </DataTable>
 
             <DataTable>
-                <div className="flex items-center gap-2 border-b border-border px-4 py-3 bg-slate-50/50">
+                <div className="flex items-center gap-2 border-b border-border bg-slate-50/50 px-4 py-3">
                     <History className="h-4 w-4 text-primary" />
                     <h2 className="text-sm font-bold text-navy">
                         Log Pembukaan Kunci (10 Terbaru)
@@ -366,11 +384,6 @@ export default function AdminNilaiIndex({
                 open={!!unlockTarget}
                 onClose={closeModal}
                 title="Konfirmasi Buka Kunci Nilai"
-                description={
-                    unlockTarget
-                        ? `Buka kunci nilai ${unlockTarget.mata_pelajaran} kelas ${unlockTarget.kelas} (guru: ${unlockTarget.nama_guru})?`
-                        : ''
-                }
                 footer={
                     <>
                         <Button
@@ -407,7 +420,8 @@ export default function AdminNilaiIndex({
                     </Alert>
                     <div>
                         <Label htmlFor="reason">
-                            Alasan Pembukaan Kunci <span className="text-danger">*</span>
+                            Alasan Pembukaan Kunci{' '}
+                            <span className="text-danger">*</span>
                         </Label>
                         <textarea
                             id="reason"

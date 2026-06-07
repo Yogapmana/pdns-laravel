@@ -94,11 +94,11 @@ test('Admin: halaman menampilkan combo Final yang dikelompokkan per guru+kelas+m
         ->get('/admin/nilai')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->has('combos', 3)
-            ->where('combos.0.mata_pelajaran', 'Bahasa Indonesia')
-            ->where('combos.0.kelas', 'X-A')
-            ->where('combos.0.nama_guru', 'Bu Sari')
-            ->where('combos.0.total_siswa', 1)
+            ->has('combos.data', 3)
+            ->where('combos.data.0.mata_pelajaran', 'Bahasa Indonesia')
+            ->where('combos.data.0.kelas', 'X-A')
+            ->where('combos.data.0.nama_guru', 'Bu Sari')
+            ->where('combos.data.0.total_siswa', 1)
         );
 });
 
@@ -116,7 +116,7 @@ test('Admin: halaman tidak menampilkan combo berstatus Draft', function () {
 
     $this->actingAs($admin)
         ->get('/admin/nilai')
-        ->assertInertia(fn ($page) => $page->has('combos', 1)->where('combos.0.mata_pelajaran', 'Matematika'));
+        ->assertInertia(fn ($page) => $page->has('combos.data', 1)->where('combos.data.0.mata_pelajaran', 'Matematika'));
 });
 
 test('Admin: halaman support filter search dan kelas', function () {
@@ -139,16 +139,16 @@ test('Admin: halaman support filter search dan kelas', function () {
     $this->actingAs($admin)
         ->get('/admin/nilai?search=Matematika')
         ->assertInertia(fn ($page) => $page
-            ->has('combos', 1)
-            ->where('combos.0.mata_pelajaran', 'Matematika')
+            ->has('combos.data', 1)
+            ->where('combos.data.0.mata_pelajaran', 'Matematika')
             ->where('filters.search', 'Matematika')
         );
 
     $this->actingAs($admin)
         ->get('/admin/nilai?kelas=X-A')
         ->assertInertia(fn ($page) => $page
-            ->has('combos', 1)
-            ->where('combos.0.kelas', 'X-A')
+            ->has('combos.data', 1)
+            ->where('combos.data.0.kelas', 'X-A')
             ->where('filters.kelas', 'X-A')
         );
 });

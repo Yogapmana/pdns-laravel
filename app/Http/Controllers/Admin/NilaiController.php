@@ -25,10 +25,10 @@ use Inertia\Response;
 class NilaiController extends Controller
 {
     /**
-     * Render the unlock page: a table of Final combos + the latest 10
-     * unlock-log entries.
+     * Render the unlock page: a paginated table of Final combos (15/page)
+     * + the latest 10 unlock-log entries.
      *
-     * @param  Request  $request  Current HTTP request; reads `search` and `kelas` query params.
+     * @param  Request  $request  Current HTTP request; reads `search`, `kelas`, and `page` query params.
      * @return Response Inertia response rendering `admin/nilai/index`.
      */
     public function index(Request $request): Response
@@ -59,17 +59,16 @@ class NilaiController extends Controller
             ->orderByDesc('validated_at')
             ->orderBy('nilai.kelas')
             ->orderBy('nilai.mata_pelajaran')
-            ->get()
-            ->map(fn ($r) => [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn ($r) => [
                 'id_guru' => (int) $r->id_guru,
                 'nama_guru' => $r->nama_guru,
                 'kelas' => $r->kelas,
                 'mata_pelajaran' => $r->mata_pelajaran,
                 'total_siswa' => (int) $r->total_siswa,
                 'validated_at' => $r->validated_at,
-            ])
-            ->values()
-            ->all();
+            ]);
 
         $kelasOptions = DB::table('nilai')
             ->where('status_validasi', Nilai::STATUS_FINAL)
