@@ -4,6 +4,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 export default function AccountCreateAdmin() {
@@ -29,9 +30,9 @@ export default function AccountCreateAdmin() {
                                 </Alert>
 
                                 <div>
-                                    <label htmlFor="username" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="username">
                                         Username <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input
                                         id="username"
                                         name="username"
@@ -43,9 +44,9 @@ export default function AccountCreateAdmin() {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="name">
                                         Nama Tampilan <span className="text-xs text-muted-foreground">(opsional)</span>
-                                    </label>
+                                    </Label>
                                     <Input
                                         id="name"
                                         name="name"
@@ -56,9 +57,9 @@ export default function AccountCreateAdmin() {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="password">
                                         Password <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input
                                         id="password"
                                         name="password"
@@ -71,9 +72,9 @@ export default function AccountCreateAdmin() {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="password_confirmation">
                                         Konfirmasi Password <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input
                                         id="password_confirmation"
                                         name="password_confirmation"

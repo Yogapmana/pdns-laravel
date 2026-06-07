@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PaginationFooter } from '@/components/ui/pagination';
-import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -62,7 +62,7 @@ export default function KelasIndex({ kelas, search }: Props) {
     });
 
     return (
-        <div>
+        <Container>
             <PageHeader
                 title="Manajemen Kelas"
                 description={`${kelas.total} kelas`}
@@ -227,7 +227,7 @@ export default function KelasIndex({ kelas, search }: Props) {
                     links={kelas.links}
                 />
             </DataTable>
-        </div>
+        </Container>
     );
 }
 

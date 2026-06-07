@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import { GraduationCap } from 'lucide-react';
 
 export default function Welcome() {
     return (
@@ -7,10 +6,12 @@ export default function Welcome() {
             <Head title="Selamat Datang" />
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy to-primary p-4">
                 <div className="text-center text-white max-w-md">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur rounded-2xl mb-4">
-                        <GraduationCap className="h-8 w-8" />
-                    </div>
-                    <h1 className="text-4xl font-bold mb-2">SMAN 7 Solo</h1>
+                    <img
+                        src="/brand/logo-sman7.png"
+                        alt="Logo SMAN 7 Solo"
+                        className="h-28 w-28 mb-4 mx-auto object-contain drop-shadow-md"
+                    />
+                    <h1 className="text-4xl font-bold mb-2 tracking-wide">SMAN 7 SOLO</h1>
                     <p className="text-lg text-blue-100 mb-8">Sistem Manajemen Akademik</p>
                     <Link
                         href="/login"

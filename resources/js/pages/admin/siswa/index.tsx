@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -60,7 +60,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
     }
 
     return (
-        <div>
+        <Container>
             <PageHeader
                 title="Manajemen Siswa"
                 description={`${siswa.total} siswa`}
@@ -226,7 +226,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                     </>
                 }
             />
-        </div>
+        </Container>
     );
 }
 

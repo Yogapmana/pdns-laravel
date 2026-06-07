@@ -1,3 +1,4 @@
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
@@ -23,15 +24,18 @@ const sizeClasses: Record<Size, string> = {
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: Variant;
     size?: Size;
+    asChild?: boolean;
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-    { className, variant = 'primary', size = 'md', ...props },
+    { className, variant = 'primary', size = 'md', asChild = false, ...props },
     ref,
 ) {
+    const Comp = asChild ? Slot : 'button';
+
     return (
-        <button
-            ref={ref}
+        <Comp
+            ref={ref as never}
             className={cn(
                 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed',
                 variantClasses[variant],

@@ -3,6 +3,7 @@ import { ArrowLeft, Save, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
@@ -14,65 +15,90 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
 
     return (
         <Container>
-            <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/siswa" className="text-muted-foreground hover:text-foreground">
+            <div className="mb-4 flex items-center gap-3">
+                <Link
+                    href="/admin/siswa"
+                    className="text-muted-foreground hover:text-foreground"
+                >
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
-                <PageHeader title="Tambah Siswa" description="Daftarkan siswa baru ke sistem" />
+                <PageHeader
+                    title="Tambah Siswa"
+                    description="Daftarkan siswa baru ke sistem"
+                />
             </div>
 
             <Card className="max-w-2xl">
                 <CardContent>
-                    <Form action="/admin/siswa" method="post" className="space-y-4">
+                    <Form
+                        action="/admin/siswa"
+                        method="post"
+                        className="space-y-4"
+                    >
                         {({ processing }) => (
                             <>
                                 <div>
-                                    <label htmlFor="nis" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nis">
                                         NIS <span className="text-danger">*</span>
-                                    </label>
-                                    <Input id="nis" name="nis" required placeholder="Contoh: 00001" />
+                                    </Label>
+                                    <Input
+                                        id="nis"
+                                        name="nis"
+                                        required
+                                        placeholder="Contoh: 00001"
+                                    />
                                     <InputError message={errors.nis} />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="nama_siswa" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nama_siswa">
                                         Nama Lengkap <span className="text-danger">*</span>
-                                    </label>
-                                    <Input id="nama_siswa" name="nama_siswa" required placeholder="Nama lengkap siswa" />
+                                    </Label>
+                                    <Input
+                                        id="nama_siswa"
+                                        name="nama_siswa"
+                                        required
+                                        placeholder="Nama lengkap siswa"
+                                    />
                                     <InputError message={errors.nama_siswa} />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="kelas" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="kelas">
                                         Kelas <span className="text-danger">*</span>
-                                    </label>
-                                    <Select id="kelas" name="kelas" defaultValue="" required>
-                                        <option value="" disabled>Pilih kelas</option>
+                                    </Label>
+                                    <Select
+                                        id="kelas"
+                                        name="kelas"
+                                        defaultValue=""
+                                        required
+                                    >
+                                        <option value="" disabled>
+                                            Pilih kelas
+                                        </option>
                                         {daftar_kelas.map((k) => (
-                                            <option key={k} value={k}>{k}</option>
+                                            <option key={k} value={k}>
+                                                {k}
+                                            </option>
                                         ))}
                                     </Select>
-                                    <p className="text-xs text-muted-foreground mt-1">
+                                    <p className="mt-1 text-xs text-muted-foreground">
                                         Belum ada kelas yang sesuai?{' '}
-                                        <Link href="/admin/kelas/create" className="text-primary hover:underline">
+                                        <Link
+                                            href="/admin/kelas/create"
+                                            className="text-primary hover:underline"
+                                        >
                                             Tambah kelas baru
                                         </Link>
                                     </p>
                                     <InputError message={errors.kelas} />
                                 </div>
 
-                                <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-secondary">
-                                        <Info className="h-4 w-4 text-primary" />
-                                        Akun Login Otomatis
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Username akun akan sama dengan NIS siswa. Anda hanya perlu menentukan password di bawah.
-                                    </p>
+                                <div className="space-y-3 rounded-lg border border-border bg-surface p-3">
                                     <div>
-                                        <label htmlFor="password" className="block text-sm font-medium text-secondary mb-2">
+                                        <Label htmlFor="password">
                                             Password <span className="text-danger">*</span>
-                                        </label>
+                                        </Label>
                                         <Input
                                             id="password"
                                             name="password"
@@ -84,9 +110,9 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                         <InputError message={errors.password} />
                                     </div>
                                     <div>
-                                        <label htmlFor="password_confirmation" className="block text-sm font-medium text-secondary mb-2">
+                                        <Label htmlFor="password_confirmation">
                                             Konfirmasi Password <span className="text-danger">*</span>
-                                        </label>
+                                        </Label>
                                         <Input
                                             id="password_confirmation"
                                             name="password_confirmation"
@@ -95,17 +121,23 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                             placeholder="Ulangi password"
                                             autoComplete="new-password"
                                         />
-                                        <InputError message={errors.password_confirmation} />
+                                        <InputError
+                                            message={
+                                                errors.password_confirmation
+                                            }
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2 pt-4 border-t border-border">
+                                <div className="flex gap-2 border-t border-border pt-4">
                                     <Button type="submit" disabled={processing}>
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
                                     <Link href="/admin/siswa">
-                                        <Button type="button" variant="outline">Batal</Button>
+                                        <Button type="button" variant="outline">
+                                            Batal
+                                        </Button>
                                     </Link>
                                 </div>
                             </>

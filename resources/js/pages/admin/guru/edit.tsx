@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
@@ -91,9 +92,9 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                         {({ processing, errors }) => (
                             <>
                                 <div>
-                                    <label htmlFor="nama_guru" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nama_guru">
                                         Nama Lengkap <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input id="nama_guru" name="nama_guru" required defaultValue={guru.nama_guru} />
                                     <InputError message={errors.nama_guru} />
                                 </div>

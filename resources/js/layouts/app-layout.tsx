@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, BookOpen, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Search, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Search, Calendar } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import type {ReactNode} from 'react';
 import { Toaster } from '@/components/ui/sonner';
@@ -223,11 +223,13 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                             </button>
                         ) : (
                             <>
-                                <div className="min-w-0">
-                                    <p className="text-lg font-bold tracking-tight flex items-center gap-2 truncate">
-                                        <BookOpen className="h-5 w-5 shrink-0" />
-                                        <span className="truncate">SMAN 7 Solo</span>
-                                    </p>
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <img
+                                        src="/brand/logo-sman7.png"
+                                        alt="Logo SMAN 7 Solo"
+                                        className="h-12 w-auto max-w-[180px] shrink-0 object-contain"
+                                    />
+                                    <span className="truncate font-bold tracking-wide text-white text-base">SMAN 7 SOLO</span>
                                 </div>
                                 <button
                                     type="button"

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 type Props = {
@@ -40,9 +41,9 @@ export default function KelasCreate({ semua_mapel }: Props) {
                         {({ processing, errors }) => (
                             <>
                                 <div>
-                                    <label htmlFor="nama" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nama">
                                         Nama Kelas <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input id="nama" name="nama" required placeholder="Contoh: X-A" maxLength={20} autoFocus />
                                     <p className="text-xs text-muted-foreground mt-1">Maksimal 20 karakter. Contoh format: X-A, XI-B, XII-IPA-1.</p>
                                     <InputError message={errors.nama} />

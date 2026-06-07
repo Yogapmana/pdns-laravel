@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -85,7 +86,7 @@ export default function AccountsIndex({ accounts, filters }: Props) {
     }
 
     return (
-        <div>
+        <Container>
             <PageHeader
                 title="Manajemen Akun"
                 description={`${accounts.total} akun`}
@@ -279,12 +280,9 @@ export default function AccountsIndex({ accounts, filters }: Props) {
                 }
             >
                 <div>
-                    <label
-                        htmlFor="new_password"
-                        className="mb-2 block text-sm font-medium text-secondary"
-                    >
+                    <Label htmlFor="new_password">
                         Password Baru <span className="text-danger">*</span>
-                    </label>
+                    </Label>
                     <Input
                         id="new_password"
                         type="text"
@@ -297,7 +295,7 @@ export default function AccountsIndex({ accounts, filters }: Props) {
                     </p>
                 </div>
             </Modal>
-        </div>
+        </Container>
     );
 }
 

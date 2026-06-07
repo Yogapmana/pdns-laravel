@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import {
@@ -405,13 +406,9 @@ export default function AdminNilaiIndex({
                         di log audit.
                     </Alert>
                     <div>
-                        <label
-                            htmlFor="reason"
-                            className="mb-2 block text-sm font-medium text-secondary"
-                        >
-                            Alasan Pembukaan Kunci{' '}
-                            <span className="text-danger">*</span>
-                        </label>
+                        <Label htmlFor="reason">
+                            Alasan Pembukaan Kunci <span className="text-danger">*</span>
+                        </Label>
                         <textarea
                             id="reason"
                             rows={4}

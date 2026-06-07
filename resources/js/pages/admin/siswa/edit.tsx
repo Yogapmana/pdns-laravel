@@ -3,6 +3,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
@@ -30,25 +31,23 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                         {({ processing }) => (
                             <>
                                 <div>
-                                    <label htmlFor="nis" className="block text-sm font-medium text-secondary mb-2">
-                                        NIS
-                                    </label>
+                                    <Label htmlFor="nis">NIS</Label>
                                     <Input id="nis" value={siswa.nis} disabled className="font-mono" />
                                     <p className="text-xs text-muted-foreground mt-1">NIS tidak dapat diubah.</p>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="nama_siswa" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nama_siswa">
                                         Nama Lengkap <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input id="nama_siswa" name="nama_siswa" required defaultValue={siswa.nama_siswa} />
                                     <InputError message={errors.nama_siswa} />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="kelas" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="kelas">
                                         Kelas <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Select id="kelas" name="kelas" defaultValue={siswa.kelas}>
                                         <option value="" disabled>Pilih kelas</option>
                                         {daftar_kelas.map((k) => (

@@ -2,7 +2,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'SMAN 7 Solo';
+const appName = import.meta.env.VITE_APP_NAME || 'SMAN 7 SOLO';
 
 const GUEST_PAGES = ['welcome', 'errors/403'];
 

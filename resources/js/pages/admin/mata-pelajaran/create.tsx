@@ -3,6 +3,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 export default function MataPelajaranCreate() {
@@ -21,9 +22,9 @@ export default function MataPelajaranCreate() {
                         {({ processing, errors }) => (
                             <>
                                 <div>
-                                    <label htmlFor="nama" className="block text-sm font-medium text-secondary mb-2">
+                                    <Label htmlFor="nama">
                                         Nama Mata Pelajaran <span className="text-danger">*</span>
-                                    </label>
+                                    </Label>
                                     <Input id="nama" name="nama" required placeholder="Contoh: Matematika" maxLength={100} autoFocus />
                                     <p className="text-xs text-muted-foreground mt-1">Maksimal 100 karakter.</p>
                                     <InputError message={errors.nama} />

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
     PageHeader,
@@ -130,12 +131,11 @@ export default function GuruDashboard({
                     <div className="flex flex-wrap items-center gap-2"></div>
                 }
                 action={
-                    <Link
-                        href="/guru/input-nilai"
-                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
-                    >
-                        <Edit3 className="h-4 w-4" />
-                        Input Nilai
+                    <Link href="/guru/input-nilai">
+                        <Button>
+                            <Edit3 className="h-4 w-4" />
+                            Input Nilai
+                        </Button>
                     </Link>
                 }
             />

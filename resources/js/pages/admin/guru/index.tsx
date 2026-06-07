@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PaginationFooter } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import { DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
+import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
@@ -87,7 +87,7 @@ export default function GuruIndex({
     }
 
     return (
-        <div>
+        <Container>
             <PageHeader
                 title="Manajemen Guru"
                 description={`${guru.total} guru`}
@@ -312,7 +312,7 @@ export default function GuruIndex({
                     </>
                 }
             />
-        </div>
+        </Container>
     );
 }
 
