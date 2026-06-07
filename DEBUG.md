@@ -13,7 +13,7 @@
 | Database MySQL | ✅ Selesai | Docker `pdns-mysql` (MySQL 8.0.46) di port 3306 |
 | Laravel Fortify | ✅ Selesai | Login pakai username; registration/reset disabled; home = `/redirect-by-role` |
 | Migrations | ✅ Selesai | 7 migrasi (users+sessions, siswa, guru, nilai, guru_mengajar, restructure, master  +mapel, **nilai_unlock_log**); `siswa.kelas` index di original migration |
-| Models + Relasi | ✅ Selesai | User, Siswa (PK=nis), Guru, GuruMengajar, Nilai + static helper hitungNilaiAkhir/tentukanKelulusan/validasiNilai |
+| Models + Relasi | ✅ Selesai | User, Siswa (PK=nis), Guru, GuruMengajar, Nilai + static helper aNilaiAkhir/tentukanKelulusan/validasiNilai |
 | Role Middleware | ✅ Selesai | `App\Http\Middleware\EnsureUserHasRole` alias `role`; cek `is_active` logout paksa |
 | Seeder lengkap | ✅ Selesai | 1 admin, 4 guru (8 kombinasi mengajar), 29 siswa (X-A/B, XI-A/B), 58 nilai (29 siswa × rata-rata 2 mapel per kelas) |
 | Halaman Login | ✅ Selesai | React+Inertia+Fortify, show/hide password |
