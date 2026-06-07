@@ -27,20 +27,25 @@ class NilaiController extends Controller
      */
     public function index(): Response
     {
-        $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
+        $siswa = Siswa::with('kelas:id,nama')->where('user_id', auth()->id())->firstOrFail();
 
-        $nilai = Nilai::with('guru:id,nama_guru')
+        $nilai = Nilai::with(['guru:id,nama_guru', 'kelas:id,nama', 'mataPelajaran:id,nama'])
             ->where('nis', $siswa->nis)
             ->where('status_validasi', Nilai::STATUS_FINAL)
             ->get()
-            ->groupBy(fn ($n) => $n->kelas.'|'.$n->mata_pelajaran);
+            ->groupBy(fn ($n) => $n->kelas_id.'|'.$n->mata_pelajaran_id);
 
         $guruMap = Guru::whereIn('id', $nilai->flatten()->pluck('id_guru')->unique())
             ->get()
             ->keyBy('id');
 
         $mapelList = $nilai->keys()
-            ->map(fn ($k) => explode('|', $k)[1])
+            ->map(function ($k) use ($nilai) {
+                $first = $nilai[$k]->first();
+
+                return $first?->mataPelajaran?->nama ?? '';
+            })
+            ->filter()
             ->unique()
             ->values();
 
@@ -53,16 +58,21 @@ class NilaiController extends Controller
 
     public function statistik(): Response
     {
-        $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
+        $siswa = Siswa::with('kelas:id,nama')->where('user_id', auth()->id())->firstOrFail();
 
-        $nilai = Nilai::with('guru:id,nama_guru')
+        $nilai = Nilai::with(['guru:id,nama_guru', 'kelas:id,nama', 'mataPelajaran:id,nama'])
             ->where('nis', $siswa->nis)
             ->where('status_validasi', Nilai::STATUS_FINAL)
             ->get()
-            ->groupBy(fn ($n) => $n->kelas.'|'.$n->mata_pelajaran);
+            ->groupBy(fn ($n) => $n->kelas_id.'|'.$n->mata_pelajaran_id);
 
         $mapelList = $nilai->keys()
-            ->map(fn ($k) => explode('|', $k)[1])
+            ->map(function ($k) use ($nilai) {
+                $first = $nilai[$k]->first();
+
+                return $first?->mataPelajaran?->nama ?? '';
+            })
+            ->filter()
             ->unique()
             ->values();
 
@@ -77,10 +87,10 @@ class NilaiController extends Controller
     /**
      * Compute aggregated chart data from grouped nilai collection.
      *
-     * Walks the `(kelas, mata_pelajaran)`-keyed collection once, building
+     * Walks the `(kelas_id, mata_pelajaran_id)`-keyed collection once, building
      * the per-mapel rows and the pass/fail counters.
      *
-     * @param  Collection<string, Collection<int, Nilai>>  $nilai  Grouped nilai rows, keyed by `"kelas|mata_pelajaran"`.
+     * @param  Collection<string, Collection<int, Nilai>>  $nilai  Grouped nilai rows, keyed by `"kelas_id|mata_pelajaran_id"`.
      * @return array{
      *     per_mapel: array<int, array{mapel: string, tugas: float|null, uts: float|null, uas: float|null, akhir: float|null, status: string|null, kkm: float}>,
      *     kkm: float,
@@ -107,10 +117,9 @@ class NilaiController extends Controller
             $uas = $item->nilai_uas !== null ? (float) $item->nilai_uas : null;
             $akhir = (float) $item->nilai_akhir;
 
-            $mapel = explode('|', $key)[1];
             $perMapel[] = [
-                'mapel' => $mapel,
-                'kelas' => $item->kelas,
+                'mapel' => $item->mataPelajaran?->nama ?? '',
+                'kelas' => $item->kelas?->nama ?? '',
                 'tugas' => $tugas,
                 'uts' => $uts,
                 'uas' => $uas,

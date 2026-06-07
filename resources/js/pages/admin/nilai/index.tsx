@@ -29,6 +29,8 @@ import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
 type Combo = {
     id_guru: number;
+    kelas_id: number;
+    mata_pelajaran_id: number;
     nama_guru: string;
     kelas: string;
     mata_pelajaran: string;
@@ -142,8 +144,8 @@ export default function AdminNilaiIndex({
             '/admin/nilai/unlock',
             {
                 id_guru: unlockTarget.id_guru,
-                kelas: unlockTarget.kelas,
-                mata_pelajaran: unlockTarget.mata_pelajaran,
+                kelas_id: unlockTarget.kelas_id,
+                mata_pelajaran_id: unlockTarget.mata_pelajaran_id,
                 reason: reason.trim(),
             },
             {
@@ -248,7 +250,7 @@ export default function AdminNilaiIndex({
                             ) : (
                                 combos.data.map((c, i) => (
                                     <tr
-                                        key={`${c.id_guru}-${c.kelas}-${c.mata_pelajaran}`}
+                                        key={`${c.id_guru}-${c.kelas_id}-${c.mata_pelajaran_id}`}
                                         className={`${i % 2 === 0 ? 'bg-white' : 'bg-surface'} transition-colors hover:bg-blue-50`}
                                     >
                                         <td className="px-4 py-3 font-medium">

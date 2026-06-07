@@ -21,19 +21,19 @@ test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
     $userSiswaB = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
 
-    $siswaA = Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Siswa A', 'kelas' => 'X-A']);
-    $siswaB = Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Siswa B', 'kelas' => 'X-A']);
+    $siswaA = Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Siswa A', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswaB = Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Siswa B', 'kelas_id' => $this->kelasId('X-A')]);
 
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     Nilai::create([
-        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -45,14 +45,14 @@ test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
         ->component('siswa/nilai/index')
         ->where('siswa.nis', '00001')
         ->where('siswa.nama_siswa', 'Siswa A')
-        ->has('nilai.X-A|Matematika', 1)
-        ->where('nilai.X-A|Matematika.0.nilai_akhir', '81.00')
+        ->has('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika'), 1)
+        ->where('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika').'.0.nilai_akhir', '81.00')
     );
 });
 
 test('AC-08: Siswa mencoba akses URL edit nilai ditolak 403', function () {
     $userSiswa = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($userSiswa)->get('/guru/input-nilai')->assertForbidden();
     $this->actingAs($userSiswa)->get('/admin/siswa')->assertForbidden();
@@ -61,9 +61,8 @@ test('AC-08: Siswa mencoba akses URL edit nilai ditolak 403', function () {
 });
 
 test('Siswa nonaktif tidak bisa login', function () {
-    $admin = User::factory()->admin()->create();
     $userSiswa = User::factory()->siswa()->inactive()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->post('/login', [
         'username' => $userSiswa->username,
@@ -77,12 +76,12 @@ test('Siswa nilai page menampilkan nama guru pengajar (guru_map adalah flat keyB
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
 
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari Wahyuni']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -99,12 +98,12 @@ test('Siswa nilai page menampilkan nama guru pengajar (guru_map adalah flat keyB
 
 test('Siswa tidak bisa akses endpoint nilai guru (POST save)', function () {
     $userSiswa = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($userSiswa)
         ->post('/guru/input-nilai/save', [
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'nilai' => [['nis' => '00001', 'nilai_tugas' => 100, 'nilai_uts' => 100, 'nilai_uas' => 100]],
         ])
         ->assertForbidden();

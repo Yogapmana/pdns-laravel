@@ -21,15 +21,15 @@ test('AC-09: Admin generate laporan kelas menampilkan semua siswa dengan nilai',
 
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
-    $s1 = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    $s2 = Siswa::create(['nis' => '00002', 'nama_siswa' => 'Budi', 'kelas' => 'X-A']);
-    $s3 = Siswa::create(['nis' => '00003', 'nama_siswa' => 'Citra', 'kelas' => 'X-B']);
+    $s1 = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    $s2 = Siswa::create(['nis' => '00002', 'nama_siswa' => 'Budi', 'kelas_id' => $this->kelasId('X-A')]);
+    $s3 = Siswa::create(['nis' => '00003', 'nama_siswa' => 'Citra', 'kelas_id' => $this->kelasId('X-B')]);
 
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
-    Nilai::create(['nis' => '00002', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus']);
-    Nilai::create(['nis' => '00003', 'id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 90, 'nilai_uts' => 85, 'nilai_uas' => 95, 'nilai_akhir' => 90.5, 'status_lulus' => 'Lulus']);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
+    Nilai::create(['nis' => '00002', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus']);
+    Nilai::create(['nis' => '00003', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 90, 'nilai_uts' => 85, 'nilai_uas' => 95, 'nilai_akhir' => 90.5, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/preview?kelas%5B%5D=X-A');
 
@@ -49,9 +49,9 @@ test('AC-10: Admin ekspor laporan ke PDF menghasilkan file PDF', function () {
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/export/pdf?kelas%5B%5D=X-A');
 
@@ -64,9 +64,9 @@ test('Admin ekspor laporan ke HTML menghasilkan file HTML', function () {
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/export/html?kelas%5B%5D=X-A');
 
@@ -79,14 +79,14 @@ test('AC-09b: Laporan multi-kelas: gabung sections dari beberapa kelas', functio
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas' => 'X-A']);
-    Siswa::create(['nis' => '00002', 'nama_siswa' => 'B', 'kelas' => 'X-B']);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'nama_siswa' => 'B', 'kelas_id' => $this->kelasId('X-B')]);
 
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
-    Nilai::create(['nis' => '00002', 'id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 50, 'nilai_akhir' => 50, 'status_lulus' => 'Tidak Lulus']);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
+    Nilai::create(['nis' => '00002', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 50, 'nilai_akhir' => 50, 'status_lulus' => 'Tidak Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/preview?kelas%5B%5D=X-A&kelas%5B%5D=X-B');
 
@@ -104,12 +104,12 @@ test('AC-09c: Laporan filter multi-mapel: hanya mapel dipilih yang tampil', func
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'IPA']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('IPA')]);
 
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'IPA', 'nilai_tugas' => 60, 'nilai_akhir' => 60, 'status_lulus' => 'Tidak Lulus']);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('IPA'), 'nilai_tugas' => 60, 'nilai_akhir' => 60, 'status_lulus' => 'Tidak Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/preview?kelas%5B%5D=X-A&mata_pelajaran%5B%5D=Matematika');
 
@@ -123,9 +123,9 @@ test('Admin ekspor laporan ke CSV menghasilkan file CSV dengan header kelas+mape
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/export/csv?kelas%5B%5D=X-A');
 
@@ -143,9 +143,9 @@ test('Admin ekspor laporan ke XLSX menghasilkan file XLSX valid (Office Open XML
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->get('/admin/laporan/export/xlsx?kelas%5B%5D=X-A');
 
@@ -182,9 +182,9 @@ test('Guru yang sudah punya nilai tidak dapat dihapus (RESTRICT)', function () {
     $admin = User::factory()->admin()->create();
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika', 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Nilai::create(['nis' => '00001', 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'), 'nilai_tugas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus']);
 
     $response = $this->actingAs($admin)->delete("/admin/guru/{$guru->id}");
 
@@ -208,10 +208,10 @@ test('Manajemen Akun: index memuat daftar akun dengan relasi siswa & guru (no Co
 
     $guruUser = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $siswaUser = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $siswaUser->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $siswaUser->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($admin)->get('/admin/akun')->assertOk();
 });

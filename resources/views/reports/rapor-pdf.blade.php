@@ -293,7 +293,7 @@
                 <tr>
                     <td class="lbl">Kelas</td>
                     <td class="sep">:</td>
-                    <td class="val">{{ $siswa->kelas }}</td>
+                    <td class="val">{{ $siswa->kelas_nama ?? $siswa->kelas?->nama }}</td>
                 </tr>
                 <tr>
                     <td class="lbl">Semester</td>
@@ -400,7 +400,7 @@
         <td class="val">{{ strtoupper($siswa->nama_siswa) }}</td>
         <td class="lbl">Kelas</td>
         <td class="sep">:</td>
-        <td class="val">{{ $siswa->kelas }}</td>
+        <td class="val">{{ $siswa->kelas_nama ?? $siswa->kelas?->nama }}</td>
     </tr>
     <tr>
         <td class="lbl">NIS</td>
@@ -498,7 +498,7 @@
 
     <div class="status-kenaikan">
         <span class="lbl">Keputusan:</span>
-        <span class="val">{{ $tidak_lulus === 0 ? 'NAIK KE KELAS ' . $next_kelas : 'TINGGAL DI KELAS ' . $siswa->kelas }}</span>
+        <span class="val">{{ $tidak_lulus === 0 ? 'NAIK KE KELAS ' . $next_kelas : 'TINGGAL DI KELAS ' . ($siswa->kelas_nama ?? $siswa->kelas?->nama) }}</span>
     </div>
 @endif
 

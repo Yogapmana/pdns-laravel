@@ -22,8 +22,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $id_admin
  * @property int $id_guru
- * @property string $kelas
- * @property string $mata_pelajaran
+ * @property int $kelas_id
+ * @property int $mata_pelajaran_id
  * @property int $affected_rows
  * @property string $reason
  * @property Carbon $created_at
@@ -42,8 +42,8 @@ class NilaiUnlockLog extends Model
     protected $fillable = [
         'id_admin',
         'id_guru',
-        'kelas',
-        'mata_pelajaran',
+        'kelas_id',
+        'mata_pelajaran_id',
         'affected_rows',
         'reason',
     ];
@@ -79,5 +79,25 @@ class NilaiUnlockLog extends Model
     public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class, 'id_guru');
+    }
+
+    /**
+     * The kelas targeted by this unlock.
+     *
+     * @return BelongsTo<Kelas, NilaiUnlockLog>
+     */
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    /**
+     * The mata pelajaran targeted by this unlock.
+     *
+     * @return BelongsTo<MataPelajaran, NilaiUnlockLog>
+     */
+    public function mataPelajaran(): BelongsTo
+    {
+        return $this->belongsTo(MataPelajaran::class);
     }
 }

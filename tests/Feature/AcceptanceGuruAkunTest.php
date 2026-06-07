@@ -21,7 +21,7 @@ test('Admin buat guru baru OTOMATIS membuat akun User (username=derived dari nam
     $response = $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Test Guru',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
@@ -34,8 +34,8 @@ test('Admin buat guru baru OTOMATIS membuat akun User (username=derived dari nam
     expect($guru)->not->toBeNull();
     expect($guru->user_id)->not->toBeNull();
     expect($guru->mengajar()->count())->toBe(1);
-    expect($guru->mengajar()->first()->kelas)->toBe('X-A');
-    expect($guru->mengajar()->first()->mata_pelajaran)->toBe('Matematika');
+    expect($guru->mengajar()->first()->kelas?->nama)->toBe('X-A');
+    expect($guru->mengajar()->first()->mataPelajaran?->nama)->toBe('Matematika');
 
     $user = User::find($guru->user_id);
     expect($user->username)->toBe('testguru');
@@ -51,9 +51,9 @@ test('Admin buat guru dengan multiple kombinasi mengajar tersimpan', function ()
     $response = $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Multi Mapel',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
-            ['kelas' => 'X-B', 'mata_pelajaran' => 'Matematika'],
-            ['kelas' => 'XI-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
+            ['kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
+            ['kelas_id' => $this->kelasId('XI-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
@@ -87,7 +87,7 @@ test('Admin buat guru dengan nama duplikat → username auto-increment counter',
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Sari Wahyuni',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
@@ -104,7 +104,7 @@ test('Admin buat guru dengan password < 6 karakter ditolak', function () {
     $response = $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Pass Lemah',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'abc',
         'password_confirmation' => 'abc',
@@ -120,7 +120,7 @@ test('Admin buat guru dengan konfirmasi password tidak cocok ditolak', function 
     $response = $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Mismatch',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia999',
@@ -136,7 +136,7 @@ test('Guru yang baru dibuat bisa login dengan username dan password', function (
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Ibu Login Test',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
@@ -160,7 +160,7 @@ test('Hapus guru juga menghapus user account terkait (kalau tidak punya nilai)',
     $admin = User::factory()->admin()->create();
     $userGuru = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Dihapus']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Fisika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('IPA')]);
 
     $this->actingAs($admin)->delete("/admin/guru/{$guru->id}");
 
@@ -171,14 +171,14 @@ test('Hapus guru juga menghapus user account terkait (kalau tidak punya nilai)',
 test('Edit guru mengganti kombinasi mengajar dengan benar', function () {
     $admin = User::factory()->admin()->create();
     $guru = Guru::create(['nama_guru' => 'Ibu Edit']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $response = $this->actingAs($admin)->put("/admin/guru/{$guru->id}", [
         'nama_guru' => 'Ibu Edit Updated',
         'mengajar' => [
-            ['kelas' => 'XI-A', 'mata_pelajaran' => 'IPA'],
-            ['kelas' => 'XI-B', 'mata_pelajaran' => 'IPA'],
+            ['kelas_id' => $this->kelasId('XI-A'), 'mata_pelajaran_id' => $this->mapelId('IPA')],
+            ['kelas_id' => $this->kelasId('XI-B'), 'mata_pelajaran_id' => $this->mapelId('IPA')],
         ],
     ]);
 
@@ -186,5 +186,5 @@ test('Edit guru mengganti kombinasi mengajar dengan benar', function () {
     $guru->refresh();
     expect($guru->nama_guru)->toBe('Ibu Edit Updated');
     expect($guru->mengajar()->count())->toBe(2);
-    expect($guru->mengajar()->pluck('kelas')->sort()->values()->all())->toBe(['XI-A', 'XI-B']);
+    expect($guru->mengajar()->get()->map(fn ($m) => $m->kelas?->nama)->sort()->values()->all())->toBe(['XI-A', 'XI-B']);
 });

@@ -14,7 +14,7 @@ trait SeedsAkademikMasters
      * Seed default master Kelas records. Idempotent.
      *
      * @param  array<int, string>|null  $only  If null, seeds full default SMA set; else only specified names.
-     * @return array<int, string>
+     * @return array<int, string> The seeded kelas names.
      */
     protected function seedKelas(?array $only = null): array
     {
@@ -32,7 +32,7 @@ trait SeedsAkademikMasters
      * Seed default master MataPelajaran records. Idempotent.
      *
      * @param  array<int, string>|null  $only  If null, seeds full default SMA set; else only specified names.
-     * @return array<int, string>
+     * @return array<int, string> The seeded mata pelajaran names.
      */
     protected function seedMataPelajaran(?array $only = null): array
     {
@@ -77,9 +77,10 @@ trait SeedsAkademikMasters
         $count = 0;
         foreach ($kelas as $k) {
             foreach ($mapel as $m) {
-                $row = KelasMataPelajaran::firstOrCreate(
-                    ['kelas' => $k, 'mata_pelajaran' => $m],
-                );
+                $row = KelasMataPelajaran::firstOrCreate([
+                    'kelas_id' => Kelas::where('nama', $k)->value('id'),
+                    'mata_pelajaran_id' => MataPelajaran::where('nama', $m)->value('id'),
+                ]);
                 if ($row->wasRecentlyCreated) {
                     $count++;
                 }
@@ -87,5 +88,53 @@ trait SeedsAkademikMasters
         }
 
         return $count;
+    }
+
+    /**
+     * Resolve the integer id of a kelas by its name.
+     */
+    protected function kelasId(string $nama): int
+    {
+        return (int) Kelas::where('nama', $nama)->value('id');
+    }
+
+    /**
+     * Resolve the integer id of a mata pelajaran by its name.
+     */
+    protected function mapelId(string $nama): int
+    {
+        return (int) MataPelajaran::where('nama', $nama)->value('id');
+    }
+
+    /**
+     * Return a `[nama => id]` map of all seeded kelas (or filtered by `$only`).
+     *
+     * @param  array<int, string>|null  $only
+     * @return array<string, int>
+     */
+    protected function kelasIdMap(?array $only = null): array
+    {
+        $q = Kelas::query();
+        if ($only !== null) {
+            $q->whereIn('nama', $only);
+        }
+
+        return $q->pluck('id', 'nama')->all();
+    }
+
+    /**
+     * Return a `[nama => id]` map of all seeded mapel (or filtered by `$only`).
+     *
+     * @param  array<int, string>|null  $only
+     * @return array<string, int>
+     */
+    protected function mapelIdMap(?array $only = null): array
+    {
+        $q = MataPelajaran::query();
+        if ($only !== null) {
+            $q->whereIn('nama', $only);
+        }
+
+        return $q->pluck('id', 'nama')->all();
     }
 }

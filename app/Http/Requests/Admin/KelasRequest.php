@@ -45,13 +45,13 @@ class KelasRequest extends FormRequest
                 'max:20',
                 Rule::unique(Kelas::class, 'nama')->ignore($kelasId),
             ],
-            'mata_pelajaran' => ['nullable', 'array'],
-            'mata_pelajaran.*' => ['string', Rule::exists(MataPelajaran::class, 'nama')],
+            'mata_pelajaran_id' => ['nullable', 'array'],
+            'mata_pelajaran_id.*' => ['integer', Rule::exists(MataPelajaran::class, 'id')],
         ];
     }
 
     /**
-     * Return the validated payload, removing an empty `mata_pelajaran`
+     * Return the validated payload, removing an empty `mata_pelajaran_id`
      * array so the controller can distinguish "no change" (key absent)
      * from "explicitly cleared" (empty array).
      *
@@ -63,35 +63,35 @@ class KelasRequest extends FormRequest
     {
         $data = parent::validated();
 
-        if (! $this->has('mata_pelajaran')) {
-            unset($data['mata_pelajaran']);
+        if (! $this->has('mata_pelajaran_id')) {
+            unset($data['mata_pelajaran_id']);
         }
 
         return $data;
     }
 
     /**
-     * Return the deduplicated, sorted list of mata-pelajaran names that
-     * were submitted for this kelas. Used by the controller to sync the
+     * Return the deduplicated list of mata-pelajaran ids that were
+     * submitted for this kelas. Used by the controller to sync the
      * `kelas_mata_pelajaran` pivot.
      *
-     * @return array<int, string>
+     * @return array<int, int>
      */
     public function getMataPelajaran(): array
     {
-        $raw = $this->input('mata_pelajaran', []);
+        $raw = $this->input('mata_pelajaran_id', []);
 
         if (! is_array($raw)) {
             return [];
         }
 
         $clean = [];
-        foreach ($raw as $nama) {
-            $nama = trim((string) $nama);
-            if ($nama === '' || in_array($nama, $clean, true)) {
+        foreach ($raw as $id) {
+            $id = (int) $id;
+            if ($id <= 0 || in_array($id, $clean, true)) {
                 continue;
             }
-            $clean[] = $nama;
+            $clean[] = $id;
         }
 
         sort($clean);
@@ -110,9 +110,9 @@ class KelasRequest extends FormRequest
             'nama.required' => 'Nama kelas wajib diisi.',
             'nama.unique' => 'Nama kelas sudah ada.',
             'nama.max' => 'Nama kelas maksimal 20 karakter.',
-            'mata_pelajaran.array' => 'Daftar mata pelajaran harus berupa array.',
-            'mata_pelajaran.*.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
-            'mata_pelajaran.*.string' => 'Nama mata pelajaran harus berupa teks.',
+            'mata_pelajaran_id.array' => 'Daftar mata pelajaran harus berupa array.',
+            'mata_pelajaran_id.*.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
+            'mata_pelajaran_id.*.integer' => 'ID mata pelajaran harus berupa angka.',
         ];
     }
 }

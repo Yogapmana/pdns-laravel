@@ -7,21 +7,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
+type Mapel = { id: number; nama: string };
+
 type Props = {
     kelas: { id: number; nama: string };
-    semua_mapel: string[];
-    selected_mapel: string[];
+    semua_mapel: Mapel[];
+    selected_mapel: number[];
 };
 
 export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props) {
-    const [selected, setSelected] = useState<string[]>(selected_mapel);
+    const [selected, setSelected] = useState<number[]>(selected_mapel);
 
-    function toggle(nama: string) {
-        setSelected((prev) => (prev.includes(nama) ? prev.filter((n) => n !== nama) : [...prev, nama]));
+    function toggle(id: number) {
+        setSelected((prev) => (prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]));
     }
 
     function selectAll() {
-        setSelected([...semua_mapel]);
+        setSelected(semua_mapel.map((m) => m.id));
     }
 
     function clearAll() {
@@ -85,24 +87,24 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                             {semua_mapel.map((m) => {
-                                                const checked = selected.includes(m);
+                                                const checked = selected.includes(m.id);
 
                                                 return (
                                                     <label
-                                                        key={m}
+                                                        key={m.id}
                                                         className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition ${
                                                             checked ? 'border-primary bg-blue-50' : 'border-border bg-white hover:bg-surface'
                                                         }`}
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            name="mata_pelajaran[]"
-                                                            value={m}
+                                                            name="mata_pelajaran_id[]"
+                                                            value={m.id}
                                                             checked={checked}
-                                                            onChange={() => toggle(m)}
+                                                            onChange={() => toggle(m.id)}
                                                             className="h-4 w-4 text-primary border-border rounded focus:ring-primary"
                                                         />
-                                                        <span className="text-sm text-secondary">{m}</span>
+                                                        <span className="text-sm text-secondary">{m.nama}</span>
                                                     </label>
                                                 );
                                             })}
@@ -112,7 +114,7 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
                                     <p className="text-xs text-muted-foreground mt-3">
                                         {selected.length} mata pelajaran dipilih.
                                     </p>
-                                    <InputError message={errors['mata_pelajaran.0']} />
+                                    <InputError message={errors['mata_pelajaran_id.0']} />
                                 </div>
 
                                 <div className="flex gap-2 pt-4 border-t border-border">

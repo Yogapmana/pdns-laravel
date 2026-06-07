@@ -19,7 +19,7 @@ import { useFlashToast } from '@/hooks/use-flash-toast';
 import { calculateNilaiAkhir, calculateStatusLulus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
-type Siswa = { nis: string; nama_siswa: string; kelas: string };
+type Siswa = { nis: string; nama_siswa: string; kelas: { id: number; nama: string } | null };
 
 type NilaiMap = Record<
     string,
@@ -33,16 +33,18 @@ type NilaiMap = Record<
     }
 >;
 
-type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
+type Mengajar = { id: number; kelas: { id: number; nama: string } | null; mata_pelajaran: { id: number; nama: string } | null };
 
 type Guru = { id: number; nama_guru: string; mengajar: Mengajar[] };
 
 type Props = {
     guru: Guru;
-    daftar_kelas: string[];
-    mapel_by_kelas: Record<string, string[]>;
+    daftar_kelas: { id: number; nama: string }[];
+    mapel_by_kelas: Record<string, { id: number; nama: string }[]>;
     kelas: string | null;
+    kelas_id: number | null;
     mata_pelajaran: string | null;
+    mata_pelajaran_id: number | null;
     siswa: Siswa[];
     nilai_map: NilaiMap;
     status_validasi_global: string;
@@ -54,35 +56,50 @@ export default function NilaiIndex({
     daftar_kelas,
     mapel_by_kelas,
     kelas,
+    kelas_id,
     mata_pelajaran,
+    mata_pelajaran_id,
     siswa,
     nilai_map,
     status_validasi_global,
     has_mengajar,
 }: Props) {
     useFlashToast();
-    const [selectedKelas, setSelectedKelas] = useState(kelas ?? '');
-    const [selectedMapel, setSelectedMapel] = useState(mata_pelajaran ?? '');
+    const [selectedKelasId, setSelectedKelasId] = useState(kelas_id ? String(kelas_id) : '');
+    const [selectedMapelId, setSelectedMapelId] = useState(mata_pelajaran_id ? String(mata_pelajaran_id) : '');
     const isFinal = status_validasi_global === 'Final';
 
-    const availableMapel = selectedKelas
-        ? (mapel_by_kelas[selectedKelas] ?? [])
+    const availableMapel = selectedKelasId
+        ? (mapel_by_kelas[selectedKelasId] ?? [])
         : [];
 
     function applyFilter() {
-        if (!selectedKelas || !selectedMapel) {
+        if (!selectedKelasId || !selectedMapelId) {
             return;
         }
 
+        const kelasNama = daftar_kelas.find((k) => String(k.id) === selectedKelasId)?.nama;
+        const mapelNama = availableMapel.find((m) => String(m.id) === selectedMapelId)?.nama;
+
         router.get('/guru/input-nilai', {
-            kelas: selectedKelas,
-            mata_pelajaran: selectedMapel,
+            kelas: kelasNama,
+            kelas_id: Number(selectedKelasId),
+            mata_pelajaran: mapelNama,
+            mata_pelajaran_id: Number(selectedMapelId),
         });
     }
 
-    function changeKelas(newKelas: string) {
-        setSelectedKelas(newKelas);
-        setSelectedMapel('');
+    function changeKelas(newKelasId: string) {
+        setSelectedKelasId(newKelasId);
+        setSelectedMapelId('');
+    }
+
+    function kelasNama(id: string): string {
+        return daftar_kelas.find((k) => String(k.id) === id)?.nama ?? '';
+    }
+
+    function mapelNama(id: string): string {
+        return availableMapel.find((m) => String(m.id) === id)?.nama ?? '';
     }
 
     return (
@@ -114,7 +131,7 @@ export default function NilaiIndex({
                                 </label>
                                 <Select
                                     id="kelas"
-                                    value={selectedKelas}
+                                    value={selectedKelasId}
                                     onChange={(e) =>
                                         changeKelas(e.target.value)
                                     }
@@ -122,8 +139,8 @@ export default function NilaiIndex({
                                 >
                                     <option value="">Pilih Kelas...</option>
                                     {daftar_kelas.map((k) => (
-                                        <option key={k} value={k}>
-                                            {k}
+                                        <option key={k.id} value={k.id}>
+                                            {k.nama}
                                         </option>
                                     ))}
                                 </Select>
@@ -137,25 +154,25 @@ export default function NilaiIndex({
                                 </label>
                                 <Select
                                     id="mapel"
-                                    value={selectedMapel}
+                                    value={selectedMapelId}
                                     onChange={(e) =>
-                                        setSelectedMapel(e.target.value)
+                                        setSelectedMapelId(e.target.value)
                                     }
-                                    disabled={!selectedKelas}
+                                    disabled={!selectedKelasId}
                                     className="h-10"
                                 >
                                     <option value="">
-                                        {selectedKelas
+                                        {selectedKelasId
                                             ? 'Pilih Mata Pelajaran...'
                                             : 'Pilih kelas dulu'}
                                     </option>
                                     {availableMapel.map((m) => (
-                                        <option key={m} value={m}>
-                                            {m}
+                                        <option key={m.id} value={m.id}>
+                                            {m.nama}
                                         </option>
                                     ))}
                                 </Select>
-                                {selectedKelas &&
+                                {selectedKelasId &&
                                     availableMapel.length === 0 && (
                                         <p className="absolute mt-1 flex items-center gap-1 text-xs text-warning">
                                             <Info className="h-3 w-3" /> Anda
@@ -165,7 +182,7 @@ export default function NilaiIndex({
                             </div>
                             <Button
                                 onClick={applyFilter}
-                                disabled={!selectedKelas || !selectedMapel}
+                                disabled={!selectedKelasId || !selectedMapelId}
                                 className="h-10 w-full shrink-0 px-6 sm:w-auto"
                             >
                                 <Search className="mr-2 h-4 w-4" />
@@ -176,7 +193,7 @@ export default function NilaiIndex({
                 </div>
             )}
 
-            {has_mengajar && (!kelas || !mata_pelajaran) && (
+            {has_mengajar && (!kelas_id || !mata_pelajaran_id) && (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-slate-50/50 py-16 text-center">
                     <div className="rounded-full bg-slate-100 p-4">
                         <FileSpreadsheet className="h-8 w-8 text-slate-400" />
@@ -192,7 +209,7 @@ export default function NilaiIndex({
                 </div>
             )}
 
-            {kelas && mata_pelajaran && siswa.length > 0 && (
+            {kelas_id && mata_pelajaran_id && siswa.length > 0 && (
                 <>
                     {isFinal && (
                         <Alert variant="warning">
@@ -220,13 +237,13 @@ export default function NilaiIndex({
                             <>
                                 <input
                                     type="hidden"
-                                    name="kelas"
-                                    value={kelas}
+                                    name="kelas_id"
+                                    value={kelas_id ?? ''}
                                 />
                                 <input
                                     type="hidden"
-                                    name="mata_pelajaran"
-                                    value={mata_pelajaran}
+                                    name="mata_pelajaran_id"
+                                    value={mata_pelajaran_id ?? ''}
                                 />
                                 <DataTable>
                                     <div className="overflow-x-auto">
@@ -324,11 +341,11 @@ export default function NilaiIndex({
                             action="/guru/input-nilai/validate-final"
                             method="post"
                         >
-                            <input type="hidden" name="kelas" value={kelas} />
+                            <input type="hidden" name="kelas_id" value={kelas_id ?? ''} />
                             <input
                                 type="hidden"
-                                name="mata_pelajaran"
-                                value={mata_pelajaran}
+                                name="mata_pelajaran_id"
+                                value={mata_pelajaran_id ?? ''}
                             />
                             <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
                                 <CardContent className="p-4 sm:px-5">
@@ -340,8 +357,8 @@ export default function NilaiIndex({
                                             </h3>
                                             <p className="mt-0.5 text-xs text-emerald-600">
                                                 Mengunci semua nilai{' '}
-                                                {mata_pelajaran} di kelas{' '}
-                                                {kelas} yang masih berstatus
+                                                {mapelNama(selectedMapelId)} di kelas{' '}
+                                                {kelasNama(selectedKelasId)} yang masih berstatus
                                                 Draft.{' '}
                                                 <strong className="font-semibold">
                                                     Nilai Final tidak dapat
@@ -365,8 +382,8 @@ export default function NilaiIndex({
                 </>
             )}
 
-            {kelas && mata_pelajaran && siswa.length === 0 && (
-                <Alert variant="info">Tidak ada siswa di kelas {kelas}.</Alert>
+            {kelas_id && mata_pelajaran_id && siswa.length === 0 && (
+                <Alert variant="info">Tidak ada siswa di kelas {kelasNama(selectedKelasId)}.</Alert>
             )}
         </Container>
     );

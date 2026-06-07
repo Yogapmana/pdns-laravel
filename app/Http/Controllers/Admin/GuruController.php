@@ -32,24 +32,26 @@ class GuruController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->input('search');
-        $kelas = $request->input('kelas');
-        $mapel = $request->input('mapel');
+        $kelasNama = $request->input('kelas');
+        $mapelNama = $request->input('mapel');
+        $kelasId = $kelasNama ? Kelas::where('nama', $kelasNama)->value('id') : null;
+        $mapelId = $mapelNama ? MataPelajaran::where('nama', $mapelNama)->value('id') : null;
 
         $guru = Guru::query()
             ->with('user:id,username,is_active')
-            ->with('mengajar:id_guru,kelas,mata_pelajaran')
+            ->with(['mengajar.kelas:id,nama', 'mengajar.mataPelajaran:id,nama'])
             ->withCount('nilai')
             ->when($search, fn ($q) => $q->where(function ($qq) use ($search) {
                 $qq->where('nama_guru', 'like', "%{$search}%");
             }))
-            ->when($kelas, fn ($q) => $q->whereHas('mengajar', fn ($qq) => $qq->where('kelas', $kelas)))
-            ->when($mapel, fn ($q) => $q->whereHas('mengajar', fn ($qq) => $qq->where('mata_pelajaran', $mapel)))
+            ->when($kelasId, fn ($q) => $q->whereHas('mengajar', fn ($qq) => $qq->where('kelas_id', $kelasId)))
+            ->when($mapelId, fn ($q) => $q->whereHas('mengajar', fn ($qq) => $qq->where('mata_pelajaran_id', $mapelId)))
             ->orderBy('nama_guru')
             ->paginate(15)
             ->withQueryString();
 
-        $daftarKelas = Kelas::pluckNamaOrdered();
-        $daftarMapel = MataPelajaran::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckIdNamaOrdered();
 
         return Inertia::render('admin/guru/index', [
             'guru' => $guru,
@@ -57,8 +59,8 @@ class GuruController extends Controller
             'daftar_mapel' => $daftarMapel,
             'filters' => [
                 'search' => $search,
-                'kelas' => $kelas,
-                'mapel' => $mapel,
+                'kelas' => $kelasNama,
+                'mapel' => $mapelNama,
             ],
         ]);
     }
@@ -70,11 +72,13 @@ class GuruController extends Controller
      */
     public function create(): Response
     {
-        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckIdNamaOrdered();
         $mapelByKelas = $this->buildMapelByKelas();
 
         return Inertia::render('admin/guru/create', [
             'daftar_kelas' => $daftarKelas,
+            'daftar_mapel' => $daftarMapel,
             'mapel_by_kelas' => $mapelByKelas,
         ]);
     }
@@ -131,13 +135,15 @@ class GuruController extends Controller
      */
     public function edit(Guru $guru): Response
     {
-        $guru->load(['user:id,username,is_active', 'mengajar']);
-        $daftarKelas = Kelas::pluckNamaOrdered();
+        $guru->load(['user:id,username,is_active', 'mengajar.kelas:id,nama', 'mengajar.mataPelajaran:id,nama']);
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckIdNamaOrdered();
         $mapelByKelas = $this->buildMapelByKelas();
 
         return Inertia::render('admin/guru/edit', [
             'guru' => $guru,
             'daftar_kelas' => $daftarKelas,
+            'daftar_mapel' => $daftarMapel,
             'mapel_by_kelas' => $mapelByKelas,
         ]);
     }
@@ -169,11 +175,11 @@ class GuruController extends Controller
      * Replace the `guru_mengajar` rows for a guru with the supplied pairs.
      *
      * Existing rows are deleted first; new rows are then inserted in a
-     * deduplicated manner (the `(kelas, mata_pelajaran)` pair must be unique
-     * for a given guru).
+     * deduplicated manner (the `(kelas_id, mata_pelajaran_id)` pair must be
+     * unique for a given guru).
      *
      * @param  Guru  $guru  The guru whose mengajar rows will be replaced.
-     * @param  array<int, array{kelas: string, mata_pelajaran: string}>  $mengajar  The new mengajar pairs.
+     * @param  array<int, array{kelas_id: int, mata_pelajaran_id: int}>  $mengajar  The new mengajar pairs (using FK ids).
      */
     private function syncMengajar(Guru $guru, array $mengajar): void
     {
@@ -181,14 +187,14 @@ class GuruController extends Controller
 
         $unique = [];
         foreach ($mengajar as $row) {
-            $key = $row['kelas'].'|'.$row['mata_pelajaran'];
+            $key = $row['kelas_id'].'|'.$row['mata_pelajaran_id'];
             if (isset($unique[$key])) {
                 continue;
             }
             $unique[$key] = true;
             $guru->mengajar()->create([
-                'kelas' => $row['kelas'],
-                'mata_pelajaran' => $row['mata_pelajaran'],
+                'kelas_id' => $row['kelas_id'],
+                'mata_pelajaran_id' => $row['mata_pelajaran_id'],
             ]);
         }
     }
@@ -257,28 +263,31 @@ class GuruController extends Controller
     }
 
     /**
-     * Build a nested `[kelas => [mapel1, mapel2, ...]]` map describing
+     * Build a nested `[kelas_id => [mapel_id, ...]]` map describing
      * which mata-pelajaran each kelas currently allows, based on the
      * `kelas_mata_pelajaran` pivot table.
      *
      * Used to populate the dependent mapel dropdown in the guru
-     * create/edit forms. A single SQL query is issued against the pivot
-     * table to avoid the N+1 trap that would otherwise occur when
-     * iterating over every kelas.
+     * create/edit forms. The map is keyed by `kelas.id` so the form can
+     * submit FK ids directly.
      *
-     * @return array<string, array<int, string>> Map keyed by `kelas.nama`, values are sorted mapel names.
+     * @return array<int, array<int, int>> Map keyed by `kelas.id` (cast to int), values are sorted `mata_pelajaran.id`.
      */
     private function buildMapelByKelas(): array
     {
         $rows = DB::table('kelas_mata_pelajaran')
-            ->join('kelas', 'kelas.nama', '=', 'kelas_mata_pelajaran.kelas')
-            ->orderBy('kelas_mata_pelajaran.kelas')
-            ->orderBy('kelas_mata_pelajaran.mata_pelajaran')
-            ->get(['kelas_mata_pelajaran.kelas', 'kelas_mata_pelajaran.mata_pelajaran']);
+            ->join('kelas', 'kelas.id', '=', 'kelas_mata_pelajaran.kelas_id')
+            ->join('mata_pelajaran', 'mata_pelajaran.id', '=', 'kelas_mata_pelajaran.mata_pelajaran_id')
+            ->orderBy('kelas.nama')
+            ->orderBy('mata_pelajaran.nama')
+            ->get(['kelas_mata_pelajaran.kelas_id as kelas_id', 'kelas_mata_pelajaran.mata_pelajaran_id as mapel_id', 'mata_pelajaran.nama as mapel_nama']);
 
         $map = [];
         foreach ($rows as $r) {
-            $map[$r->kelas][] = $r->mata_pelajaran;
+            $map[(int) $r->kelas_id][] = [
+                'id' => (int) $r->mapel_id,
+                'nama' => $r->mapel_nama,
+            ];
         }
 
         return $map;

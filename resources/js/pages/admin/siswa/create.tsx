@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
-type Props = { daftar_kelas: string[] };
+type Props = { daftar_kelas: { id: number; nama: string }[] };
 
 export default function SiswaCreate({ daftar_kelas }: Props) {
     const { props } = usePage<{ errors: Record<string, string> }>();
@@ -64,12 +64,12 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="kelas">
+                                    <Label htmlFor="kelas_id">
                                         Kelas <span className="text-danger">*</span>
                                     </Label>
                                     <Select
-                                        id="kelas"
-                                        name="kelas"
+                                        id="kelas_id"
+                                        name="kelas_id"
                                         defaultValue=""
                                         required
                                     >
@@ -77,8 +77,8 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                             Pilih kelas
                                         </option>
                                         {daftar_kelas.map((k) => (
-                                            <option key={k} value={k}>
-                                                {k}
+                                            <option key={k.id} value={k.id}>
+                                                {k.nama}
                                             </option>
                                         ))}
                                     </Select>
@@ -91,7 +91,7 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                             Tambah kelas baru
                                         </Link>
                                     </p>
-                                    <InputError message={errors.kelas} />
+                                    <InputError message={errors.kelas_id} />
                                 </div>
 
                                 <div className="space-y-3 rounded-lg border border-border bg-surface p-3">

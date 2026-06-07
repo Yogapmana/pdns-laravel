@@ -18,12 +18,12 @@ beforeEach(function () {
 
 test('AC-03: Admin menambahkan siswa dengan NIS duplikat ditolak', function () {
     $admin = User::factory()->admin()->create();
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Siswa Lama', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Siswa Lama', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00001',
         'nama_siswa' => 'Siswa Duplikat',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
     ]);
@@ -38,7 +38,7 @@ test('AC-03b: Admin berhasil menambah siswa dengan NIS unik', function () {
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00999',
         'nama_siswa' => 'Siswa Baru',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
     ]);
@@ -55,7 +55,7 @@ test('AC-03b2: Admin menambah siswa dengan kelas dari master table (sebelumnya k
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00699',
         'nama_siswa' => 'Mahmud Subagja',
-        'kelas' => 'XII-C',
+        'kelas_id' => $this->kelasId('XII-C'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
     ]);
@@ -64,7 +64,7 @@ test('AC-03b2: Admin menambah siswa dengan kelas dari master table (sebelumnya k
     $response->assertSessionHas('success');
     $siswa = Siswa::find('00699');
     expect($siswa)->not->toBeNull();
-    expect($siswa->kelas)->toBe('XII-C');
+    expect($siswa->kelas_nama)->toBe('XII-C');
 });
 
 test('AC-03-akun: Tambah siswa otomatis membuat akun User (username=NIS, role=siswa)', function () {
@@ -73,7 +73,7 @@ test('AC-03-akun: Tambah siswa otomatis membuat akun User (username=NIS, role=si
     $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00999',
         'nama_siswa' => 'Siswa Akun',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
     ])->assertRedirect('/admin/siswa');
@@ -94,7 +94,7 @@ test('AC-03-password: Tambah siswa dengan password < 6 karakter ditolak', functi
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00999',
         'nama_siswa' => 'Siswa Lemah',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'abc',
         'password_confirmation' => 'abc',
     ]);
@@ -110,7 +110,7 @@ test('AC-03-confirm: Tambah siswa dengan konfirmasi password tidak cocok ditolak
     $response = $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00999',
         'nama_siswa' => 'Siswa Mismatch',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia999',
     ]);
@@ -125,7 +125,7 @@ test('AC-03-login: Siswa yang baru dibuat bisa login dengan NIS dan password', f
     $this->actingAs($admin)->post('/admin/siswa', [
         'nis' => '00999',
         'nama_siswa' => 'Siswa Login',
-        'kelas' => 'X-A',
+        'kelas_id' => $this->kelasId('X-A'),
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
     ])->assertRedirect('/admin/siswa');
@@ -144,30 +144,30 @@ test('AC-03-login: Siswa yang baru dibuat bisa login dengan NIS dan password', f
 
 test('AC-03c: Admin berhasil edit data siswa (kecuali NIS)', function () {
     $admin = User::factory()->admin()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($admin)->put("/admin/siswa/{$siswa->nis}", [
         'nis' => '99999',
         'nama_siswa' => 'Ahmad Updated',
-        'kelas' => 'X-B',
+        'kelas_id' => $this->kelasId('X-B'),
     ]);
 
     $response->assertRedirect('/admin/siswa');
     $updated = Siswa::find('00001');
     expect($updated->nama_siswa)->toBe('Ahmad Updated');
-    expect($updated->kelas)->toBe('X-B');
+    expect($updated->kelas_nama)->toBe('X-B');
     expect(Siswa::where('nis', '99999')->count())->toBe(0);
 });
 
 test('AC-03d: Admin hapus siswa juga menghapus nilai terkait (CASCADE)', function () {
     $admin = User::factory()->admin()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['nama_guru' => 'Ibu Sari']);
     Nilai::create([
         'nis' => $siswa->nis,
         'id_guru' => $guru->id,
-        'kelas' => 'X-A',
-        'mata_pelajaran' => 'Matematika',
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80,
         'nilai_uts' => 70,
         'nilai_uas' => 90,
@@ -186,8 +186,8 @@ test('AC-03d: Admin hapus siswa juga menghapus nilai terkait (CASCADE)', functio
 
 test('AC-03e: Admin bisa search siswa by NIS, nama, atau kelas', function () {
     $admin = User::factory()->admin()->create();
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad Fauzi', 'kelas' => 'X-A']);
-    Siswa::create(['nis' => '00002', 'nama_siswa' => 'Budi Santoso', 'kelas' => 'X-B']);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad Fauzi', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'nama_siswa' => 'Budi Santoso', 'kelas_id' => $this->kelasId('X-B')]);
 
     $this->actingAs($admin)->get('/admin/siswa?search=00001')
         ->assertInertia(fn ($page) => $page->component('admin/siswa/index'));

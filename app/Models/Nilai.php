@@ -20,8 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property string $nis
  * @property int $id_guru
- * @property string $kelas
- * @property string $mata_pelajaran
+ * @property int $kelas_id
+ * @property int $mata_pelajaran_id
  * @property string|null $nilai_tugas
  * @property string|null $nilai_uts
  * @property string|null $nilai_uas
@@ -32,8 +32,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'nis',
     'id_guru',
-    'kelas',
-    'mata_pelajaran',
+    'kelas_id',
+    'mata_pelajaran_id',
     'nilai_tugas',
     'nilai_uts',
     'nilai_uas',
@@ -135,5 +135,25 @@ class Nilai extends Model
     public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class, 'id_guru');
+    }
+
+    /**
+     * The kelas this nilai row belongs to.
+     *
+     * @return BelongsTo<Kelas, Nilai>
+     */
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    /**
+     * The mata pelajaran this nilai row belongs to.
+     *
+     * @return BelongsTo<MataPelajaran, Nilai>
+     */
+    public function mataPelajaran(): BelongsTo
+    {
+        return $this->belongsTo(MataPelajaran::class);
     }
 }

@@ -21,11 +21,11 @@ use Illuminate\Support\Carbon;
  * @property string $nis
  * @property int|null $user_id
  * @property string $nama_siswa
- * @property string|null $kelas
+ * @property int|null $kelas_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['nis', 'user_id', 'nama_siswa', 'kelas'])]
+#[Fillable(['nis', 'user_id', 'nama_siswa', 'kelas_id'])]
 class Siswa extends Model
 {
     /** @use HasFactory<SiswaFactory> */
@@ -60,6 +60,16 @@ class Siswa extends Model
     }
 
     /**
+     * The `Kelas` this siswa belongs to.
+     *
+     * @return BelongsTo<Kelas, Siswa>
+     */
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    /**
      * The `Nilai` rows belonging to this siswa.
      *
      * @return HasMany<Nilai>
@@ -67,5 +77,15 @@ class Siswa extends Model
     public function nilai(): HasMany
     {
         return $this->hasMany(Nilai::class, 'nis', 'nis');
+    }
+
+    /**
+     * Convenience accessor: the display name of the siswa's kelas, or
+     * `null` when the siswa is not assigned to a kelas. Useful in views
+     * that previously relied on the now-removed string `kelas` column.
+     */
+    protected function getKelasNamaAttribute(): ?string
+    {
+        return $this->kelas?->nama;
     }
 }

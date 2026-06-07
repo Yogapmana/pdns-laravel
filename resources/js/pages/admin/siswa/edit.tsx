@@ -8,8 +8,8 @@ import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 type Props = {
-    siswa: { nis: string; nama_siswa: string; kelas: string };
-    daftar_kelas: string[];
+    siswa: { nis: string; nama_siswa: string; kelas_id: number; kelas_nama?: string };
+    daftar_kelas: { id: number; nama: string }[];
 };
 
 export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
@@ -45,13 +45,13 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="kelas">
+                                    <Label htmlFor="kelas_id">
                                         Kelas <span className="text-danger">*</span>
                                     </Label>
-                                    <Select id="kelas" name="kelas" defaultValue={siswa.kelas}>
+                                    <Select id="kelas_id" name="kelas_id" defaultValue={siswa.kelas_id} required>
                                         <option value="" disabled>Pilih kelas</option>
                                         {daftar_kelas.map((k) => (
-                                            <option key={k} value={k}>{k}</option>
+                                            <option key={k.id} value={k.id}>{k.nama}</option>
                                         ))}
                                     </Select>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -60,7 +60,7 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                                             Tambah kelas baru
                                         </Link>
                                     </p>
-                                    <InputError message={errors.kelas} />
+                                    <InputError message={errors.kelas_id} />
                                 </div>
 
                                 <div className="flex gap-2 pt-4 border-t border-border">

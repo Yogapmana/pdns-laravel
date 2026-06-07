@@ -7,19 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
+type Mapel = { id: number; nama: string };
+
 type Props = {
-    semua_mapel: string[];
+    semua_mapel: Mapel[];
 };
 
 export default function KelasCreate({ semua_mapel }: Props) {
-    const [selected, setSelected] = useState<string[]>([]);
+    const [selected, setSelected] = useState<number[]>([]);
 
-    function toggle(nama: string) {
-        setSelected((prev) => (prev.includes(nama) ? prev.filter((n) => n !== nama) : [...prev, nama]));
+    function toggle(id: number) {
+        setSelected((prev) => (prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]));
     }
 
     function selectAll() {
-        setSelected([...semua_mapel]);
+        setSelected(semua_mapel.map((m) => m.id));
     }
 
     function clearAll() {
@@ -80,24 +82,24 @@ export default function KelasCreate({ semua_mapel }: Props) {
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                             {semua_mapel.map((m) => {
-                                                const checked = selected.includes(m);
+                                                const checked = selected.includes(m.id);
 
                                                 return (
                                                     <label
-                                                        key={m}
+                                                        key={m.id}
                                                         className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition ${
                                                             checked ? 'border-primary bg-blue-50' : 'border-border bg-white hover:bg-surface'
                                                         }`}
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            name="mata_pelajaran[]"
-                                                            value={m}
+                                                            name="mata_pelajaran_id[]"
+                                                            value={m.id}
                                                             checked={checked}
-                                                            onChange={() => toggle(m)}
+                                                            onChange={() => toggle(m.id)}
                                                             className="h-4 w-4 text-primary border-border rounded focus:ring-primary"
                                                         />
-                                                        <span className="text-sm text-secondary">{m}</span>
+                                                        <span className="text-sm text-secondary">{m.nama}</span>
                                                     </label>
                                                 );
                                             })}

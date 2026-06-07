@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
  *
  * Backed by the `mata_pelajaran` table. The subject is identified by
  * its `nama` and is referenced by guru-mengajar and nilai rows through
- * that string value (non-FK relationships).
+ * the `mata_pelajaran_id` foreign key.
  *
  * @property int $id
  * @property string $nama
@@ -37,23 +37,23 @@ class MataPelajaran extends Model
      */
     public function guruMengajar(): HasMany
     {
-        return $this->hasMany(GuruMengajar::class, 'mata_pelajaran', 'nama');
+        return $this->hasMany(GuruMengajar::class, 'mata_pelajaran_id');
     }
 
     /**
-     * The nilai rows whose `mata_pelajaran` matches this row's `nama`.
+     * The nilai rows whose `mata_pelajaran_id` matches this row.
      *
      * @return HasMany<Nilai>
      */
     public function nilai(): HasMany
     {
-        return $this->hasMany(Nilai::class, 'mata_pelajaran', 'nama');
+        return $this->hasMany(Nilai::class, 'mata_pelajaran_id');
     }
 
     /**
      * The kelas rows that this mata-pelajaran belongs to, joined through
-     * the `kelas_mata_pelajaran` pivot (matched on `mata_pelajaran.nama ==
-     * pivot.mata_pelajaran` and `kelas.nama == pivot.kelas`).
+     * the `kelas_mata_pelajaran` pivot using the `(kelas_id, mata_pelajaran_id)`
+     * composite key.
      *
      * @return BelongsToMany<Kelas>
      */
@@ -62,10 +62,8 @@ class MataPelajaran extends Model
         return $this->belongsToMany(
             Kelas::class,
             'kelas_mata_pelajaran',
-            'mata_pelajaran',
-            'kelas',
-            'nama',
-            'nama',
+            'mata_pelajaran_id',
+            'kelas_id',
         )->withTimestamps();
     }
 
@@ -109,6 +107,19 @@ class MataPelajaran extends Model
     public static function pluckNamaOrdered(): Collection
     {
         return static::query()->orderBy('nama')->pluck('nama');
+    }
+
+    /**
+     * Static helper that returns `id` and `nama` for every mata pelajaran, ordered ascending by `nama`.
+     *
+     * Used by FK-aware forms that need to submit the mapel id but display
+     * the name in the option label.
+     *
+     * @return Collection<int, static> Collection of MataPelajaran models with only `id` and `nama` selected.
+     */
+    public static function pluckIdNamaOrdered(): Collection
+    {
+        return static::query()->orderBy('nama')->get(['id', 'nama']);
     }
 
     /**

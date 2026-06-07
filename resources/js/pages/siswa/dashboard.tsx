@@ -11,7 +11,8 @@ import { useFlashToast } from '@/hooks/use-flash-toast';
 type Siswa = {
     nis: string;
     nama_siswa: string;
-    kelas: string;
+    kelas: { id: number; nama: string } | null;
+    kelas_nama?: string;
     user: { username: string } | null;
 };
 
@@ -35,7 +36,7 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
                 />
                 <StatCard
                     label="Kelas"
-                    value={siswa.kelas}
+                    value={siswa.kelas_nama ?? siswa.kelas?.nama ?? '—'}
                     icon={<School className="h-4 w-4" />}
                     color="accent"
                     variant="colored"

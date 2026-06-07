@@ -15,7 +15,7 @@ import { useInertiaSearch } from '@/hooks/use-inertia-search';
 type Siswa = {
     nis: string;
     nama_siswa: string;
-    kelas: string;
+    kelas: { id: number; nama: string } | null;
     nilai_count: number;
     user: { username: string; is_active: boolean; created_at: string | null } | null;
 };
@@ -30,7 +30,7 @@ type Paginated<T> = {
 
 type Props = {
     siswa: Paginated<Siswa>;
-    daftar_kelas: string[];
+    daftar_kelas: { id: number; nama: string }[];
     filters: { search: string | null; kelas: string | null };
 };
 
@@ -127,8 +127,8 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                 >
                     <option value="">Semua Kelas</option>
                     {daftar_kelas.map((k) => (
-                        <option key={k} value={k}>
-                            {k}
+                        <option key={k.id} value={k.nama}>
+                            {k.nama}
                         </option>
                     ))}
                 </Select>
@@ -185,7 +185,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <Badge variant="info">
-                                                {s.kelas}
+                                                {s.kelas?.nama ?? '—'}
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3 text-center font-mono text-xs">
@@ -282,7 +282,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                                 <div className="flex items-center justify-between gap-3">
                                     <dt className="text-muted-foreground">Kelas</dt>
                                     <dd>
-                                        <Badge variant="info">{selected.kelas}</Badge>
+                                        <Badge variant="info">{selected.kelas?.nama ?? '—'}</Badge>
                                     </dd>
                                 </div>
                             </dl>

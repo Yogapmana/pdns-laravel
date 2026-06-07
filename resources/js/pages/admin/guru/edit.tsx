@@ -12,8 +12,8 @@ import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 type Mengajar = {
     id: number;
-    kelas: string;
-    mata_pelajaran: string;
+    kelas: { id: number; nama: string } | null;
+    mata_pelajaran: { id: number; nama: string } | null;
 };
 
 type Guru = {
@@ -25,26 +25,30 @@ type Guru = {
 
 type Props = {
     guru: Guru;
-    daftar_kelas: string[];
-    mapel_by_kelas: Record<string, string[]>;
+    daftar_kelas: { id: number; nama: string }[];
+    daftar_mapel: { id: number; nama: string }[];
+    mapel_by_kelas: Record<string, number[]>;
 };
 
 type MengajarRow = {
-    kelas: string;
-    mata_pelajaran: string;
+    kelas_id: string;
+    mata_pelajaran_id: string;
 };
 
-export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) {
+export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_kelas }: Props) {
     const hasAccount = guru.user !== null;
 
     const initialRows: MengajarRow[] = guru.mengajar.length > 0
-        ? guru.mengajar.map((m) => ({ kelas: m.kelas, mata_pelajaran: m.mata_pelajaran }))
-        : [{ kelas: '', mata_pelajaran: '' }];
+        ? guru.mengajar.map((m) => ({
+              kelas_id: m.kelas ? String(m.kelas.id) : '',
+              mata_pelajaran_id: m.mata_pelajaran ? String(m.mata_pelajaran.id) : '',
+          }))
+        : [{ kelas_id: '', mata_pelajaran_id: '' }];
 
     const [rows, setRows] = useState<MengajarRow[]>(initialRows);
 
     function addRow() {
-        setRows((prev) => [...prev, { kelas: '', mata_pelajaran: '' }]);
+        setRows((prev) => [...prev, { kelas_id: '', mata_pelajaran_id: '' }]);
     }
 
     function removeRow(index: number) {
@@ -55,15 +59,21 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
         setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
     }
 
-    function mapelForKelas(kelas: string): string[] {
-        return mapel_by_kelas[kelas] ?? [];
+    function mapelForKelas(kelasId: string): number[] {
+        return mapel_by_kelas[kelasId] ?? [];
+    }
+
+    function kelasNama(kelasId: string): string {
+        return daftar_kelas.find((k) => String(k.id) === kelasId)?.nama ?? '';
     }
 
     const mengajarSummary = guru.mengajar.length > 0
-        ? guru.mengajar.map((m) => `${m.kelas} — ${m.mata_pelajaran}`).join(' | ')
+        ? guru.mengajar
+              .map((m) => `${m.kelas?.nama ?? '—'} — ${m.mata_pelajaran?.nama ?? '—'}`)
+              .join(' | ')
         : 'Belum ada';
 
-    const emptyKelas = daftar_kelas.filter((k) => mapelForKelas(k).length === 0);
+    const emptyKelas = daftar_kelas.filter((k) => mapelForKelas(String(k.id)).length === 0);
 
     return (
         <Container>
@@ -117,8 +127,8 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
 
                                     <div className="space-y-3">
                                         {rows.map((row, i) => {
-                                            const allowedMapel = mapelForKelas(row.kelas);
-                                            const kelasHasMapel = row.kelas !== '' && allowedMapel.length === 0;
+                                            const allowedMapel = mapelForKelas(row.kelas_id);
+                                            const kelasHasMapel = row.kelas_id !== '' && allowedMapel.length === 0;
 
                                             return (
                                                 <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-border bg-surface">
@@ -127,50 +137,53 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                                                             Kelas <span className="text-danger">*</span>
                                                         </label>
                                                         <Select
-                                                            name={`mengajar[${i}][kelas]`}
-                                                            value={row.kelas}
+                                                            name={`mengajar[${i}][kelas_id]`}
+                                                            value={row.kelas_id}
                                                             onChange={(e) => {
-                                                                updateRow(i, 'kelas', e.target.value);
+                                                                updateRow(i, 'kelas_id', e.target.value);
 
-                                                                if (e.target.value !== row.kelas) {
-                                                                    updateRow(i, 'mata_pelajaran', '');
+                                                                if (e.target.value !== row.kelas_id) {
+                                                                    updateRow(i, 'mata_pelajaran_id', '');
                                                                 }
                                                             }}
                                                             required
                                                         >
                                                             <option value="" disabled>Pilih kelas</option>
                                                             {daftar_kelas.map((k) => (
-                                                                <option key={k} value={k}>{k}</option>
+                                                                <option key={k.id} value={k.id}>{k.nama}</option>
                                                             ))}
                                                         </Select>
-                                                        <InputError message={errors[`mengajar.${i}.kelas`]} />
+                                                        <InputError message={errors[`mengajar.${i}.kelas_id`]} />
                                                     </div>
                                                     <div className="col-span-10 sm:col-span-6">
                                                         <label className="block text-xs font-medium text-muted-foreground mb-1">
                                                             Mata Pelajaran <span className="text-danger">*</span>
                                                         </label>
                                                         <Select
-                                                            name={`mengajar[${i}][mata_pelajaran]`}
-                                                            value={row.mata_pelajaran}
-                                                            onChange={(e) => updateRow(i, 'mata_pelajaran', e.target.value)}
+                                                            name={`mengajar[${i}][mata_pelajaran_id]`}
+                                                            value={row.mata_pelajaran_id}
+                                                            onChange={(e) => updateRow(i, 'mata_pelajaran_id', e.target.value)}
                                                             required
-                                                            disabled={!row.kelas}
+                                                            disabled={!row.kelas_id}
                                                         >
                                                             <option value="" disabled>
-                                                                {!row.kelas ? 'Pilih kelas dulu' : allowedMapel.length === 0 ? 'Tidak ada mapel diizinkan' : 'Pilih mata pelajaran'}
+                                                                {!row.kelas_id ? 'Pilih kelas dulu' : allowedMapel.length === 0 ? 'Tidak ada mapel diizinkan' : 'Pilih mata pelajaran'}
                                                             </option>
-                                                            {allowedMapel.map((m) => (
-                                                                <option key={m} value={m}>{m}</option>
-                                                            ))}
+                                                            {allowedMapel.map((mId) => {
+                                                                const m = daftar_mapel.find((x) => x.id === mId);
+                                                                return (
+                                                                    <option key={mId} value={mId}>{m?.nama ?? `#${mId}`}</option>
+                                                                );
+                                                            })}
                                                         </Select>
                                                         {kelasHasMapel && (
                                                             <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
                                                                 <AlertTriangle className="h-3 w-3" />
-                                                                Kelas "{row.kelas}" belum punya mapel diizinkan.{' '}
+                                                                Kelas "{kelasNama(row.kelas_id)}" belum punya mapel diizinkan.{' '}
                                                                 <Link href="/admin/kelas" className="underline">Atur di Manajemen Kelas</Link>.
                                                             </p>
                                                         )}
-                                                        <InputError message={errors[`mengajar.${i}.mata_pelajaran`]} />
+                                                        <InputError message={errors[`mengajar.${i}.mata_pelajaran_id`]} />
                                                     </div>
                                                     <div className="col-span-2 sm:col-span-1 flex items-end justify-end h-full">
                                                         {rows.length > 1 && (
@@ -191,7 +204,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
 
                                     {emptyKelas.length > 0 && (
                                         <Alert variant="warning" className="mt-3">
-                                            {emptyKelas.join(', ')} belum punya mapel. <Link href="/admin/kelas" className="underline font-medium">Atur di Manajemen Kelas</Link>.
+                                            {emptyKelas.map((k) => k.nama).join(', ')} belum punya mapel. <Link href="/admin/kelas" className="underline font-medium">Atur di Manajemen Kelas</Link>.
                                         </Alert>
                                     )}
                                 </div>

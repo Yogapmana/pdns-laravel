@@ -82,7 +82,7 @@ test('Admin: delete kelas yang tidak dipakai berhasil', function () {
 test('Admin: delete kelas yang dipakai siswa ditolak (FK protection)', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $kelas->id]);
 
     $this->actingAs($admin)
         ->delete("/admin/kelas/{$kelas->id}")
@@ -96,7 +96,7 @@ test('Admin: delete kelas yang dipakai mengajar ditolak (FK protection)', functi
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
     $guru = Guru::create(['nama_guru' => 'Test']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $this->actingAs($admin)
         ->delete("/admin/kelas/{$kelas->id}")
@@ -162,7 +162,7 @@ test('Admin: delete mapel yang dipakai mengajar ditolak (FK protection)', functi
     $admin = User::factory()->admin()->create();
     $mapel = MataPelajaran::firstOrCreate(['nama' => 'Matematika']);
     $guru = Guru::create(['nama_guru' => 'Test']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $mapel->id]);
 
     $this->actingAs($admin)
         ->delete("/admin/mata-pelajaran/{$mapel->id}")
@@ -172,48 +172,48 @@ test('Admin: delete mapel yang dipakai mengajar ditolak (FK protection)', functi
     expect(MataPelajaran::find($mapel->id))->not->toBeNull();
 });
 
-test('Siswa form: kelas tidak ada di master ditolak dengan 422', function () {
+test('Siswa form: kelas_id tidak ada di master ditolak dengan 422', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
         ->post('/admin/siswa', [
             'nis' => '00001',
             'nama_siswa' => 'Ahmad',
-            'kelas' => 'KELAS-FAKTA-99',
+            'kelas_id' => 999999,
             'password' => 'rahasia123',
             'password_confirmation' => 'rahasia123',
         ])
-        ->assertSessionHasErrors('kelas');
+        ->assertSessionHasErrors('kelas_id');
 });
 
-test('Guru form mengajar: mata pelajaran tidak ada di master ditolak dengan 422', function () {
+test('Guru form mengajar: mata_pelajaran_id tidak ada di master ditolak dengan 422', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
         ->post('/admin/guru', [
             'nama_guru' => 'Pak Test',
             'mengajar' => [
-                ['kelas' => 'X-A', 'mata_pelajaran' => 'MAPEL-FAKTA-99'],
+                ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => 999999],
             ],
             'password' => 'rahasia123',
             'password_confirmation' => 'rahasia123',
         ])
-        ->assertSessionHasErrors('mengajar.0.mata_pelajaran');
+        ->assertSessionHasErrors('mengajar.0.mata_pelajaran_id');
 });
 
-test('Guru form mengajar: kelas tidak ada di master ditolak dengan 422', function () {
+test('Guru form mengajar: kelas_id tidak ada di master ditolak dengan 422', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
         ->post('/admin/guru', [
             'nama_guru' => 'Pak Test',
             'mengajar' => [
-                ['kelas' => 'KELAS-FAKTA-99', 'mata_pelajaran' => 'Matematika'],
+                ['kelas_id' => 999999, 'mata_pelajaran_id' => $this->mapelId('Matematika')],
             ],
             'password' => 'rahasia123',
             'password_confirmation' => 'rahasia123',
         ])
-        ->assertSessionHasErrors('mengajar.0.kelas');
+        ->assertSessionHasErrors('mengajar.0.kelas_id');
 });
 
 test('Laporan filter: kelas tidak ada di master ditolak (validateFilter via preview)', function () {

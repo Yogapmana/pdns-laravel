@@ -19,10 +19,10 @@ use Illuminate\Validation\Rules\In;
  *
  * - Authorisation: admin only.
  * - Validates that each mengajar pair references existing rows in `kelas`
- *   and `mata_pelajaran`.
- * - `withValidator()` rejects duplicate `(kelas, mata_pelajaran)` pairs in
- *   the submission.
- * - `prepareForValidation()` trims whitespace from each pair.
+ *   and `mata_pelajaran` via their FK ids.
+ * - `withValidator()` rejects duplicate `(kelas_id, mata_pelajaran_id)` pairs
+ *   in the submission and checks the pair is allowed by the
+ *   `kelas_mata_pelajaran` pivot.
  * - `getMengajar()` exposes the cleaned-up pairs to the controller.
  */
 class GuruRequest extends FormRequest
@@ -41,8 +41,8 @@ class GuruRequest extends FormRequest
      * Validation rules for the guru + mengajar form.
      *
      * For each submitted `mengajar.<i>` row, the method enforces that
-     * `kelas` and `mata_pelajaran` are required strings that exist in
-     * their respective master tables.
+     * `kelas_id` and `mata_pelajaran_id` are required integers that exist
+     * in their respective master tables.
      *
      * @return array<string, array<int, string|In>> Validation rules keyed by field name.
      */
@@ -60,17 +60,15 @@ class GuruRequest extends FormRequest
             if (! is_array($row)) {
                 continue;
             }
-            $kelasKey = "mengajar.$i.kelas";
-            $mapelKey = "mengajar.$i.mata_pelajaran";
+            $kelasKey = "mengajar.$i.kelas_id";
+            $mapelKey = "mengajar.$i.mata_pelajaran_id";
 
-            $rules[$kelasKey] = ['required', 'string', Rule::exists(Kelas::class, 'nama')];
-            $rules[$mapelKey] = ['required', 'string', Rule::exists(MataPelajaran::class, 'nama')];
+            $rules[$kelasKey] = ['required', 'integer', Rule::exists(Kelas::class, 'id')];
+            $rules[$mapelKey] = ['required', 'integer', Rule::exists(MataPelajaran::class, 'id')];
         }
 
         return $rules;
     }
-
-    private array $existingMengajarPairs = [];
 
     /**
      * Indonesian-language error messages for the validation rules.
@@ -83,9 +81,9 @@ class GuruRequest extends FormRequest
             'nama_guru.required' => 'Nama guru wajib diisi.',
             'mengajar.required' => 'Minimal satu kombinasi kelas dan mata pelajaran harus diisi.',
             'mengajar.min' => 'Minimal satu kombinasi kelas dan mata pelajaran harus diisi.',
-            'mengajar.*.kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
-            'mengajar.*.mata_pelajaran.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
-            'mengajar.*.mata_pelajaran.required' => 'Mata pelajaran wajib dipilih.',
+            'mengajar.*.kelas_id.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
+            'mengajar.*.mata_pelajaran_id.exists' => 'Mata pelajaran tidak valid. Pilih dari daftar mata pelajaran yang tersedia.',
+            'mengajar.*.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
             'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
@@ -94,7 +92,8 @@ class GuruRequest extends FormRequest
 
     /**
      * Add an `after` validation hook that rejects duplicate
-     * `(kelas, mata_pelajaran)` pairs in the submitted `mengajar` array.
+     * `(kelas_id, mata_pelajaran_id)` pairs in the submitted `mengajar` array
+     * and ensures the pair is allowed by the `kelas_mata_pelajaran` master.
      *
      * @param  Validator  $validator  The current validator instance.
      */
@@ -103,38 +102,41 @@ class GuruRequest extends FormRequest
         $validator->after(function (Validator $v) {
             $mengajar = $this->input('mengajar', []);
             $seen = [];
-            $allowedByKelas = $this->loadAllowedMapelByKelas($mengajar);
+            $allowedByKelas = $this->loadAllowedMapelByKelasId($mengajar);
 
             foreach ($mengajar as $i => $row) {
                 if (! is_array($row)) {
                     continue;
                 }
 
-                $kelas = trim((string) ($row['kelas'] ?? ''));
-                $mapel = trim((string) ($row['mata_pelajaran'] ?? ''));
+                $kelasId = (int) ($row['kelas_id'] ?? 0);
+                $mapelId = (int) ($row['mata_pelajaran_id'] ?? 0);
 
-                if ($kelas === '' || $mapel === '') {
+                if ($kelasId <= 0 || $mapelId <= 0) {
                     continue;
                 }
 
-                $pair = $kelas.'|'.$mapel;
+                $pair = $kelasId.'|'.$mapelId;
 
                 if (in_array($pair, $seen, true)) {
-                    $v->errors()->add("mengajar.$i.mata_pelajaran", 'Kombinasi kelas & mata pelajaran duplikat.');
+                    $v->errors()->add("mengajar.$i.mata_pelajaran_id", 'Kombinasi kelas & mata pelajaran duplikat.');
                 } else {
                     $seen[] = $pair;
                 }
 
-                $allowedForKelas = $allowedByKelas[$kelas] ?? null;
+                $allowedForKelas = $allowedByKelas[$kelasId] ?? null;
+                $mapelName = MataPelajaran::where('id', $mapelId)->value('nama');
+                $kelasName = Kelas::where('id', $kelasId)->value('nama');
+
                 if ($allowedForKelas === null) {
                     $v->errors()->add(
-                        "mengajar.$i.kelas",
-                        "Kelas \"{$kelas}\" belum punya mata pelajaran yang diizinkan. Atur dulu di Manajemen Kelas."
+                        "mengajar.$i.kelas_id",
+                        "Kelas \"{$kelasName}\" belum punya mata pelajaran yang diizinkan. Atur dulu di Manajemen Kelas."
                     );
-                } elseif (! in_array($mapel, $allowedForKelas, true)) {
+                } elseif (! in_array($mapelId, $allowedForKelas, true)) {
                     $v->errors()->add(
-                        "mengajar.$i.mata_pelajaran",
-                        "Mata pelajaran \"{$mapel}\" tidak diizinkan untuk kelas \"{$kelas}\". Atur dulu di Manajemen Kelas."
+                        "mengajar.$i.mata_pelajaran_id",
+                        "Mata pelajaran \"{$mapelName}\" tidak diizinkan untuk kelas \"{$kelasName}\". Atur dulu di Manajemen Kelas."
                     );
                 }
             }
@@ -142,76 +144,51 @@ class GuruRequest extends FormRequest
     }
 
     /**
-     * Build a `[kelas => [mapel, ...]]` map of the allowed mata-pelajaran
-     * for every kelas referenced by the submitted `mengajar` rows. Used
-     * by `withValidator()` to detect combinations that are not in the
-     * `kelas_mata_pelajaran` master.
+     * Build a `[kelas_id => [mapel_id, ...]]` map of the allowed mata-pelajaran
+     * for every kelas referenced by the submitted `mengajar` rows.
      *
      * @param  mixed  $mengajar  The raw input from `$this->input('mengajar', [])`.
-     * @return array<string, array<int, string>>
+     * @return array<int, array<int, int>>
      */
-    private function loadAllowedMapelByKelas(mixed $mengajar): array
+    private function loadAllowedMapelByKelasId(mixed $mengajar): array
     {
         if (! is_array($mengajar)) {
             return [];
         }
 
-        $kelasNames = [];
+        $kelasIds = [];
         foreach ($mengajar as $row) {
             if (! is_array($row)) {
                 continue;
             }
-            $kelas = trim((string) ($row['kelas'] ?? ''));
-            if ($kelas !== '') {
-                $kelasNames[$kelas] = true;
+            $id = (int) ($row['kelas_id'] ?? 0);
+            if ($id > 0) {
+                $kelasIds[$id] = true;
             }
         }
 
-        if ($kelasNames === []) {
+        if ($kelasIds === []) {
             return [];
         }
 
-        $rows = KelasMataPelajaran::whereIn('kelas', array_keys($kelasNames))->get(['kelas', 'mata_pelajaran']);
+        $rows = KelasMataPelajaran::whereIn('kelas_id', array_keys($kelasIds))->get(['kelas_id', 'mata_pelajaran_id']);
 
         $map = [];
         foreach ($rows as $r) {
-            $map[$r->kelas][] = $r->mata_pelajaran;
+            $map[(int) $r->kelas_id][] = (int) $r->mata_pelajaran_id;
         }
 
         return $map;
     }
 
     /**
-     * Trim whitespace from each `mengajar.*.kelas` and `mengajar.*.mata_pelajaran`
-     * entry before validation runs.
-     */
-    public function prepareForValidation(): void
-    {
-        $mengajar = $this->input('mengajar', []);
-
-        if (is_array($mengajar)) {
-            $cleaned = [];
-            foreach ($mengajar as $row) {
-                if (! is_array($row)) {
-                    continue;
-                }
-                $cleaned[] = [
-                    'kelas' => isset($row['kelas']) ? trim((string) $row['kelas']) : '',
-                    'mata_pelajaran' => isset($row['mata_pelajaran']) ? trim((string) $row['mata_pelajaran']) : '',
-                ];
-            }
-            $this->merge(['mengajar' => $cleaned]);
-        }
-    }
-
-    /**
      * Return the cleaned-up mengajar pairs as a 2-D array.
      *
-     * Each pair is `['kelas' => string, 'mata_pelajaran' => string]`. Pairs
-     * with an empty `kelas` or `mata_pelajaran` are skipped (the rules
-     * already enforce non-empty values, so this is a defensive fallback).
+     * Each pair is `['kelas_id' => int, 'mata_pelajaran_id' => int]`. Pairs
+     * with non-positive ids are skipped (the rules already enforce
+     * positive values, so this is a defensive fallback).
      *
-     * @return array<int, array{kelas: string, mata_pelajaran: string}> List of mengajar pairs.
+     * @return array<int, array{kelas_id: int, mata_pelajaran_id: int}> List of mengajar pairs.
      */
     public function getMengajar(): array
     {
@@ -220,13 +197,13 @@ class GuruRequest extends FormRequest
             if (! is_array($row)) {
                 continue;
             }
-            $kelas = trim((string) ($row['kelas'] ?? ''));
-            $mapel = trim((string) ($row['mata_pelajaran'] ?? ''));
+            $kelasId = (int) ($row['kelas_id'] ?? 0);
+            $mapelId = (int) ($row['mata_pelajaran_id'] ?? 0);
 
-            if ($kelas === '' || $mapel === '') {
+            if ($kelasId <= 0 || $mapelId <= 0) {
                 continue;
             }
-            $out[] = ['kelas' => $kelas, 'mata_pelajaran' => $mapel];
+            $out[] = ['kelas_id' => $kelasId, 'mata_pelajaran_id' => $mapelId];
         }
 
         return $out;

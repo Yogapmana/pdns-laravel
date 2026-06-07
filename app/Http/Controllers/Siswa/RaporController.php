@@ -24,21 +24,18 @@ class RaporController extends Controller
      */
     public function pdf(): Response
     {
-        $siswa = Siswa::where('user_id', auth()->id())->firstOrFail();
+        $siswa = Siswa::with('kelas:id,nama')->where('user_id', auth()->id())->firstOrFail();
 
-        $nilai = Nilai::with('guru:id,nama_guru')
+        $nilai = Nilai::with(['guru:id,nama_guru', 'mataPelajaran:id,nama'])
             ->where('nis', $siswa->nis)
             ->where('status_validasi', Nilai::STATUS_FINAL)
-            ->orderBy('mata_pelajaran')
-            ->get();
-
-        $guruMap = Guru::whereIn('id', $nilai->pluck('id_guru')->unique())
             ->get()
-            ->keyBy('id');
+            ->sortBy(fn ($n) => $n->mataPelajaran?->nama ?? '')
+            ->values();
 
         $perMapel = $nilai
-            ->groupBy('mata_pelajaran')
-            ->map(function ($items, $mapel) {
+            ->groupBy('mata_pelajaran_id')
+            ->map(function ($items) {
                 $item = $items->first();
                 $nilaiAkhir = $item->nilai_akhir !== null ? (float) $item->nilai_akhir : null;
                 $tugas = $item->nilai_tugas !== null ? (float) $item->nilai_tugas : null;
@@ -46,8 +43,7 @@ class RaporController extends Controller
                 $uas = $item->nilai_uas !== null ? (float) $item->nilai_uas : null;
 
                 return [
-                    'mapel' => $mapel,
-                    'kelas' => $item->kelas,
+                    'mapel' => $item->mataPelajaran?->nama ?? '',
                     'nama_guru' => $item->guru?->nama_guru ?? '—',
                     'tugas' => $tugas,
                     'uts' => $uts,
@@ -69,9 +65,11 @@ class RaporController extends Controller
             : null;
 
         $tahunAjaran = $this->guessTahunAjaran();
+        $kelasName = $siswa->kelas?->nama ?? '—';
 
         $data = [
             'siswa' => $siswa,
+            'kelas' => $kelasName,
             'per_mapel' => $perMapel,
             'jumlah_mapel' => $jumlahMapel,
             'lulus' => $lulus,
@@ -87,7 +85,7 @@ class RaporController extends Controller
             'kepala_sekolah' => config('pdns.sekolah.kepala', 'Drs. H. Kepala Sekolah, M.Pd.'),
             'nip_kepsek' => config('pdns.sekolah.nip_kepsek', '—'),
             'wali_kelas' => '—',
-            'next_kelas' => $this->guessNextKelas($siswa->kelas),
+            'next_kelas' => $this->guessNextKelas($kelasName),
         ];
 
         $pdf = Pdf::loadView('reports.rapor-pdf', $data)->setPaper('a4', 'portrait');

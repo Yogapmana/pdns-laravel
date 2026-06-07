@@ -6,6 +6,8 @@ namespace Database\Factories;
 
 use App\Models\Guru;
 use App\Models\GuruMengajar;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,13 +17,10 @@ class GuruMengajarFactory extends Factory
 {
     public function definition(): array
     {
-        $kelasList = ['X-A', 'X-B', 'XI-A', 'XI-B'];
-        $mapelList = ['Matematika', 'Bahasa Indonesia', 'IPA', 'IPS', 'Bahasa Inggris', 'PKN'];
-
         return [
             'id_guru' => Guru::factory(),
-            'kelas' => fake()->randomElement($kelasList),
-            'mata_pelajaran' => fake()->randomElement($mapelList),
+            'kelas_id' => Kelas::factory(),
+            'mata_pelajaran_id' => MataPelajaran::factory(),
         ];
     }
 }

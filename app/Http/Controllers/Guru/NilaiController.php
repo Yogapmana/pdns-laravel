@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use Illuminate\Http\RedirectResponse;
@@ -30,31 +32,60 @@ class NilaiController extends Controller
      */
     public function index(Request $request): Response
     {
-        $guru = Guru::with('mengajar')->where('user_id', auth()->id())->firstOrFail();
+        $guru = Guru::with(['mengajar.kelas:id,nama', 'mengajar.mataPelajaran:id,nama'])
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $kelas = $request->input('kelas');
         $mataPelajaran = $request->input('mata_pelajaran');
+        $kelasId = $request->input('kelas_id');
+        $mapelId = $request->input('mata_pelajaran_id');
 
-        $daftarKelas = $guru->mengajar()->distinct()->orderBy('kelas')->pluck('kelas')->all();
-        $mapelByKelas = [];
-        foreach ($guru->mengajar()->orderBy('kelas')->orderBy('mata_pelajaran')->get() as $m) {
-            $mapelByKelas[$m->kelas][] = $m->mata_pelajaran;
+        if ($kelas && ! $kelasId) {
+            $kelasId = Kelas::where('nama', $kelas)->value('id');
         }
-        $daftarMapel = $kelas && isset($mapelByKelas[$kelas]) ? $mapelByKelas[$kelas] : [];
+        if ($mataPelajaran && ! $mapelId) {
+            $mapelId = MataPelajaran::where('nama', $mataPelajaran)->value('id');
+        }
+
+        $mengajar = $guru->mengajar;
+        $daftarKelas = $mengajar
+            ->map(fn ($m) => $m->kelas)
+            ->filter()
+            ->unique('id')
+            ->sortBy('nama')
+            ->values()
+            ->map(fn ($k) => ['id' => (int) $k->id, 'nama' => $k->nama])
+            ->all();
+        $mapelByKelas = [];
+        foreach ($mengajar->sortBy([
+            ['kelas.nama', 'asc'],
+            ['mataPelajaran.nama', 'asc'],
+        ]) as $m) {
+            $kelasKey = (string) $m->kelas?->id;
+            if ($kelasKey === '') {
+                continue;
+            }
+            $mapelByKelas[$kelasKey][] = [
+                'id' => (int) $m->mataPelajaran?->id,
+                'nama' => $m->mataPelajaran?->nama ?? '',
+            ];
+        }
+        $daftarMapel = $kelasId && isset($mapelByKelas[(string) $kelasId]) ? $mapelByKelas[(string) $kelasId] : [];
 
         $siswa = collect();
         $nilaiMap = [];
         $statusValidasiGlobal = null;
         $hasMengajar = $guru->mengajar()->exists();
 
-        if ($kelas && $mataPelajaran && $hasMengajar && $guru->mengajarDiKelasMapel($kelas, $mataPelajaran)) {
-            $siswa = Siswa::where('kelas', $kelas)
+        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId($kelasId, $mapelId)) {
+            $siswa = Siswa::where('kelas_id', $kelasId)
                 ->orderBy('nis')
                 ->get();
 
             $existing = Nilai::where('id_guru', $guru->id)
-                ->where('kelas', $kelas)
-                ->where('mata_pelajaran', $mataPelajaran)
+                ->where('kelas_id', $kelasId)
+                ->where('mata_pelajaran_id', $mapelId)
                 ->whereIn('nis', $siswa->pluck('nis'))
                 ->get()
                 ->keyBy('nis');
@@ -63,9 +94,8 @@ class NilaiController extends Controller
                 $nilaiMap[$item->nis] = $item;
             }
 
-            $jumlahFinalRows = $existing->where('status_validasi', Nilai::STATUS_FINAL)->count();
-            $jumlahDraftRows = $existing->where('status_validasi', Nilai::STATUS_DRAFT)->count();
             $jumlahInputRows = $existing->whereNotNull('nilai_akhir')->count();
+            $jumlahDraftRows = $existing->where('status_validasi', Nilai::STATUS_DRAFT)->count();
 
             $statusValidasiGlobal = $jumlahInputRows > 0 && $jumlahDraftRows === 0
                 ? Nilai::STATUS_FINAL
@@ -77,7 +107,9 @@ class NilaiController extends Controller
             'daftar_kelas' => $daftarKelas,
             'mapel_by_kelas' => $mapelByKelas,
             'kelas' => $kelas,
+            'kelas_id' => $kelasId,
             'mata_pelajaran' => $mataPelajaran,
+            'mata_pelajaran_id' => $mapelId,
             'daftar_mapel' => $daftarMapel,
             'siswa' => $siswa,
             'nilai_map' => $nilaiMap,
@@ -103,8 +135,8 @@ class NilaiController extends Controller
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
 
         $validated = $request->validate([
-            'kelas' => ['required', 'string'],
-            'mata_pelajaran' => ['required', 'string'],
+            'kelas_id' => ['required', 'integer', 'exists:kelas,id'],
+            'mata_pelajaran_id' => ['required', 'integer', 'exists:mata_pelajaran,id'],
             'nilai' => ['required', 'array'],
             'nilai.*.nis' => ['required', 'string', 'exists:siswa,nis'],
             'nilai.*.nilai_tugas' => ['nullable', 'numeric', 'between:0,100'],
@@ -112,7 +144,7 @@ class NilaiController extends Controller
             'nilai.*.nilai_uas' => ['nullable', 'numeric', 'between:0,100'],
         ]);
 
-        if (! $guru->mengajarDiKelasMapel($validated['kelas'], $validated['mata_pelajaran'])) {
+        if (! $guru->mengajarDiKelasMapelId($validated['kelas_id'], $validated['mata_pelajaran_id'])) {
             abort(403, 'Anda tidak mengajar kombinasi kelas dan mata pelajaran ini.');
         }
 
@@ -143,8 +175,8 @@ class NilaiController extends Controller
                     [
                         'nis' => $row['nis'],
                         'id_guru' => $guru->id,
-                        'kelas' => $validated['kelas'],
-                        'mata_pelajaran' => $validated['mata_pelajaran'],
+                        'kelas_id' => $validated['kelas_id'],
+                        'mata_pelajaran_id' => $validated['mata_pelajaran_id'],
                     ],
                     [
                         'nilai_tugas' => $tugas,
@@ -173,23 +205,17 @@ class NilaiController extends Controller
         $guru = Guru::where('user_id', auth()->id())->firstOrFail();
 
         $validated = $request->validate([
-            'kelas' => ['required', 'string'],
-            'mata_pelajaran' => ['required', 'string'],
+            'kelas_id' => ['required', 'integer', 'exists:kelas,id'],
+            'mata_pelajaran_id' => ['required', 'integer', 'exists:mata_pelajaran,id'],
         ]);
 
-        if (! $guru->mengajarDiKelasMapel($validated['kelas'], $validated['mata_pelajaran'])) {
+        if (! $guru->mengajarDiKelasMapelId($validated['kelas_id'], $validated['mata_pelajaran_id'])) {
             abort(403);
         }
 
-        $rows = Nilai::where('id_guru', $guru->id)
-            ->where('kelas', $validated['kelas'])
-            ->where('mata_pelajaran', $validated['mata_pelajaran'])
-            ->whereNotNull('nilai_akhir')
-            ->get();
-
         $updated = Nilai::where('id_guru', $guru->id)
-            ->where('kelas', $validated['kelas'])
-            ->where('mata_pelajaran', $validated['mata_pelajaran'])
+            ->where('kelas_id', $validated['kelas_id'])
+            ->where('mata_pelajaran_id', $validated['mata_pelajaran_id'])
             ->whereNotNull('nilai_akhir')
             ->update(['status_validasi' => Nilai::STATUS_FINAL]);
 
@@ -234,27 +260,57 @@ class NilaiController extends Controller
      */
     public function rekap(Request $request): Response
     {
-        $guru = Guru::with('mengajar')->where('user_id', auth()->id())->firstOrFail();
+        $guru = Guru::with(['mengajar.kelas:id,nama', 'mengajar.mataPelajaran:id,nama'])
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $kelas = $request->input('kelas');
         $mataPelajaran = $request->input('mata_pelajaran');
-        $hasMengajar = $guru->mengajar()->exists();
+        $kelasId = $request->input('kelas_id');
+        $mapelId = $request->input('mata_pelajaran_id');
 
-        $daftarKelas = $guru->mengajar()->distinct()->orderBy('kelas')->pluck('kelas')->all();
-        $mapelByKelas = [];
-        foreach ($guru->mengajar()->orderBy('kelas')->orderBy('mata_pelajaran')->get() as $m) {
-            $mapelByKelas[$m->kelas][] = $m->mata_pelajaran;
+        if ($kelas && ! $kelasId) {
+            $kelasId = Kelas::where('nama', $kelas)->value('id');
         }
-        $daftarMapel = $kelas && isset($mapelByKelas[$kelas]) ? $mapelByKelas[$kelas] : [];
+        if ($mataPelajaran && ! $mapelId) {
+            $mapelId = MataPelajaran::where('nama', $mataPelajaran)->value('id');
+        }
+
+        $hasMengajar = $guru->mengajar()->exists();
+        $mengajar = $guru->mengajar;
+
+        $daftarKelas = $mengajar
+            ->map(fn ($m) => $m->kelas)
+            ->filter()
+            ->unique('id')
+            ->sortBy('nama')
+            ->values()
+            ->map(fn ($k) => ['id' => (int) $k->id, 'nama' => $k->nama])
+            ->all();
+        $mapelByKelas = [];
+        foreach ($mengajar->sortBy([
+            ['kelas.nama', 'asc'],
+            ['mataPelajaran.nama', 'asc'],
+        ]) as $m) {
+            $kelasKey = (string) $m->kelas?->id;
+            if ($kelasKey === '') {
+                continue;
+            }
+            $mapelByKelas[$kelasKey][] = [
+                'id' => (int) $m->mataPelajaran?->id,
+                'nama' => $m->mataPelajaran?->nama ?? '',
+            ];
+        }
+        $daftarMapel = $kelasId && isset($mapelByKelas[(string) $kelasId]) ? $mapelByKelas[(string) $kelasId] : [];
 
         $rows = collect();
         $stats = ['lulus' => 0, 'tidak_lulus' => 0, 'belum' => 0];
 
-        if ($kelas && $mataPelajaran && $hasMengajar && $guru->mengajarDiKelasMapel($kelas, $mataPelajaran)) {
-            $siswaList = Siswa::where('kelas', $kelas)->orderBy('nis')->get();
+        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId($kelasId, $mapelId)) {
+            $siswaList = Siswa::where('kelas_id', $kelasId)->orderBy('nis')->get();
             $nilaiList = Nilai::where('id_guru', $guru->id)
-                ->where('kelas', $kelas)
-                ->where('mata_pelajaran', $mataPelajaran)
+                ->where('kelas_id', $kelasId)
+                ->where('mata_pelajaran_id', $mapelId)
                 ->whereIn('nis', $siswaList->pluck('nis'))
                 ->get()
                 ->keyBy('nis');
@@ -278,7 +334,9 @@ class NilaiController extends Controller
         return Inertia::render('guru/rekap/index', [
             'guru' => $guru,
             'kelas' => $kelas,
+            'kelas_id' => $kelasId,
             'mata_pelajaran' => $mataPelajaran,
+            'mata_pelajaran_id' => $mapelId,
             'daftar_kelas' => $daftarKelas,
             'mapel_by_kelas' => $mapelByKelas,
             'daftar_mapel' => $daftarMapel,

@@ -17,9 +17,13 @@ beforeEach(function () {
 });
 
 test('Admin: dashboard menampilkan stats utama dengan total yang benar', function () {
-    Siswa::factory()->count(3)->create(['kelas' => 'X-A']);
-    Siswa::factory()->count(2)->create(['kelas' => 'X-B']);
-    Guru::factory()->count(2)->create();
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Siswa 1', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'nama_siswa' => 'Siswa 2', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00003', 'nama_siswa' => 'Siswa 3', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00004', 'nama_siswa' => 'Siswa 4', 'kelas_id' => $this->kelasId('X-B')]);
+    Siswa::create(['nis' => '00005', 'nama_siswa' => 'Siswa 5', 'kelas_id' => $this->kelasId('X-B')]);
+    Guru::create(['nama_guru' => 'Guru 1']);
+    Guru::create(['nama_guru' => 'Guru 2']);
 
     $admin = User::factory()->admin()->create();
 
@@ -40,26 +44,26 @@ test('Admin: dashboard menampilkan stats utama dengan total yang benar', functio
 });
 
 test('Admin: dashboard menghitung persentase lulus dari total nilai', function () {
-    $guru = Guru::factory()->create();
-    $siswaA = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Alpha']);
-    $siswaB = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Beta']);
-    $siswaC = Siswa::factory()->create(['kelas' => 'X-B', 'nama_siswa' => 'Gamma']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    $siswaA = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Alpha', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswaB = Siswa::create(['nis' => '00002', 'nama_siswa' => 'Beta', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswaC = Siswa::create(['nis' => '00003', 'nama_siswa' => 'Gamma', 'kelas_id' => $this->kelasId('X-B')]);
 
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     Nilai::create([
-        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
         'nilai_akhir' => 80, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 60, 'nilai_uts' => 60, 'nilai_uas' => 60,
         'nilai_akhir' => 60, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $siswaC->nis, 'id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswaC->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 90, 'nilai_uts' => 90, 'nilai_uas' => 90,
         'nilai_akhir' => 90, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -78,20 +82,20 @@ test('Admin: dashboard menghitung persentase lulus dari total nilai', function (
 });
 
 test('Admin: rekap per kelas berisi jumlah siswa, lulus, tidak lulus, dan persentase', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
-    $siswa1 = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'A1']);
-    $siswa2 = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'A2']);
-    $siswa3 = Siswa::factory()->create(['kelas' => 'X-B', 'nama_siswa' => 'B1']);
+    $siswa1 = Siswa::create(['nis' => '00001', 'nama_siswa' => 'A1', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswa2 = Siswa::create(['nis' => '00002', 'nama_siswa' => 'A2', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswa3 = Siswa::create(['nis' => '00003', 'nama_siswa' => 'B1', 'kelas_id' => $this->kelasId('X-B')]);
 
     Nilai::create([
-        'nis' => $siswa1->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa1->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
         'nilai_akhir' => 80, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $siswa2->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa2->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 50, 'nilai_uts' => 50, 'nilai_uas' => 50,
         'nilai_akhir' => 50, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -118,26 +122,26 @@ test('Admin: rekap per kelas berisi jumlah siswa, lulus, tidak lulus, dan persen
 });
 
 test('Admin: rata-rata per mapel diurutkan descending dan menghitung persentase lulus', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
-    $s1 = Siswa::factory()->create(['kelas' => 'X-A']);
-    $s2 = Siswa::factory()->create(['kelas' => 'X-A']);
-    $s3 = Siswa::factory()->create(['kelas' => 'X-A']);
+    $s1 = Siswa::create(['nis' => '00001', 'nama_siswa' => 'S1', 'kelas_id' => $this->kelasId('X-A')]);
+    $s2 = Siswa::create(['nis' => '00002', 'nama_siswa' => 'S2', 'kelas_id' => $this->kelasId('X-A')]);
+    $s3 = Siswa::create(['nis' => '00003', 'nama_siswa' => 'S3', 'kelas_id' => $this->kelasId('X-A')]);
 
     Nilai::create([
-        'nis' => $s1->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $s1->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 90, 'nilai_uts' => 90, 'nilai_uas' => 90,
         'nilai_akhir' => 90, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $s2->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $s2->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
         'nilai_akhir' => 80, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $s3->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $s3->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 60, 'nilai_uts' => 60, 'nilai_uas' => 60,
         'nilai_akhir' => 60, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -162,22 +166,22 @@ test('Admin: rata-rata per mapel diurutkan descending dan menghitung persentase 
 });
 
 test('Admin: top siswa diurutkan descending berdasarkan rata-rata dan dibatasi 5', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
     for ($i = 1; $i <= 6; $i++) {
-        $siswa = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Siswa '.$i]);
+        $siswa = Siswa::create(['nis' => str_pad((string) $i, 5, '0', STR_PAD_LEFT), 'nama_siswa' => 'Siswa '.$i, 'kelas_id' => $this->kelasId('X-A')]);
         $avg = 70 + $i;
 
         Nilai::create([
-            'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+            'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'nilai_tugas' => $avg, 'nilai_uts' => $avg, 'nilai_uas' => $avg,
             'nilai_akhir' => (float) $avg, 'status_lulus' => $avg >= 70 ? Nilai::LULUS : Nilai::TIDAK_LULUS,
             'status_validasi' => Nilai::STATUS_FINAL,
         ]);
         Nilai::create([
-            'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+            'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
             'nilai_tugas' => $avg, 'nilai_uts' => $avg, 'nilai_uas' => $avg,
             'nilai_akhir' => (float) $avg, 'status_lulus' => $avg >= 70 ? Nilai::LULUS : Nilai::TIDAK_LULUS,
             'status_validasi' => Nilai::STATUS_FINAL,
@@ -199,30 +203,30 @@ test('Admin: top siswa diurutkan descending berdasarkan rata-rata dan dibatasi 5
 });
 
 test('Admin: siswa perhatian hanya berisi siswa dengan minimal 1 mapel tidak lulus', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
-    $berprestasi = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Top Student']);
+    $berprestasi = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Top Student', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $berprestasi->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $berprestasi->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 90, 'nilai_uts' => 90, 'nilai_uas' => 90,
         'nilai_akhir' => 90, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $berprestasi->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $berprestasi->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 95, 'nilai_uts' => 95, 'nilai_uas' => 95,
         'nilai_akhir' => 95, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
-    $perluPerhatian = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Struggling Student']);
+    $perluPerhatian = Siswa::create(['nis' => '00002', 'nama_siswa' => 'Struggling Student', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $perluPerhatian->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $perluPerhatian->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 50, 'nilai_uts' => 50, 'nilai_uas' => 50,
         'nilai_akhir' => 50, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $perluPerhatian->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $perluPerhatian->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 60, 'nilai_uts' => 60, 'nilai_uas' => 60,
         'nilai_akhir' => 60, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -243,30 +247,30 @@ test('Admin: siswa perhatian hanya berisi siswa dengan minimal 1 mapel tidak lul
 });
 
 test('Admin: siswa perhatian diurutkan berdasarkan rasio tidak lulus desc, lalu rata-rata asc', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
-    $worst = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Worst']);
+    $worst = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Worst', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $worst->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $worst->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 40, 'nilai_uts' => 40, 'nilai_uas' => 40,
         'nilai_akhir' => 40, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $worst->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $worst->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 40, 'nilai_uts' => 40, 'nilai_uas' => 40,
         'nilai_akhir' => 40, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
-    $half = Siswa::factory()->create(['kelas' => 'X-A', 'nama_siswa' => 'Half']);
+    $half = Siswa::create(['nis' => '00002', 'nama_siswa' => 'Half', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $half->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $half->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
         'nilai_akhir' => 80, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $half->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $half->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 40, 'nilai_uts' => 40, 'nilai_uas' => 40,
         'nilai_akhir' => 40, 'status_lulus' => Nilai::TIDAK_LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -286,12 +290,12 @@ test('Admin: siswa perhatian diurutkan berdasarkan rasio tidak lulus desc, lalu 
 });
 
 test('Admin: siswa perhatian kosong ketika semua siswa lulus', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    $guru = Guru::create(['nama_guru' => 'Ibu Guru']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
-    $siswa = Siswa::factory()->create(['kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'nama_siswa' => 'Siswa', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
         'nilai_akhir' => 80, 'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);

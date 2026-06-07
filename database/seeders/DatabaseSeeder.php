@@ -147,8 +147,8 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $kelas = $this->seedKelas();
-        $mapel = $this->seedMataPelajaran();
+        $kelasIds = $this->seedKelas();
+        $mapelIds = $this->seedMataPelajaran();
         $this->seedKelasMataPelajaran();
         $this->seedAdmin();
         $guru = $this->seedGuru();
@@ -157,39 +157,57 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string, int> Map of kelas nama => kelas id.
      */
     private function seedKelas(): array
     {
+        $map = [];
         foreach (self::KELAS_LIST as $nama) {
-            Kelas::firstOrCreate(['nama' => $nama]);
+            $kelas = Kelas::firstOrCreate(['nama' => $nama]);
+            $map[$nama] = $kelas->id;
         }
 
-        return self::KELAS_LIST;
+        return $map;
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string, int> Map of mata pelajaran nama => mata pelajaran id.
      */
     private function seedMataPelajaran(): array
     {
+        $map = [];
         foreach (self::MAPEL_LIST as $nama) {
-            MataPelajaran::firstOrCreate(['nama' => $nama]);
+            $mapel = MataPelajaran::firstOrCreate(['nama' => $nama]);
+            $map[$nama] = $mapel->id;
         }
 
-        return self::MAPEL_LIST;
+        return $map;
     }
 
     /**
      * Populate the `kelas_mata_pelajaran` pivot from MAPEL_BY_KELAS.
+     *
+     * @param  array<string, int>  $kelasIds  Map of kelas nama => id.
+     * @param  array<string, int>  $mapelIds  Map of mapel nama => id.
      */
-    private function seedKelasMataPelajaran(): void
+    private function seedKelasMataPelajaran(?array $kelasIds = null, ?array $mapelIds = null): void
     {
+        $kelasIds ??= Kelas::pluck('id', 'nama')->all();
+        $mapelIds ??= MataPelajaran::pluck('id', 'nama')->all();
+
         foreach (self::MAPEL_BY_KELAS as $kelas => $mapelList) {
+            $kelasId = $kelasIds[$kelas] ?? null;
+            if ($kelasId === null) {
+                continue;
+            }
             foreach ($mapelList as $mapel) {
+                $mapelId = $mapelIds[$mapel] ?? null;
+                if ($mapelId === null) {
+                    continue;
+                }
                 KelasMataPelajaran::firstOrCreate([
-                    'kelas' => $kelas,
-                    'mata_pelajaran' => $mapel,
+                    'kelas_id' => $kelasId,
+                    'mata_pelajaran_id' => $mapelId,
                 ]);
             }
         }
@@ -221,16 +239,26 @@ class DatabaseSeeder extends Seeder
      * Always-max assignment (capped at 6) with balanced selection
      * gives 84 entries distributed evenly = 7 per kelas.
      *
+     * @param  array<string, int>|null  $kelasIds  Map of kelas nama => id.
+     * @param  array<string, int>|null  $mapelIds  Map of mapel nama => id.
      * @return array<int, Guru>
      */
-    private function seedGuru(): array
+    private function seedGuru(?array $kelasIds = null, ?array $mapelIds = null): array
     {
+        $kelasIds ??= Kelas::pluck('id', 'nama')->all();
+        $mapelIds ??= MataPelajaran::pluck('id', 'nama')->all();
+
         $guruList = [];
         $mapelList = self::MAPEL_LIST;
         $kelasCounts = array_fill_keys(self::KELAS_LIST, 0);
 
         foreach (self::GURU_LIST as $idx => $nama) {
             $mapel = $mapelList[$idx % count($mapelList)];
+            $mapelId = $mapelIds[$mapel] ?? null;
+            if ($mapelId === null) {
+                continue;
+            }
+
             $availableKelas = $this->getKelasOfferingMapel($mapel);
             $numKelas = min(6, count($availableKelas));
 
@@ -258,10 +286,14 @@ class DatabaseSeeder extends Seeder
             );
 
             foreach ($selectedKelas as $kelas) {
+                $kelasId = $kelasIds[$kelas] ?? null;
+                if ($kelasId === null) {
+                    continue;
+                }
                 GuruMengajar::firstOrCreate([
                     'id_guru' => $guru->id,
-                    'kelas' => $kelas,
-                    'mata_pelajaran' => $mapel,
+                    'kelas_id' => $kelasId,
+                    'mata_pelajaran_id' => $mapelId,
                 ]);
                 $kelasCounts[$kelas]++;
             }
@@ -298,10 +330,12 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * @param  array<string, int>|null  $kelasIds  Map of kelas nama => id.
      * @return array<int, Siswa>
      */
-    private function seedSiswa(): array
+    private function seedSiswa(?array $kelasIds = null): array
     {
+        $kelasIds ??= Kelas::pluck('id', 'nama')->all();
         $namaDepan = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eko', 'Fitri', 'Galih', 'Hana', 'Indra', 'Jihan', 'Kiki', 'Lutfi', 'Mira', 'Nanda', 'Oki', 'Putri', 'Qori', 'Raka', 'Siti', 'Toni', 'Umi', 'Vina', 'Wahyu', 'Xena', 'Yusuf', 'Zara'];
         $namaBelakang = ['Fauzi', 'Santoso', 'Lestari', 'Anggraini', 'Prasetyo', 'Wulandari', 'Pratama', 'Nurhaliza', 'Wijaya', 'Aulia', 'Saputra', 'Handayani', 'Putri', 'Maulana', 'Ramadhan', 'Sari', 'Hidayat', 'Permata', 'Utami', 'Setiawan'];
 
@@ -309,6 +343,7 @@ class DatabaseSeeder extends Seeder
         $counter = 1;
 
         foreach (self::KELAS_LIST as $kls) {
+            $kelasId = $kelasIds[$kls] ?? null;
             for ($i = 0; $i < self::SISWA_PER_KELAS; $i++) {
                 $nama = $namaDepan[array_rand($namaDepan)].' '.$namaBelakang[array_rand($namaBelakang)];
                 $nis = str_pad((string) $counter, 5, '0', STR_PAD_LEFT);
@@ -329,7 +364,7 @@ class DatabaseSeeder extends Seeder
                     [
                         'user_id' => $user->id,
                         'nama_siswa' => $nama,
-                        'kelas' => $kls,
+                        'kelas_id' => $kelasId,
                     ]
                 );
 
@@ -347,15 +382,16 @@ class DatabaseSeeder extends Seeder
      */
     private function seedNilai(array $guruList, array $siswaList): void
     {
-        $mengajarByKelas = [];
+        $mengajarByKelasId = [];
         foreach ($guruList as $guru) {
             foreach (GuruMengajar::where('id_guru', $guru->id)->get()->all() as $m) {
-                $mengajarByKelas[$m->kelas][] = $m;
+                $mengajarByKelasId[$m->kelas_id][] = $m;
             }
         }
 
         foreach ($siswaList as $siswa) {
-            foreach ($mengajarByKelas[$siswa->kelas] ?? [] as $m) {
+            $mengajar = $mengajarByKelasId[$siswa->kelas_id] ?? [];
+            foreach ($mengajar as $m) {
                 $tugas = fake()->numberBetween(50, 100);
                 $uts = fake()->numberBetween(50, 100);
                 $uas = fake()->numberBetween(50, 100);
@@ -365,8 +401,8 @@ class DatabaseSeeder extends Seeder
                     [
                         'nis' => $siswa->nis,
                         'id_guru' => $m->id_guru,
-                        'kelas' => $m->kelas,
-                        'mata_pelajaran' => $m->mata_pelajaran,
+                        'kelas_id' => $m->kelas_id,
+                        'mata_pelajaran_id' => $m->mata_pelajaran_id,
                     ],
                     [
                         'nilai_tugas' => $tugas,

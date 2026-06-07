@@ -21,8 +21,8 @@ import { useInertiaSearch } from '@/hooks/use-inertia-search';
 
 type Mengajar = {
     id: number;
-    kelas: string;
-    mata_pelajaran: string;
+    kelas: { id: number; nama: string } | null;
+    mata_pelajaran: { id: number; nama: string } | null;
 };
 
 type Guru = {
@@ -43,8 +43,8 @@ type Paginated<T> = {
 
 type Props = {
     guru: Paginated<Guru>;
-    daftar_kelas: string[];
-    daftar_mapel: string[];
+    daftar_kelas: { id: number; nama: string }[];
+    daftar_mapel: { id: number; nama: string }[];
     filters: {
         search: string | null;
         kelas: string | null;
@@ -98,10 +98,11 @@ export default function GuruIndex({
         }
         const groups = new Map<string, string[]>();
         for (const m of selected.mengajar) {
-            if (!groups.has(m.kelas)) {
-                groups.set(m.kelas, []);
+            const kelasNama = m.kelas?.nama ?? '—';
+            if (!groups.has(kelasNama)) {
+                groups.set(kelasNama, []);
             }
-            groups.get(m.kelas)?.push(m.mata_pelajaran);
+            groups.get(kelasNama)?.push(m.mata_pelajaran?.nama ?? '—');
         }
         return Array.from(groups.entries())
             .sort(([a], [b]) => a.localeCompare(b))
@@ -156,8 +157,8 @@ export default function GuruIndex({
                 >
                     <option value="">Semua Kelas</option>
                     {daftar_kelas.map((k) => (
-                        <option key={k} value={k}>
-                            {k}
+                        <option key={k.id} value={k.nama}>
+                            {k.nama}
                         </option>
                     ))}
                 </Select>
@@ -168,8 +169,8 @@ export default function GuruIndex({
                 >
                     <option value="">Semua Mata Pelajaran</option>
                     {daftar_mapel.map((m) => (
-                        <option key={m} value={m}>
-                            {m}
+                        <option key={m.id} value={m.nama}>
+                            {m.nama}
                         </option>
                     ))}
                 </Select>
@@ -213,8 +214,8 @@ export default function GuruIndex({
                                 />
                             ) : (
                                 guru.data.map((g, i) => {
-                                    const kelasCount = new Set(g.mengajar.map((m) => m.kelas)).size;
-                                    const mapelCount = new Set(g.mengajar.map((m) => m.mata_pelajaran)).size;
+                                    const kelasCount = new Set(g.mengajar.map((m) => m.kelas?.id).filter(Boolean)).size;
+                                    const mapelCount = new Set(g.mengajar.map((m) => m.mata_pelajaran?.id).filter(Boolean)).size;
 
                                     return (
                                         <tr

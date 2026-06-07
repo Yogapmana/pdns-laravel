@@ -50,7 +50,7 @@ class KelasController extends Controller
     public function create(): Response
     {
         return Inertia::render('admin/kelas/create', [
-            'semua_mapel' => MataPelajaran::pluckNamaOrdered()->values()->all(),
+            'semua_mapel' => MataPelajaran::query()->select('id', 'nama')->orderBy('nama')->get(),
         ]);
     }
 
@@ -68,7 +68,7 @@ class KelasController extends Controller
         $kelas = Kelas::create(['nama' => $data['nama']]);
         $this->syncAvailableMapel($kelas, $mapel);
 
-        $message = $this->buildSyncMessage('ditambahkan', $kelas->nama, $mapel, null);
+        $message = $this->buildSyncMessage('ditambahkan', $kelas->nama, count($mapel), null);
 
         return redirect()->route('admin.kelas.index')->with('success', $message);
     }
@@ -81,11 +81,11 @@ class KelasController extends Controller
      */
     public function edit(Kelas $kela): Response
     {
-        $selectedMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('nama')->all();
+        $selectedMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('mata_pelajaran.id')->all();
 
         return Inertia::render('admin/kelas/edit', [
             'kelas' => $kela,
-            'semua_mapel' => MataPelajaran::pluckNamaOrdered()->values()->all(),
+            'semua_mapel' => MataPelajaran::query()->select('id', 'nama')->orderBy('nama')->get(),
             'selected_mapel' => $selectedMapel,
         ]);
     }
@@ -100,14 +100,14 @@ class KelasController extends Controller
     public function update(KelasRequest $request, Kelas $kela): RedirectResponse
     {
         $data = $request->validated();
-        $previousMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('nama')->all();
+        $previousMapel = $kela->mataPelajaran()->orderBy('nama')->pluck('mata_pelajaran.id')->all();
         $kela->update(['nama' => $data['nama']]);
 
-        if ($request->has('mata_pelajaran')) {
+        if ($request->has('mata_pelajaran_id')) {
             $this->syncAvailableMapel($kela, $request->getMataPelajaran());
         }
 
-        $message = $this->buildSyncMessage('diperbarui', $kela->nama, $request->getMataPelajaran(), $previousMapel);
+        $message = $this->buildSyncMessage('diperbarui', $kela->nama, count($request->getMataPelajaran()), count($previousMapel));
 
         return redirect()->route('admin.kelas.index')->with('success', $message);
     }
@@ -133,20 +133,18 @@ class KelasController extends Controller
 
     /**
      * Replace the `kelas_mata_pelajaran` rows for the supplied kelas with
-     * the supplied list of mata-pelajaran names. Existing rows are
-     * detached; new rows are attached in the supplied order.
+     * the supplied list of mata-pelajaran ids. Existing rows are detached;
+     * new rows are attached in the supplied order.
      *
      * @param  Kelas  $kela  The kelas whose mapel allow-list is being replaced.
-     * @param  array<int, string>  $mapel  Deduplicated, sorted list of mapel names.
+     * @param  array<int, int>  $mapel  Deduplicated, sorted list of mapel ids.
      */
     private function syncAvailableMapel(Kelas $kela, array $mapel): void
     {
         $kela->mataPelajaran()->detach();
 
-        foreach ($mapel as $nama) {
-            $kela->mataPelajaran()->attach(
-                MataPelajaran::firstOrCreate(['nama' => $nama])
-            );
+        foreach ($mapel as $id) {
+            $kela->mataPelajaran()->attach($id);
         }
     }
 
@@ -157,12 +155,11 @@ class KelasController extends Controller
      *
      * @param  string  $verb  "ditambahkan" | "diperbarui"
      * @param  string  $kelasName  The kelas display name.
-     * @param  array<int, string>  $mapel  The new mapel list (after sync).
-     * @param  array<int, string>|null  $previousMapel  The previous mapel list (only on update).
+     * @param  int  $count  The new mapel count (after sync).
+     * @param  int|null  $previousCount  The previous mapel count (only on update).
      */
-    private function buildSyncMessage(string $verb, string $kelasName, array $mapel, ?array $previousMapel): string
+    private function buildSyncMessage(string $verb, string $kelasName, int $count, ?int $previousCount): string
     {
-        $count = count($mapel);
         $base = "Kelas \"{$kelasName}\" berhasil {$verb}.";
 
         if ($count === 0) {
@@ -171,8 +168,8 @@ class KelasController extends Controller
 
         $summary = "Kelas \"{$kelasName}\" berhasil {$verb} dengan {$count} mata pelajaran diizinkan.";
 
-        if ($previousMapel !== null && $count !== count($previousMapel)) {
-            $summary .= ' (sebelumnya: '.count($previousMapel).')';
+        if ($previousCount !== null && $count !== $previousCount) {
+            $summary .= ' (sebelumnya: '.$previousCount.')';
         }
 
         return $summary;

@@ -17,22 +17,23 @@ import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
 
 type Props = {
-    daftar_kelas: string[];
-    mapel_by_kelas: Record<string, string[]>;
+    daftar_kelas: { id: number; nama: string }[];
+    daftar_mapel: { id: number; nama: string }[];
+    mapel_by_kelas: Record<string, number[]>;
 };
 
 type MengajarRow = {
-    kelas: string;
-    mata_pelajaran: string;
+    kelas_id: string;
+    mata_pelajaran_id: string;
 };
 
-export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
+export default function GuruCreate({ daftar_kelas, daftar_mapel, mapel_by_kelas }: Props) {
     const [rows, setRows] = useState<MengajarRow[]>([
-        { kelas: '', mata_pelajaran: '' },
+        { kelas_id: '', mata_pelajaran_id: '' },
     ]);
 
     function addRow() {
-        setRows((prev) => [...prev, { kelas: '', mata_pelajaran: '' }]);
+        setRows((prev) => [...prev, { kelas_id: '', mata_pelajaran_id: '' }]);
     }
 
     function removeRow(index: number) {
@@ -45,12 +46,16 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
         );
     }
 
-    function mapelForKelas(kelas: string): string[] {
-        return mapel_by_kelas[kelas] ?? [];
+    function mapelForKelas(kelasId: string): number[] {
+        return mapel_by_kelas[kelasId] ?? [];
+    }
+
+    function kelasNama(kelasId: string): string {
+        return daftar_kelas.find((k) => String(k.id) === kelasId)?.nama ?? '';
     }
 
     const emptyKelas = daftar_kelas.filter(
-        (k) => mapelForKelas(k).length === 0,
+        (k) => mapelForKelas(String(k.id)).length === 0,
     );
 
     return (
@@ -148,10 +153,10 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                     <div className="space-y-3">
                                         {rows.map((row, i) => {
                                             const allowedMapel = mapelForKelas(
-                                                row.kelas,
+                                                row.kelas_id,
                                             );
                                             const kelasHasMapel =
-                                                row.kelas !== '' &&
+                                                row.kelas_id !== '' &&
                                                 allowedMapel.length === 0;
 
                                             return (
@@ -167,12 +172,12 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                             </span>
                                                         </label>
                                                         <Select
-                                                            name={`mengajar[${i}][kelas]`}
-                                                            value={row.kelas}
+                                                            name={`mengajar[${i}][kelas_id]`}
+                                                            value={row.kelas_id}
                                                             onChange={(e) => {
                                                                 updateRow(
                                                                     i,
-                                                                    'kelas',
+                                                                    'kelas_id',
                                                                     e.target
                                                                         .value,
                                                                 );
@@ -180,11 +185,11 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                                 if (
                                                                     e.target
                                                                         .value !==
-                                                                    row.kelas
+                                                                    row.kelas_id
                                                                 ) {
                                                                     updateRow(
                                                                         i,
-                                                                        'mata_pelajaran',
+                                                                        'mata_pelajaran_id',
                                                                         '',
                                                                     );
                                                                 }
@@ -200,12 +205,12 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                             {daftar_kelas.map(
                                                                 (k) => (
                                                                     <option
-                                                                        key={k}
+                                                                        key={k.id}
                                                                         value={
-                                                                            k
+                                                                            k.id
                                                                         }
                                                                     >
-                                                                        {k}
+                                                                        {k.nama}
                                                                     </option>
                                                                 ),
                                                             )}
@@ -213,7 +218,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                         <InputError
                                                             message={
                                                                 errors[
-                                                                    `mengajar.${i}.kelas`
+                                                                    `mengajar.${i}.kelas_id`
                                                                 ]
                                                             }
                                                         />
@@ -226,28 +231,28 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                             </span>
                                                         </label>
                                                         <Select
-                                                            name={`mengajar[${i}][mata_pelajaran]`}
+                                                            name={`mengajar[${i}][mata_pelajaran_id]`}
                                                             value={
-                                                                row.mata_pelajaran
+                                                                row.mata_pelajaran_id
                                                             }
                                                             onChange={(e) =>
                                                                 updateRow(
                                                                     i,
-                                                                    'mata_pelajaran',
+                                                                    'mata_pelajaran_id',
                                                                     e.target
                                                                         .value,
                                                                 )
                                                             }
                                                             required
                                                             disabled={
-                                                                !row.kelas
+                                                                !row.kelas_id
                                                             }
                                                         >
                                                             <option
                                                                 value=""
                                                                 disabled
                                                             >
-                                                                {!row.kelas
+                                                                {!row.kelas_id
                                                                     ? 'Pilih kelas dulu'
                                                                     : allowedMapel.length ===
                                                                         0
@@ -255,23 +260,33 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                                       : 'Pilih mata pelajaran'}
                                                             </option>
                                                             {allowedMapel.map(
-                                                                (m) => (
-                                                                    <option
-                                                                        key={m}
-                                                                        value={
-                                                                            m
-                                                                        }
-                                                                    >
-                                                                        {m}
-                                                                    </option>
-                                                                ),
+                                                                (mId) => {
+                                                                    const m = daftar_mapel.find(
+                                                                        (x) =>
+                                                                            x.id ===
+                                                                            mId,
+                                                                    );
+                                                                    return (
+                                                                        <option
+                                                                            key={
+                                                                                mId
+                                                                            }
+                                                                            value={
+                                                                                mId
+                                                                            }
+                                                                        >
+                                                                            {m?.nama ??
+                                                                                `#${mId}`}
+                                                                        </option>
+                                                                    );
+                                                                },
                                                             )}
                                                         </Select>
                                                         {kelasHasMapel && (
                                                             <p className="mt-1 flex items-center gap-1 text-xs text-amber-700">
                                                                 <AlertTriangle className="h-3 w-3" />
                                                                 Kelas "
-                                                                {row.kelas}"
+                                                                {kelasNama(row.kelas_id)}"
                                                                 belum punya
                                                                 mapel diizinkan.{' '}
                                                                 <Link
@@ -288,7 +303,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                         <InputError
                                                             message={
                                                                 errors[
-                                                                    `mengajar.${i}.mata_pelajaran`
+                                                                    `mengajar.${i}.mata_pelajaran_id`
                                                                 ]
                                                             }
                                                         />
@@ -319,7 +334,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                 pelajaran yang diizinkan:
                                             </p>
                                             <p className="mt-1">
-                                                {emptyKelas.join(', ')}.{' '}
+                                                {emptyKelas.map((k) => k.nama).join(', ')}.{' '}
                                                 <Link
                                                     href="/admin/kelas"
                                                     className="underline font-medium"

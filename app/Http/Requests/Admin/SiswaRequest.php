@@ -50,7 +50,7 @@ class SiswaRequest extends FormRequest
                 Rule::unique(Siswa::class, 'nis')->ignore($this->route('siswa')?->nis, 'nis'),
             ],
             'nama_siswa' => ['required', 'string', 'max:255'],
-            'kelas' => ['nullable', 'string', Rule::exists(Kelas::class, 'nama')],
+            'kelas_id' => ['nullable', 'integer', Rule::exists(Kelas::class, 'id')],
             'password' => [$isUpdate ? 'nullable' : 'required', 'string', 'min:6', 'confirmed'],
         ];
     }
@@ -66,7 +66,7 @@ class SiswaRequest extends FormRequest
             'nis.unique' => 'NIS sudah terdaftar.',
             'nis.required' => 'NIS wajib diisi.',
             'nama_siswa.required' => 'Nama siswa wajib diisi.',
-            'kelas.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
+            'kelas_id.exists' => 'Kelas tidak valid. Pilih dari daftar kelas yang tersedia.',
             'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
@@ -75,7 +75,7 @@ class SiswaRequest extends FormRequest
 
     /**
      * Return the validated payload, removing `nis` on PUT/PATCH (the field
-     * is immutable) and dropping an empty `kelas` (so the column is
+     * is immutable) and dropping a null `kelas_id` (so the column is
      * preserved unchanged on update when left blank).
      *
      * @param  string|array<int, string>|null  $key  Optional key(s) to pluck.
@@ -90,8 +90,8 @@ class SiswaRequest extends FormRequest
             unset($data['nis']);
         }
 
-        if (empty($data['kelas'])) {
-            unset($data['kelas']);
+        if (empty($data['kelas_id'])) {
+            unset($data['kelas_id']);
         }
 
         return $data;

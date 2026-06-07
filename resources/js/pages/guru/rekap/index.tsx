@@ -24,11 +24,11 @@ import {
 } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 
-type Mengajar = { id: number; kelas: string; mata_pelajaran: string };
+type Mengajar = { id: number; kelas: { id: number; nama: string } | null; mata_pelajaran: { id: number; nama: string } | null };
 
 type Guru = { id: number; nama_guru: string; mengajar: Mengajar[] };
 
-type Siswa = { nis: string; nama_siswa: string; kelas: string };
+type Siswa = { nis: string; nama_siswa: string; kelas: { id: number; nama: string } | null };
 
 type Nilai = {
     id: number;
@@ -45,9 +45,11 @@ type Row = { siswa: Siswa; nilai: Nilai | null };
 type Props = {
     guru: Guru;
     kelas: string | null;
+    kelas_id: number | null;
     mata_pelajaran: string | null;
-    daftar_kelas: string[];
-    mapel_by_kelas: Record<string, string[]>;
+    mata_pelajaran_id: number | null;
+    daftar_kelas: { id: number; nama: string }[];
+    mapel_by_kelas: Record<string, { id: number; nama: string }[]>;
     rows: Row[];
     stats: { lulus: number; tidak_lulus: number; belum: number };
     has_mengajar: boolean;
@@ -56,7 +58,9 @@ type Props = {
 export default function RekapIndex({
     guru,
     kelas,
+    kelas_id,
     mata_pelajaran,
+    mata_pelajaran_id,
     daftar_kelas,
     mapel_by_kelas,
     rows,
@@ -64,26 +68,31 @@ export default function RekapIndex({
     has_mengajar,
 }: Props) {
     useFlashToast();
-    const [selectedKelas, setSelectedKelas] = useState(kelas ?? '');
-    const [selectedMapel, setSelectedMapel] = useState(mata_pelajaran ?? '');
+    const [selectedKelasId, setSelectedKelasId] = useState(kelas_id ? String(kelas_id) : '');
+    const [selectedMapelId, setSelectedMapelId] = useState(mata_pelajaran_id ? String(mata_pelajaran_id) : '');
 
-    const availableMapel = selectedKelas
-        ? (mapel_by_kelas[selectedKelas] ?? [])
+    const availableMapel = selectedKelasId
+        ? (mapel_by_kelas[selectedKelasId] ?? [])
         : [];
 
-    function changeKelas(newKelas: string) {
-        setSelectedKelas(newKelas);
-        setSelectedMapel('');
+    function changeKelas(newKelasId: string) {
+        setSelectedKelasId(newKelasId);
+        setSelectedMapelId('');
     }
 
     function applyFilter() {
-        if (!selectedKelas || !selectedMapel) {
+        if (!selectedKelasId || !selectedMapelId) {
             return;
         }
 
+        const kelasNama = daftar_kelas.find((k) => String(k.id) === selectedKelasId)?.nama;
+        const mapelNama = availableMapel.find((m) => String(m.id) === selectedMapelId)?.nama;
+
         router.get('/guru/rekap', {
-            kelas: selectedKelas,
-            mata_pelajaran: selectedMapel,
+            kelas: kelasNama,
+            kelas_id: Number(selectedKelasId),
+            mata_pelajaran: mapelNama,
+            mata_pelajaran_id: Number(selectedMapelId),
         });
     }
 
@@ -116,7 +125,7 @@ export default function RekapIndex({
                                 </label>
                                 <Select
                                     id="kelas"
-                                    value={selectedKelas}
+                                    value={selectedKelasId}
                                     onChange={(e) =>
                                         changeKelas(e.target.value)
                                     }
@@ -124,8 +133,8 @@ export default function RekapIndex({
                                 >
                                     <option value="">Pilih kelas...</option>
                                     {daftar_kelas.map((k) => (
-                                        <option key={k} value={k}>
-                                            {k}
+                                        <option key={k.id} value={k.id}>
+                                            {k.nama}
                                         </option>
                                     ))}
                                 </Select>
@@ -139,25 +148,25 @@ export default function RekapIndex({
                                 </label>
                                 <Select
                                     id="mapel"
-                                    value={selectedMapel}
+                                    value={selectedMapelId}
                                     onChange={(e) =>
-                                        setSelectedMapel(e.target.value)
+                                        setSelectedMapelId(e.target.value)
                                     }
-                                    disabled={!selectedKelas}
+                                    disabled={!selectedKelasId}
                                     className="h-10"
                                 >
                                     <option value="">
-                                        {selectedKelas
+                                        {selectedKelasId
                                             ? 'Pilih mata pelajaran...'
                                             : 'Pilih kelas dulu'}
                                     </option>
                                     {availableMapel.map((m) => (
-                                        <option key={m} value={m}>
-                                            {m}
+                                        <option key={m.id} value={m.id}>
+                                            {m.nama}
                                         </option>
                                     ))}
                                 </Select>
-                                {selectedKelas &&
+                                {selectedKelasId &&
                                     availableMapel.length === 0 && (
                                         <p className="mt-1 flex items-center gap-1 text-xs text-warning">
                                             <Info className="h-3 w-3" /> Anda
@@ -168,7 +177,7 @@ export default function RekapIndex({
                             </div>
                             <Button
                                 onClick={applyFilter}
-                                disabled={!selectedKelas || !selectedMapel}
+                                disabled={!selectedKelasId || !selectedMapelId}
                                 className="h-10 w-full shrink-0 px-6 sm:w-auto"
                             >
                                 <Search className="mr-2 h-4 w-4" />
@@ -179,7 +188,7 @@ export default function RekapIndex({
                 </div>
             )}
 
-            {has_mengajar && (!kelas || !mata_pelajaran) && (
+            {has_mengajar && (!kelas_id || !mata_pelajaran_id) && (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-slate-50/50 py-16 text-center">
                     <div className="rounded-full bg-slate-100 p-4">
                         <FileSpreadsheet className="h-8 w-8 text-slate-400" />
@@ -195,7 +204,7 @@ export default function RekapIndex({
                 </div>
             )}
 
-            {kelas && mata_pelajaran && (
+            {kelas_id && mata_pelajaran_id && (
                 <>
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-3">
                         <BookOpen className="h-4 w-4 text-primary" />

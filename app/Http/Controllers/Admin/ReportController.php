@@ -28,8 +28,8 @@ class ReportController extends Controller
      */
     public function index(Request $request): InertiaResponse
     {
-        $daftarKelas = Kelas::pluckNamaOrdered();
-        $daftarMapel = MataPelajaran::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
+        $daftarMapel = MataPelajaran::pluckIdNamaOrdered();
 
         return Inertia::render('admin/reports/index', [
             'daftar_kelas' => $daftarKelas,
@@ -135,7 +135,7 @@ class ReportController extends Controller
         $rows = $this->flattenRowsForExport($data);
 
         $writer = (new XlsxWriter)
-            ->setTitle('Laporan '.implode('_', $payload['kelas']))
+            ->setTitle('Laporan '.implode('_', $payload['kelas_names']))
             ->addRows($rows);
 
         $binary = $writer->toString();
@@ -153,10 +153,17 @@ class ReportController extends Controller
      * Reads `kelas` (required, at least one) and `mata_pelajaran` (optional)
      * from the request, verifies that every entry exists in the corresponding
      * master table, deduplicates, and sorts the resulting lists for a stable
-     * output filename.
+     * output filename. The returned payload uses `kelas_id`/`mata_pelajaran_id`
+     * internally; the human-readable names are preserved in the `kelas_names` /
+     * `mapel_names` keys for filename and display.
      *
      * @param  Request  $request  Current HTTP request carrying the filter parameters.
-     * @return array{kelas: array<int, string>, mata_pelajaran: array<int, string>} The normalized filter payload.
+     * @return array{
+     *     kelas: array<int, int>,
+     *     kelas_names: array<int, string>,
+     *     mata_pelajaran: array<int, int>,
+     *     mapel_names: array<int, string>
+     * } The normalized filter payload.
      */
     private function validateFilter(Request $request): array
     {
@@ -170,18 +177,24 @@ class ReportController extends Controller
             'mata_pelajaran.*' => ['string', Rule::in($validMapel)],
         ]);
 
-        $kelas = array_values(array_unique(array_map('strval', $validated['kelas'])));
-        sort($kelas);
+        $kelasNames = array_values(array_unique(array_map('strval', $validated['kelas'])));
+        sort($kelasNames);
 
-        $mapel = [];
+        $kelasIds = Kelas::whereIn('nama', $kelasNames)->orderBy('nama')->pluck('id')->all();
+
+        $mapelNames = [];
+        $mapelIds = [];
         if (! empty($validated['mata_pelajaran'])) {
-            $mapel = array_values(array_unique(array_map('strval', $validated['mata_pelajaran'])));
-            sort($mapel);
+            $mapelNames = array_values(array_unique(array_map('strval', $validated['mata_pelajaran'])));
+            sort($mapelNames);
+            $mapelIds = MataPelajaran::whereIn('nama', $mapelNames)->orderBy('nama')->pluck('id')->all();
         }
 
         return [
-            'kelas' => $kelas,
-            'mata_pelajaran' => $mapel,
+            'kelas' => $kelasIds,
+            'kelas_names' => $kelasNames,
+            'mata_pelajaran' => $mapelIds,
+            'mapel_names' => $mapelNames,
         ];
     }
 
@@ -191,15 +204,20 @@ class ReportController extends Controller
      * Single-kelas payloads use the sanitized class name; multi-kelas payloads
      * collapse to `multi_<n>kelas` to keep the filename short.
      *
-     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload  The normalized filter payload.
+     * @param  array{
+     *     kelas: array<int, int>,
+     *     kelas_names: array<int, string>,
+     *     mata_pelajaran: array<int, int>,
+     *     mapel_names: array<int, string>
+     * }  $payload  The normalized filter payload.
      * @param  string  $ext  Extension suffix (currently unused in the produced filename but kept for future use).
      * @return string The generated filename (without extension).
      */
     private function filenameFor(array $payload, string $ext): string
     {
-        $kelas = count($payload['kelas']) === 1
-            ? str_replace('-', '_', $payload['kelas'][0])
-            : 'multi_'.count($payload['kelas']).'kelas';
+        $kelas = count($payload['kelas_names']) === 1
+            ? str_replace('-', '_', $payload['kelas_names'][0])
+            : 'multi_'.count($payload['kelas_names']).'kelas';
 
         return 'laporan_'.$kelas.'_'.date('Y');
     }
@@ -208,19 +226,24 @@ class ReportController extends Controller
      * Build the aggregated report data used by every export and the HTML preview.
      *
      * Pipeline:
-     *  1. Load all `Siswa` rows whose `kelas` is in the filter.
+     *  1. Load all `Siswa` rows whose `kelas_id` is in the filter (with `kelas` eager-loaded for display).
      *  2. Load all `Nilai` rows for those siswa, optionally restricted to the
-     *     selected `mata_pelajaran` filter, grouped by `[nis][mata_pelajaran]`.
-     *  3. Group siswa by `kelas` and, for every siswa, accumulate the per-mapel
-     *     nilai, the per-kelas pass/fail counts, and the global totals.
+     *     selected `mata_pelajaran_id` filter, grouped by `[nis][mata_pelajaran_id]`.
+     *  3. Group siswa by `kelas.nama` and, for every siswa, accumulate the
+     *     per-mapel nilai, the per-kelas pass/fail counts, and the global totals.
      *
-     * @param  array{kelas: array<int, string>, mata_pelajaran: array<int, string>}  $payload  The normalized filter payload.
+     * @param  array{
+     *     kelas: array<int, int>,
+     *     kelas_names: array<int, string>,
+     *     mata_pelajaran: array<int, int>,
+     *     mapel_names: array<int, string>
+     * }  $payload  The normalized filter payload.
      * @return array{
      *     kelas_list: array<int, string>,
      *     mapel_list: array<int, string>,
      *     sections: array<int, array{
      *         kelas: string,
-     *         rows: array<int, array{siswa: Siswa, nilai_per_mapel: array<string, Nilai|null>, rata_rata: float|null}>,
+     *         rows: array<int, array{siswa: Siswa, nilai_per_mapel: array<int, Nilai|null>, rata_rata: float|null}>,
      *         stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int}
      *     }>,
      *     stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int},
@@ -229,40 +252,40 @@ class ReportController extends Controller
      */
     private function buildReportData(array $payload): array
     {
-        $kelasList = $payload['kelas'];
-        $mapelFilter = $payload['mata_pelajaran'];
+        $kelasIds = $payload['kelas'];
+        $kelasNames = $payload['kelas_names'];
+        $mapelIds = $payload['mata_pelajaran'];
 
-        $siswaList = Siswa::whereIn('kelas', $kelasList)
-            ->orderBy('kelas')
+        $siswaList = Siswa::with('kelas:id,nama')
+            ->whereIn('kelas_id', $kelasIds)
+            ->orderBy('kelas_id')
             ->orderBy('nis')
             ->get();
 
-        $nilaiQuery = Nilai::whereIn('nis', $siswaList->pluck('nis'))
-            ->orderBy('mata_pelajaran');
+        $nilaiQuery = Nilai::with('mataPelajaran:id,nama')
+            ->whereIn('nis', $siswaList->pluck('nis'));
 
-        if (! empty($mapelFilter)) {
-            $nilaiQuery->whereIn('mata_pelajaran', $mapelFilter);
+        if (! empty($mapelIds)) {
+            $nilaiQuery->whereIn('mata_pelajaran_id', $mapelIds);
         }
 
-        $nilai = $nilaiQuery->get()->groupBy(['nis', 'mata_pelajaran']);
+        $nilai = $nilaiQuery->get()->groupBy(['nis', 'mata_pelajaran_id']);
 
-        $mapelList = $nilaiQuery->clone()->distinct()
-            ->orderBy('mata_pelajaran')
-            ->pluck('mata_pelajaran')
-            ->values()
-            ->all();
+        $mapelList = empty($mapelIds)
+            ? MataPelajaran::whereIn('id', $nilaiQuery->clone()->distinct()->pluck('mata_pelajaran_id'))->orderBy('nama')->pluck('nama')->all()
+            : $payload['mapel_names'];
 
-        $sections = $siswaList->groupBy('kelas')
+        $sections = $siswaList->groupBy(fn ($s) => $s->kelas?->nama ?? '?')
             ->sortKeys()
-            ->map(function ($siswaInKelas, $kelas) use ($nilai, $mapelList) {
-                $rows = $siswaInKelas->map(function ($siswa) use ($nilai, $mapelList) {
+            ->map(function ($siswaInKelas, $kelasNama) use ($nilai) {
+                $rows = $siswaInKelas->map(function ($siswa) use ($nilai) {
                     $rowNilai = [];
                     $totalAkhir = 0;
                     $jumlahMapel = 0;
 
-                    foreach ($mapelList as $mapel) {
-                        $item = $nilai->get($siswa->nis)?->get($mapel)?->first();
-                        $rowNilai[$mapel] = $item;
+                    foreach ($nilai->get($siswa->nis, collect()) as $mapelId => $items) {
+                        $item = $items->first();
+                        $rowNilai[$mapelId] = $item;
                         if ($item && $item->nilai_akhir !== null) {
                             $totalAkhir += (float) $item->nilai_akhir;
                             $jumlahMapel++;
@@ -294,7 +317,7 @@ class ReportController extends Controller
                 }
 
                 return [
-                    'kelas' => $kelas,
+                    'kelas' => $kelasNama,
                     'rows' => $rows,
                     'stats' => [
                         'jumlah_siswa' => $siswaInKelas->count(),
@@ -316,7 +339,7 @@ class ReportController extends Controller
         }
 
         return [
-            'kelas_list' => $kelasList,
+            'kelas_list' => $kelasNames,
             'mapel_list' => $mapelList,
             'sections' => $sections,
             'stats' => [
@@ -363,12 +386,11 @@ class ReportController extends Controller
         foreach ($data['sections'] as $section) {
             foreach ($section['rows'] as $row) {
                 $flat = [
-                    $row['siswa']->kelas,
+                    $section['kelas'],
                     $row['siswa']->nis,
                     $row['siswa']->nama_siswa,
                 ];
-                foreach ($data['mapel_list'] as $m) {
-                    $n = $row['nilai_per_mapel'][$m] ?? null;
+                foreach ($row['nilai_per_mapel'] as $n) {
                     $flat[] = $n?->nilai_tugas;
                     $flat[] = $n?->nilai_uts;
                     $flat[] = $n?->nilai_uas;

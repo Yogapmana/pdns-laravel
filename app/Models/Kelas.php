@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
  *
  * Backed by the `kelas` table. The class is identified by its `nama`
  * (e.g. `X-A`, `XI-B`) and is referenced by siswa, guru-mengajar and
- * nilai rows through that string value (non-FK relationships).
+ * nilai rows through the `kelas_id` foreign key.
  *
  * @property int $id
  * @property string $nama
@@ -31,13 +31,13 @@ class Kelas extends Model
     protected $table = 'kelas';
 
     /**
-     * The siswa that belong to this kelas (matched on `kelas.nama == siswa.kelas`).
+     * The siswa that belong to this kelas.
      *
      * @return HasMany<Siswa>
      */
     public function siswa(): HasMany
     {
-        return $this->hasMany(Siswa::class, 'kelas', 'nama');
+        return $this->hasMany(Siswa::class, 'kelas_id');
     }
 
     /**
@@ -47,23 +47,23 @@ class Kelas extends Model
      */
     public function guruMengajar(): HasMany
     {
-        return $this->hasMany(GuruMengajar::class, 'kelas', 'nama');
+        return $this->hasMany(GuruMengajar::class, 'kelas_id');
     }
 
     /**
-     * The nilai rows whose `kelas` matches this row's `nama`.
+     * The nilai rows whose `kelas_id` matches this row.
      *
      * @return HasMany<Nilai>
      */
     public function nilai(): HasMany
     {
-        return $this->hasMany(Nilai::class, 'kelas', 'nama');
+        return $this->hasMany(Nilai::class, 'kelas_id');
     }
 
     /**
      * The mata-pelajaran rows that this kelas allows, joined through the
-     * `kelas_mata_pelajaran` pivot (matched on `kelas.nama == pivot.kelas`
-     * and `mata_pelajaran.nama == pivot.mata_pelajaran`).
+     * `kelas_mata_pelajaran` pivot using the `(kelas_id, mata_pelajaran_id)`
+     * composite key.
      *
      * @return BelongsToMany<MataPelajaran>
      */
@@ -72,10 +72,8 @@ class Kelas extends Model
         return $this->belongsToMany(
             MataPelajaran::class,
             'kelas_mata_pelajaran',
-            'kelas',
-            'mata_pelajaran',
-            'nama',
-            'nama',
+            'kelas_id',
+            'mata_pelajaran_id',
         )->withTimestamps();
     }
 
@@ -119,6 +117,19 @@ class Kelas extends Model
     public static function pluckNamaOrdered(): Collection
     {
         return static::query()->orderBy('nama')->pluck('nama');
+    }
+
+    /**
+     * Static helper that returns `id` and `nama` for every kelas, ordered ascending by `nama`.
+     *
+     * Used by FK-aware forms that need to submit the kelas id but display
+     * the name in the option label.
+     *
+     * @return Collection<int, static> Collection of Kelas models with only `id` and `nama` selected.
+     */
+    public static function pluckIdNamaOrdered(): Collection
+    {
+        return static::query()->orderBy('nama')->get(['id', 'nama']);
     }
 
     /**

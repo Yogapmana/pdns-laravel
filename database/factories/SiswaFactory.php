@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,13 +16,11 @@ class SiswaFactory extends Factory
 {
     public function definition(): array
     {
-        $kelas = ['X-A', 'X-B', 'XI-A', 'XI-B', 'XII-A', 'XII-B'];
-
         return [
             'nis' => str_pad((string) fake()->unique()->numberBetween(1, 99999), 5, '0', STR_PAD_LEFT),
             'user_id' => null,
             'nama_siswa' => fake()->name(),
-            'kelas' => fake()->randomElement($kelas),
+            'kelas_id' => Kelas::factory(),
         ];
     }
 

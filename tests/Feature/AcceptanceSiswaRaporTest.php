@@ -36,18 +36,18 @@ beforeEach(function () {
 test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 60, 'nilai_uts' => 50, 'nilai_uas' => 55, 'nilai_akhir' => 55, 'status_lulus' => 'Tidak Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -71,7 +71,7 @@ test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', funct
 
 test('Siswa nilai page chart_data menghitung ulang untuk siswa tanpa nilai', function () {
     $userSiswa = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
 
@@ -89,11 +89,11 @@ test('Siswa nilai page chart_data menghitung ulang untuk siswa tanpa nilai', fun
 test('Siswa dapat mengunduh rapor PDF mereka', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -108,11 +108,11 @@ test('Siswa dapat mengunduh rapor PDF mereka', function () {
 test('Rapor PDF berisi nama siswa, NIS, kelas, dan mapel (UTF-16BE encoded)', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad Subagja', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad Subagja', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari Wahyuni']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -139,8 +139,8 @@ test('Rapor PDF berisi nama siswa, NIS, kelas, dan mapel (UTF-16BE encoded)', fu
 test('Rapor PDF untuk siswa lain tidak exposing data siswa A', function () {
     $userSiswaA = User::factory()->siswa()->create();
     $userSiswaB = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
-    Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Budi', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Budi', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($userSiswaB)->get('/siswa/rapor/pdf');
 
@@ -154,7 +154,7 @@ test('Rapor PDF untuk siswa lain tidak exposing data siswa A', function () {
 
 test('Rapor PDF filename berisi nama siswa dan NIS', function () {
     $userSiswa = User::factory()->siswa()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad Subagja', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad Subagja', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/rapor/pdf');
 
@@ -178,11 +178,11 @@ test('Admin tidak bisa akses /siswa/rapor/pdf (403)', function () {
 test('Siswa dashboard menampilkan has_nilai=true jika ada nilai', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
     Nilai::create([
-        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $siswa->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -197,7 +197,7 @@ test('Siswa dashboard menampilkan has_nilai=true jika ada nilai', function () {
 
 test('Siswa dashboard menampilkan has_nilai=false jika belum ada nilai', function () {
     $userSiswa = User::factory()->siswa()->create();
-    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($userSiswa)->get('/siswa/dashboard');
 

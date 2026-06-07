@@ -32,29 +32,30 @@ class SiswaController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->input('search');
-        $kelas = $request->input('kelas');
+        $kelasNama = $request->input('kelas');
+        $kelasId = $kelasNama ? Kelas::where('nama', $kelasNama)->value('id') : null;
 
         $siswa = Siswa::query()
-            ->with('user:id,username,is_active,created_at')
+            ->with(['user:id,username,is_active,created_at', 'kelas:id,nama'])
             ->withCount('nilai')
             ->when($search, fn ($q) => $q->where(function ($qq) use ($search) {
                 $qq->where('nis', 'like', "%{$search}%")
                     ->orWhere('nama_siswa', 'like', "%{$search}%");
             }))
-            ->when($kelas, fn ($q) => $q->where('kelas', $kelas))
-            ->orderBy('kelas')
+            ->when($kelasId, fn ($q) => $q->where('kelas_id', $kelasId))
+            ->orderBy('kelas_id')
             ->orderBy('nis')
             ->paginate(15)
             ->withQueryString();
 
-        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
 
         return Inertia::render('admin/siswa/index', [
             'siswa' => $siswa,
             'daftar_kelas' => $daftarKelas,
             'filters' => [
                 'search' => $search,
-                'kelas' => $kelas,
+                'kelas' => $kelasNama,
             ],
         ]);
     }
@@ -66,7 +67,7 @@ class SiswaController extends Controller
      */
     public function create(): Response
     {
-        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
 
         return Inertia::render('admin/siswa/create', [
             'daftar_kelas' => $daftarKelas,
@@ -104,7 +105,7 @@ class SiswaController extends Controller
                 'nis' => $nis,
                 'user_id' => $user->id,
                 'nama_siswa' => $data['nama_siswa'],
-                'kelas' => $data['kelas'] ?? null,
+                'kelas_id' => $data['kelas_id'] ?? null,
             ]);
         });
 
@@ -125,7 +126,7 @@ class SiswaController extends Controller
      */
     public function edit(Siswa $siswa): Response
     {
-        $daftarKelas = Kelas::pluckNamaOrdered();
+        $daftarKelas = Kelas::pluckIdNamaOrdered();
 
         return Inertia::render('admin/siswa/edit', [
             'siswa' => $siswa,

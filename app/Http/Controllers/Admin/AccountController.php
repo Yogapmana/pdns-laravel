@@ -33,7 +33,10 @@ class AccountController extends Controller
         $role = $request->input('role');
 
         $accounts = User::query()
-            ->with(['siswa:nis,user_id,nama_siswa,kelas', 'guru:id,user_id,nama_guru', 'guru.mengajar:id_guru,kelas,mata_pelajaran'])
+            ->with([
+                'siswa:nis,user_id,nama_siswa',
+                'guru:id,user_id,nama_guru',
+            ])
             ->when($search, fn ($q) => $q->where(function ($qq) use ($search) {
                 $qq->where('username', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%");

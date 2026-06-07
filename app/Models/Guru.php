@@ -70,7 +70,15 @@ class Guru extends Model
      */
     public function getAllKelasAttribute(): array
     {
-        return $this->mengajar()->distinct()->orderBy('kelas')->pluck('kelas')->all();
+        return $this->mengajar()
+            ->with('kelas:id,nama')
+            ->get()
+            ->pluck('kelas.nama')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**
@@ -80,7 +88,15 @@ class Guru extends Model
      */
     public function getAllMapelAttribute(): array
     {
-        return $this->mengajar()->distinct()->orderBy('mata_pelajaran')->pluck('mata_pelajaran')->all();
+        return $this->mengajar()
+            ->with('mataPelajaran:id,nama')
+            ->get()
+            ->pluck('mataPelajaran.nama')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**
@@ -91,10 +107,20 @@ class Guru extends Model
      */
     public function getMapelByKelas(string $kelas): array
     {
+        $kelasId = Kelas::where('nama', $kelas)->value('id');
+        if ($kelasId === null) {
+            return [];
+        }
+
         return $this->mengajar()
-            ->where('kelas', $kelas)
-            ->orderBy('mata_pelajaran')
-            ->pluck('mata_pelajaran')
+            ->where('kelas_id', $kelasId)
+            ->with('mataPelajaran:id,nama')
+            ->get()
+            ->pluck('mataPelajaran.nama')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
             ->all();
     }
 
@@ -107,9 +133,28 @@ class Guru extends Model
      */
     public function mengajarDiKelasMapel(string $kelas, string $mataPelajaran): bool
     {
+        $kelasId = Kelas::where('nama', $kelas)->value('id');
+        $mapelId = MataPelajaran::where('nama', $mataPelajaran)->value('id');
+
+        if ($kelasId === null || $mapelId === null) {
+            return false;
+        }
+
+        return $this->mengajarDiKelasMapelId($kelasId, $mapelId);
+    }
+
+    /**
+     * Determine whether this guru teaches the supplied (kelas_id, mata_pelajaran_id) pair.
+     *
+     * @param  int  $kelasId  The kelas id.
+     * @param  int  $mataPelajaranId  The mata pelajaran id.
+     * @return bool `true` when a `GuruMengajar` row exists for this combination.
+     */
+    public function mengajarDiKelasMapelId(int $kelasId, int $mataPelajaranId): bool
+    {
         return $this->mengajar()
-            ->where('kelas', $kelas)
-            ->where('mata_pelajaran', $mataPelajaran)
+            ->where('kelas_id', $kelasId)
+            ->where('mata_pelajaran_id', $mataPelajaranId)
             ->exists();
     }
 }

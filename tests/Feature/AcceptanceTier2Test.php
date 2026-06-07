@@ -21,12 +21,12 @@ beforeEach(function () {
 test('Admin bisa edit siswa (nama & kelas) tanpa mengubah NIS', function () {
     $admin = User::factory()->admin()->create();
     $userSiswa = User::factory()->siswa()->create();
-    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
     $response = $this->actingAs($admin)->put("/admin/siswa/{$siswa->nis}", [
         'nis' => '99999',
         'nama_siswa' => 'Ahmad Updated',
-        'kelas' => 'XI-B',
+        'kelas_id' => $this->kelasId('XI-B'),
     ]);
 
     $response->assertRedirect(route('admin.siswa.index'));
@@ -35,20 +35,20 @@ test('Admin bisa edit siswa (nama & kelas) tanpa mengubah NIS', function () {
     $fresh = $siswa->fresh();
     expect($fresh->nis)->toBe('00001');
     expect($fresh->nama_siswa)->toBe('Ahmad Updated');
-    expect($fresh->kelas)->toBe('XI-B');
+    expect($fresh->kelas_nama)->toBe('XI-B');
 });
 
 test('Admin edit siswa: nis duplikat di body ditolak (unique rule aktif), siswa lain tidak ter-overwrite', function () {
     $admin = User::factory()->admin()->create();
     $userA = User::factory()->siswa()->create();
     $userB = User::factory()->siswa()->create();
-    $a = Siswa::create(['nis' => '00001', 'user_id' => $userA->id, 'nama_siswa' => 'A', 'kelas' => 'X-A']);
-    Siswa::create(['nis' => '00002', 'user_id' => $userB->id, 'nama_siswa' => 'B', 'kelas' => 'X-A']);
+    $a = Siswa::create(['nis' => '00001', 'user_id' => $userA->id, 'nama_siswa' => 'A', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'user_id' => $userB->id, 'nama_siswa' => 'B', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($admin)->put("/admin/siswa/{$a->nis}", [
         'nis' => '00002',
         'nama_siswa' => 'A Updated',
-        'kelas' => 'XI-B',
+        'kelas_id' => $this->kelasId('XI-B'),
     ])->assertSessionHasErrors('nis');
 
     expect($a->fresh()->nama_siswa)->toBe('A');
@@ -59,22 +59,22 @@ test('Admin edit guru: nama & kombinasi mengajar ter-update', function () {
     $admin = User::factory()->admin()->create();
     $userGuru = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Lama']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $this->actingAs($admin)->put("/admin/guru/{$guru->id}", [
         'nama_guru' => 'Ibu Baru',
         'mengajar' => [
-            ['kelas' => 'XI-B', 'mata_pelajaran' => 'IPA'],
-            ['kelas' => 'XII-A', 'mata_pelajaran' => 'IPA'],
+            ['kelas_id' => $this->kelasId('XI-B'), 'mata_pelajaran_id' => $this->mapelId('IPA')],
+            ['kelas_id' => $this->kelasId('XII-A'), 'mata_pelajaran_id' => $this->mapelId('IPA')],
         ],
     ])->assertSessionHas('success');
 
     $fresh = $guru->fresh();
     expect($fresh->nama_guru)->toBe('Ibu Baru');
-    $mengajar = $fresh->mengajar()->orderBy('kelas')->orderBy('mata_pelajaran')->get();
+    $mengajar = $fresh->mengajar()->get()->sortBy(fn ($m) => $m->kelas?->nama);
     expect($mengajar)->toHaveCount(2);
-    expect($mengajar->pluck('kelas')->all())->toBe(['XI-B', 'XII-A']);
-    expect($mengajar->pluck('mata_pelajaran')->all())->toBe(['IPA', 'IPA']);
+    expect($mengajar->pluck('kelas.nama')->all())->toBe(['XI-B', 'XII-A']);
+    expect($mengajar->pluck('mataPelajaran.nama')->all())->toBe(['IPA', 'IPA']);
 });
 
 test('Toggle active akun admin mengubah is_active', function () {
@@ -127,8 +127,8 @@ test('Reset password gagal untuk password terlalu pendek', function () {
 test('Guru rekap: guru hanya bisa akses kelas & mapel yang diajar', function () {
     $userGuru = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas' => 'X-A']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'A', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($userGuru)
         ->get('/guru/rekap?kelas=X-A&mata_pelajaran=Matematika')
@@ -163,17 +163,17 @@ test('Guru rekap tanpa mengajar tampil has_mengajar=false', function () {
 test('Guru rekap menampilkan statistik lulus/tidak_lulus/belum', function () {
     $userGuru = User::factory()->guru()->create();
     $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    $sLulus = Siswa::create(['nis' => '00001', 'nama_siswa' => 'L', 'kelas' => 'X-A']);
-    $sTidak = Siswa::create(['nis' => '00002', 'nama_siswa' => 'TL', 'kelas' => 'X-A']);
-    $sBelum = Siswa::create(['nis' => '00003', 'nama_siswa' => 'B', 'kelas' => 'X-A']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    $sLulus = Siswa::create(['nis' => '00001', 'nama_siswa' => 'L', 'kelas_id' => $this->kelasId('X-A')]);
+    $sTidak = Siswa::create(['nis' => '00002', 'nama_siswa' => 'TL', 'kelas_id' => $this->kelasId('X-A')]);
+    $sBelum = Siswa::create(['nis' => '00003', 'nama_siswa' => 'B', 'kelas_id' => $this->kelasId('X-A')]);
 
     Nilai::create([
-        'nis' => $sLulus->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $sLulus->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80, 'status_lulus' => 'Lulus',
     ]);
     Nilai::create([
-        'nis' => $sTidak->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $sTidak->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 50, 'nilai_uts' => 50, 'nilai_uas' => 50, 'nilai_akhir' => 50, 'status_lulus' => 'Tidak Lulus',
     ]);
 

@@ -16,7 +16,7 @@ import { Container, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { cn } from '@/lib/utils';
 
-type Props = { daftar_kelas: string[]; daftar_mapel: string[] };
+type Props = { daftar_kelas: { id: number; nama: string }[]; daftar_mapel: { id: number; nama: string }[] };
 
 function buildUrl(endpoint: string, kelas: string[], mapel: string[]) {
     const search = new URLSearchParams();
@@ -39,19 +39,22 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
     const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
     const [selectedMapel, setSelectedMapel] = useState<string[]>([]);
 
+    const kelasNamaList = daftar_kelas.map((k) => k.nama);
+    const mapelNamaList = daftar_mapel.map((m) => m.nama);
+
     function selectAllKelas() {
         setSelectedKelas(
-            selectedKelas.length === daftar_kelas.length
+            selectedKelas.length === kelasNamaList.length
                 ? []
-                : [...daftar_kelas],
+                : [...kelasNamaList],
         );
     }
 
     function selectAllMapel() {
         setSelectedMapel(
-            selectedMapel.length === daftar_mapel.length
+            selectedMapel.length === mapelNamaList.length
                 ? []
-                : [...daftar_mapel],
+                : [...mapelNamaList],
         );
     }
 
@@ -99,24 +102,24 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                 size="sm"
                                 className="text-xs h-8"
                             >
-                                {selectedKelas.length === daftar_kelas.length
+                                {selectedKelas.length === kelasNamaList.length
                                     ? 'Hapus Semua'
                                     : 'Pilih Semua'}
                             </Button>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {daftar_kelas.map((k) => {
-                                const isSelected = selectedKelas.includes(k);
+                                const isSelected = selectedKelas.includes(k.nama);
 
                                 return (
                                     <button
-                                        key={k}
+                                        key={k.id}
                                         type="button"
                                         onClick={() =>
                                             toggle(
                                                 selectedKelas,
                                                 setSelectedKelas,
-                                                k,
+                                                k.nama,
                                             )
                                         }
                                         className={cn(
@@ -131,7 +134,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                         ) : (
                                             <Square className="h-4 w-4 flex-shrink-0" />
                                         )}
-                                        {k}
+                                        {k.nama}
                                     </button>
                                 );
                             })}
@@ -156,24 +159,24 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                 size="sm"
                                 className="text-xs h-8"
                             >
-                                {selectedMapel.length === daftar_mapel.length
+                                {selectedMapel.length === mapelNamaList.length
                                     ? 'Hapus Semua'
                                     : 'Pilih Semua'}
                             </Button>
                         </div>
                         <div className="grid max-h-[300px] grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto pr-2 pb-1">
                             {daftar_mapel.map((m) => {
-                                const isSelected = selectedMapel.includes(m);
+                                const isSelected = selectedMapel.includes(m.nama);
 
                                 return (
                                     <button
-                                        key={m}
+                                        key={m.id}
                                         type="button"
                                         onClick={() =>
                                             toggle(
                                                 selectedMapel,
                                                 setSelectedMapel,
-                                                m,
+                                                m.nama,
                                             )
                                         }
                                         className={cn(
@@ -188,7 +191,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                                         ) : (
                                             <Square className="h-4 w-4 flex-shrink-0" />
                                         )}
-                                        {m}
+                                        {m.nama}
                                     </button>
                                 );
                             })}

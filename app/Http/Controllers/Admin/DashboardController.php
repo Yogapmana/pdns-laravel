@@ -85,17 +85,19 @@ class DashboardController extends Controller
      */
     private function buildRekapPerKelas(): array
     {
-        $siswaPerKelas = Siswa::query()
-            ->select('kelas')
-            ->selectRaw('COUNT(*) as jumlah_siswa')
-            ->groupBy('kelas')
+        $siswaPerKelas = DB::table('siswa')
+            ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
+            ->groupBy('kelas.nama')
+            ->orderBy('kelas.nama')
+            ->selectRaw('kelas.nama as kelas, COUNT(*) as jumlah_siswa')
             ->pluck('jumlah_siswa', 'kelas');
 
         $nilaiPerKelas = DB::table('nilai')
             ->join('siswa', 'siswa.nis', '=', 'nilai.nis')
-            ->groupBy('siswa.kelas', 'nilai.status_lulus')
+            ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
+            ->groupBy('kelas.nama', 'nilai.status_lulus')
             ->select([
-                'siswa.kelas',
+                'kelas.nama as kelas',
                 'nilai.status_lulus',
                 DB::raw('COUNT(*) as total'),
             ])
@@ -146,13 +148,14 @@ class DashboardController extends Controller
         $tidakLulusValue = Nilai::TIDAK_LULUS;
 
         $rows = DB::table('nilai')
-            ->groupBy('mata_pelajaran')
+            ->join('mata_pelajaran', 'mata_pelajaran.id', '=', 'nilai.mata_pelajaran_id')
+            ->groupBy('mata_pelajaran.id', 'mata_pelajaran.nama')
             ->select([
-                'mata_pelajaran',
-                DB::raw('AVG(nilai_akhir) as rata_rata'),
+                'mata_pelajaran.nama as mata_pelajaran',
+                DB::raw('AVG(nilai.nilai_akhir) as rata_rata'),
                 DB::raw('COUNT(*) as total_nilai'),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
             ])
             ->get();
 
@@ -201,15 +204,16 @@ class DashboardController extends Controller
 
         return DB::table('nilai')
             ->join('siswa', 'siswa.nis', '=', 'nilai.nis')
-            ->groupBy('nilai.nis', 'siswa.nama_siswa', 'siswa.kelas')
+            ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
+            ->groupBy('nilai.nis', 'siswa.nama_siswa', 'kelas.nama')
             ->select([
                 'nilai.nis',
                 'siswa.nama_siswa',
-                'siswa.kelas',
-                DB::raw('AVG(nilai_akhir) as rata_rata'),
+                'kelas.nama as kelas',
+                DB::raw('AVG(nilai.nilai_akhir) as rata_rata'),
                 DB::raw('COUNT(*) as total_mapel'),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
             ])
             ->havingRaw('COUNT(*) > 0')
             ->orderByDesc('rata_rata')
@@ -253,18 +257,19 @@ class DashboardController extends Controller
 
         return DB::table('nilai')
             ->join('siswa', 'siswa.nis', '=', 'nilai.nis')
-            ->groupBy('nilai.nis', 'siswa.nama_siswa', 'siswa.kelas')
+            ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
+            ->groupBy('nilai.nis', 'siswa.nama_siswa', 'kelas.nama')
             ->select([
                 'nilai.nis',
                 'siswa.nama_siswa',
-                'siswa.kelas',
-                DB::raw('AVG(nilai_akhir) as rata_rata'),
+                'kelas.nama as kelas',
+                DB::raw('AVG(nilai.nilai_akhir) as rata_rata'),
                 DB::raw('COUNT(*) as total_mapel'),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
-                DB::raw("SUM(CASE WHEN status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$lulusValue}' THEN 1 ELSE 0 END) as lulus"),
+                DB::raw("SUM(CASE WHEN nilai.status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) as tidak_lulus"),
             ])
-            ->havingRaw("SUM(CASE WHEN status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) > 0")
-            ->orderByRaw("SUM(CASE WHEN status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) DESC, AVG(nilai_akhir) ASC")
+            ->havingRaw("SUM(CASE WHEN nilai.status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) > 0")
+            ->orderByRaw("SUM(CASE WHEN nilai.status_lulus = '{$tidakLulusValue}' THEN 1 ELSE 0 END) DESC, AVG(nilai.nilai_akhir) ASC")
             ->limit($limit)
             ->get()
             ->map(function ($r) {

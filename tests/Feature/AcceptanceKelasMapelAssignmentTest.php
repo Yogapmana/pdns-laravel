@@ -22,7 +22,12 @@ test('AC-KM-01: Create kelas baru bisa sekaligus menentukan mapel yang diizinkan
 
     $response = $this->actingAs($admin)->post('/admin/kelas', [
         'nama' => 'X-MIPA-1',
-        'mata_pelajaran' => ['Matematika', 'Bahasa Indonesia', 'IPA', 'Bahasa Inggris'],
+        'mata_pelajaran_id' => [
+            $this->mapelId('Matematika'),
+            $this->mapelId('Bahasa Indonesia'),
+            $this->mapelId('IPA'),
+            $this->mapelId('Bahasa Inggris'),
+        ],
     ]);
 
     $response->assertRedirect('/admin/kelas');
@@ -48,22 +53,25 @@ test('AC-KM-02: Create kelas tanpa mapel tetap berhasil tapi tidak punya mapel d
 test('AC-KM-03: Edit kelas bisa menambah mapel baru', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $this->actingAs($admin)->put("/admin/kelas/{$kelas->id}", [
         'nama' => 'X-A',
-        'mata_pelajaran' => ['Matematika', 'Bahasa Indonesia'],
+        'mata_pelajaran_id' => [
+            $this->mapelId('Matematika'),
+            $this->mapelId('Bahasa Indonesia'),
+        ],
     ])->assertRedirect('/admin/kelas');
 
     expect($kelas->fresh()->mataPelajaran->pluck('nama')->sort()->values()->all())
         ->toBe(['Bahasa Indonesia', 'Matematika']);
 });
 
-test('AC-KM-04: Edit kelas tanpa kirim field mata_pelajaran tidak mengubah mapel', function () {
+test('AC-KM-04: Edit kelas tanpa kirim field mata_pelajaran_id tidak mengubah mapel', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'IPA']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('IPA')]);
 
     $this->actingAs($admin)->put("/admin/kelas/{$kelas->id}", [
         'nama' => 'X-A',
@@ -76,11 +84,11 @@ test('AC-KM-04: Edit kelas tanpa kirim field mata_pelajaran tidak mengubah mapel
 test('AC-KM-05: Edit kelas dengan array kosong menghapus semua mapel', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $this->actingAs($admin)->put("/admin/kelas/{$kelas->id}", [
         'nama' => 'X-A',
-        'mata_pelajaran' => [],
+        'mata_pelajaran_id' => [],
     ])->assertRedirect('/admin/kelas');
 
     expect($kelas->fresh()->mataPelajaran)->toHaveCount(0);
@@ -91,8 +99,11 @@ test('AC-KM-06: Mapel yang dikirim harus ada di master mata_pelajaran', function
 
     $this->actingAs($admin)->post('/admin/kelas', [
         'nama' => 'X-MIPA-2',
-        'mata_pelajaran' => ['Matematika', 'MAPEL-FAKTA-99'],
-    ])->assertSessionHasErrors('mata_pelajaran.1');
+        'mata_pelajaran_id' => [
+            $this->mapelId('Matematika'),
+            999999,
+        ],
+    ])->assertSessionHasErrors('mata_pelajaran_id.1');
 
     expect(Kelas::where('nama', 'X-MIPA-2')->count())->toBe(0);
 });
@@ -100,22 +111,24 @@ test('AC-KM-06: Mapel yang dikirim harus ada di master mata_pelajaran', function
 test('AC-KM-07: Hapus kelas juga menghapus baris kelas_mata_pelajaran terkait', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'XII-C']);
-    KelasMataPelajaran::create(['kelas' => 'XII-C', 'mata_pelajaran' => 'Matematika']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
-    expect(KelasMataPelajaran::where('kelas', 'XII-C')->count())->toBe(1);
+    expect(KelasMataPelajaran::where('kelas_id', $kelas->id)->count())->toBe(1);
 
     $this->actingAs($admin)->delete("/admin/kelas/{$kelas->id}")
         ->assertRedirect('/admin/kelas');
 
     expect(Kelas::find($kelas->id))->toBeNull();
-    expect(KelasMataPelajaran::where('kelas', 'XII-C')->count())->toBe(0);
+    expect(KelasMataPelajaran::where('kelas_id', $kelas->id)->count())->toBe(0);
 });
 
 test('AC-KM-08: Halaman edit kelas mengirim semua mapel master + selected_mapel', function () {
     $admin = User::factory()->admin()->create();
     $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'IPA']);
+    $idMat = $this->mapelId('Matematika');
+    $idIpa = $this->mapelId('IPA');
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $idMat]);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $idIpa]);
 
     $this->actingAs($admin)
         ->get("/admin/kelas/{$kelas->id}/edit")
@@ -124,7 +137,7 @@ test('AC-KM-08: Halaman edit kelas mengirim semua mapel master + selected_mapel'
             ->component('admin/kelas/edit')
             ->where('kelas.nama', 'X-A')
             ->has('semua_mapel', 10)
-            ->where('selected_mapel', ['IPA', 'Matematika'])
+            ->where('selected_mapel', [$idIpa, $idMat])
         );
 });
 
@@ -142,9 +155,9 @@ test('AC-KM-09: Halaman create kelas mengirim semua mapel master', function () {
 
 test('AC-KM-10: Halaman index kelas juga menghitung jumlah mapel per kelas', function () {
     $admin = User::factory()->admin()->create();
-    Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'IPA']);
+    $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('IPA')]);
 
     $this->actingAs($admin)
         ->get('/admin/kelas')
@@ -161,7 +174,7 @@ test('AC-GM-01: Guru form: kombinasi (kelas, mapel) yang ada di master diterima'
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Pak Joko',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
@@ -172,17 +185,17 @@ test('AC-GM-01: Guru form: kombinasi (kelas, mapel) yang ada di master diterima'
 
 test('AC-GM-02: Guru form: kombinasi (kelas, mapel) yang TIDAK ada di master DITOLAK dengan 422', function () {
     $admin = User::factory()->admin()->create();
-    Kelas::firstOrCreate(['nama' => 'X-A']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    $kelas = Kelas::firstOrCreate(['nama' => 'X-A']);
+    KelasMataPelajaran::create(['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Pak Sejarah',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Sejarah'],
+            ['kelas_id' => $kelas->id, 'mata_pelajaran_id' => $this->mapelId('Sejarah')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
-    ])->assertSessionHasErrors('mengajar.0.mata_pelajaran');
+    ])->assertSessionHasErrors('mengajar.0.mata_pelajaran_id');
 
     expect(Guru::where('nama_guru', 'Pak Sejarah')->count())->toBe(0);
 });
@@ -195,43 +208,50 @@ test('AC-GM-03: Guru form: jika kelas belum punya mapel diizinkan, semua mengaja
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Pak Tanpa Mapel',
         'mengajar' => [
-            ['kelas' => 'XII-C', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('XII-C'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
-    ])->assertSessionHasErrors('mengajar.0.kelas');
+    ])->assertSessionHasErrors('mengajar.0.kelas_id');
 });
 
 test('AC-GM-04: Edit guru: replace kombinasi ke mapel yang TIDAK diizinkan ditolak', function () {
     $admin = User::factory()->admin()->create();
     $guru = Guru::create(['nama_guru' => 'Pak Edit']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-B', 'mata_pelajaran' => 'IPA']);
+    $kelasA = $this->kelasId('X-A');
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $kelasA, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    KelasMataPelajaran::create(['kelas_id' => $kelasA, 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    KelasMataPelajaran::create(['kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('IPA')]);
 
     $this->actingAs($admin)->put("/admin/guru/{$guru->id}", [
         'nama_guru' => 'Pak Edit Updated',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Sejarah'],
+            ['kelas_id' => $kelasA, 'mata_pelajaran_id' => $this->mapelId('Sejarah')],
         ],
-    ])->assertSessionHasErrors('mengajar.0.mata_pelajaran');
+    ])->assertSessionHasErrors('mengajar.0.mata_pelajaran_id');
 
     $guru->refresh();
     expect($guru->mengajar()->count())->toBe(1);
-    expect($guru->mengajar()->first()->mata_pelajaran)->toBe('Matematika');
+    expect($guru->mengajar()->first()->mataPelajaran?->nama)->toBe('Matematika');
 });
 
-test('AC-GM-05: Halaman create guru mengirim mapel_by_kelas (nested, key = nama kelas)', function () {
+test('AC-GM-05: Halaman create guru mengirim mapel_by_kelas (nested, key = kelas_id)', function () {
     $admin = User::factory()->admin()->create();
     $this->seedKelasMataPelajaran(['X-A', 'X-B'], ['Matematika', 'IPA']);
+
+    $kelasA = $this->kelasId('X-A');
+    $kelasB = $this->kelasId('X-B');
+    $mapelMath = $this->mapelId('Matematika');
+    $mapelIpa = $this->mapelId('IPA');
 
     $this->actingAs($admin)
         ->get('/admin/guru/create')
         ->assertInertia(fn ($page) => $page
             ->component('admin/guru/create')
-            ->has('mapel_by_kelas.X-A', 2)
-            ->has('mapel_by_kelas.X-B', 2)
-            ->where('mapel_by_kelas.X-A', ['IPA', 'Matematika'])
+            ->has("mapel_by_kelas.{$kelasA}", 2)
+            ->has("mapel_by_kelas.{$kelasB}", 2)
+            ->where("mapel_by_kelas.{$kelasA}.0.id", $mapelIpa)
+            ->where("mapel_by_kelas.{$kelasA}.1.id", $mapelMath)
         );
 });
 
@@ -239,13 +259,15 @@ test('AC-GM-06: Halaman edit guru mengirim mapel_by_kelas', function () {
     $admin = User::factory()->admin()->create();
     $this->seedKelasMataPelajaran(['X-A'], ['Matematika', 'IPA']);
     $guru = Guru::create(['nama_guru' => 'Pak Test']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+
+    $kelasA = $this->kelasId('X-A');
 
     $this->actingAs($admin)
         ->get("/admin/guru/{$guru->id}/edit")
         ->assertInertia(fn ($page) => $page
             ->component('admin/guru/edit')
-            ->has('mapel_by_kelas.X-A', 2)
+            ->has("mapel_by_kelas.{$kelasA}", 2)
         );
 });
 
@@ -256,22 +278,24 @@ test('AC-GM-07: Kombinasi yang ada di master + duplikat tetap kena error duplika
     $this->actingAs($admin)->post('/admin/guru', [
         'nama_guru' => 'Pak Duplikat',
         'mengajar' => [
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
-            ['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika'],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
+            ['kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')],
         ],
         'password' => 'rahasia123',
         'password_confirmation' => 'rahasia123',
-    ])->assertSessionHasErrors('mengajar.1.mata_pelajaran');
+    ])->assertSessionHasErrors('mengajar.1.mata_pelajaran_id');
 });
 
 test('AC-GM-08: Hapus mapel dari master TIDAK menghapus guru_mengajar yang sudah ada (backward-compat)', function () {
     $admin = User::factory()->admin()->create();
     $guru = Guru::create(['nama_guru' => 'Pak Backward']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    KelasMataPelajaran::create(['kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
+    $kelasA = $this->kelasId('X-A');
+    $mapelId = $this->mapelId('Matematika');
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $kelasA, 'mata_pelajaran_id' => $mapelId]);
+    KelasMataPelajaran::create(['kelas_id' => $kelasA, 'mata_pelajaran_id' => $mapelId]);
 
-    KelasMataPelajaran::where('kelas', 'X-A')->where('mata_pelajaran', 'Matematika')->delete();
+    KelasMataPelajaran::where('kelas_id', $kelasA)->where('mata_pelajaran_id', $mapelId)->delete();
 
     expect(GuruMengajar::where('id_guru', $guru->id)->count())->toBe(1);
-    expect(KelasMataPelajaran::where('kelas', 'X-A')->count())->toBe(0);
+    expect(KelasMataPelajaran::where('kelas_id', $kelasA)->count())->toBe(0);
 });

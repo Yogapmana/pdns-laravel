@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Guru;
 use App\Models\GuruMengajar;
 use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use App\Models\User;
@@ -26,17 +27,20 @@ beforeEach(function () {
  */
 function makeFinalCombo(string $kelas = 'X-A', string $mapel = 'Matematika', int $jumlah = 3, string $status = Nilai::LULUS): array
 {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => $kelas, 'mata_pelajaran' => $mapel]);
+    $guru = Guru::create(['nama_guru' => 'Guru '.$mapel.' '.$kelas.' '.uniqid()]);
+    $kelasId = Kelas::where('nama', $kelas)->value('id');
+    $mapelId = MataPelajaran::where('nama', $mapel)->value('id');
+
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $kelasId, 'mata_pelajaran_id' => $mapelId]);
 
     $siswa = collect();
     for ($i = 0; $i < $jumlah; $i++) {
-        $s = Siswa::factory()->create(['kelas' => $kelas, 'nama_siswa' => "Siswa {$i}"]);
+        $s = Siswa::create(['nis' => str_pad((string) (int) (microtime(true) * 1000 + $i), 5, '0', STR_PAD_LEFT), 'nama_siswa' => "Siswa {$i}", 'kelas_id' => $kelasId]);
         Nilai::create([
             'nis' => $s->nis,
             'id_guru' => $guru->id,
-            'kelas' => $kelas,
-            'mata_pelajaran' => $mapel,
+            'kelas_id' => $kelasId,
+            'mata_pelajaran_id' => $mapelId,
             'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80,
             'nilai_akhir' => 80,
             'status_lulus' => $status,
@@ -65,25 +69,25 @@ test('Admin: halaman manajemen nilai 200 OK dan render page yang benar', functio
 });
 
 test('Admin: halaman menampilkan combo Final yang dikelompokkan per guru+kelas+mapel', function () {
-    $guru1 = Guru::factory()->create(['nama_guru' => 'Pak Anton']);
-    $guru2 = Guru::factory()->create(['nama_guru' => 'Bu Sari']);
+    $guru1 = Guru::create(['nama_guru' => 'Pak Anton']);
+    $guru2 = Guru::create(['nama_guru' => 'Bu Sari']);
 
-    GuruMengajar::create(['id_guru' => $guru1->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru1->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru2->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    GuruMengajar::create(['id_guru' => $guru1->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru1->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru2->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
     foreach (['X-A', 'X-B'] as $kelas) {
-        $s = Siswa::factory()->create(['kelas' => $kelas]);
+        $s = Siswa::create(['nis' => str_pad((string) (int) (microtime(true) * 1000 + crc32($kelas)), 5, '0', STR_PAD_LEFT), 'nama_siswa' => "S-{$kelas}", 'kelas_id' => $this->kelasId($kelas)]);
         Nilai::create([
-            'nis' => $s->nis, 'id_guru' => $guru1->id, 'kelas' => $kelas, 'mata_pelajaran' => 'Matematika',
+            'nis' => $s->nis, 'id_guru' => $guru1->id, 'kelas_id' => $this->kelasId($kelas), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
             'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
         ]);
     }
 
-    $s3 = Siswa::factory()->create(['kelas' => 'X-A']);
+    $s3 = Siswa::create(['nis' => str_pad((string) (int) (microtime(true) + 9999), 5, '0', STR_PAD_LEFT), 'nama_siswa' => 'S-XA-BI', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $s3->nis, 'id_guru' => $guru2->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $s3->nis, 'id_guru' => $guru2->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
         'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -105,9 +109,9 @@ test('Admin: halaman menampilkan combo Final yang dikelompokkan per guru+kelas+m
 test('Admin: halaman tidak menampilkan combo berstatus Draft', function () {
     ['guru' => $guru] = makeFinalCombo('X-A', 'Matematika', 2, Nilai::LULUS);
 
-    $s = Siswa::factory()->create(['kelas' => 'X-A']);
+    $s = Siswa::create(['nis' => '00999', 'nama_siswa' => 'S Draft', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Bahasa Indonesia',
+        'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
         'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_DRAFT,
     ]);
@@ -120,15 +124,15 @@ test('Admin: halaman tidak menampilkan combo berstatus Draft', function () {
 });
 
 test('Admin: halaman support filter search dan kelas', function () {
-    $guru = Guru::factory()->create(['nama_guru' => 'Pak Anton']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Bahasa Indonesia']);
+    $guru = Guru::create(['nama_guru' => 'Pak Anton']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Bahasa Indonesia')]);
 
     foreach (['X-A', 'X-B'] as $kelas) {
         $mapel = $kelas === 'X-A' ? 'Matematika' : 'Bahasa Indonesia';
-        $s = Siswa::factory()->create(['kelas' => $kelas]);
+        $s = Siswa::create(['nis' => str_pad((string) (int) (microtime(true) * 1000 + crc32($kelas)), 5, '0', STR_PAD_LEFT), 'nama_siswa' => "S-{$kelas}", 'kelas_id' => $this->kelasId($kelas)]);
         Nilai::create([
-            'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas' => $kelas, 'mata_pelajaran' => $mapel,
+            'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId($kelas), 'mata_pelajaran_id' => $this->mapelId($mapel),
             'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
             'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
         ]);
@@ -160,8 +164,8 @@ test('Admin: POST unlock mengembalikan Final ke Draft dan menulis log audit', fu
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Koreksi nilai UAS yang salah input, akan diedit ulang.',
         ])
         ->assertRedirect()
@@ -169,16 +173,16 @@ test('Admin: POST unlock mengembalikan Final ke Draft dan menulis log audit', fu
 
     $this->assertDatabaseHas('nilai', [
         'id_guru' => $guru->id,
-        'kelas' => 'X-A',
-        'mata_pelajaran' => 'Matematika',
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'status_validasi' => Nilai::STATUS_DRAFT,
     ]);
 
     $this->assertDatabaseHas('nilai_unlock_log', [
         'id_admin' => $admin->id,
         'id_guru' => $guru->id,
-        'kelas' => 'X-A',
-        'mata_pelajaran' => 'Matematika',
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'affected_rows' => 3,
         'reason' => 'Koreksi nilai UAS yang salah input, akan diedit ulang.',
     ]);
@@ -191,8 +195,8 @@ test('Admin: POST unlock validasi reason min 10 karakter', function () {
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'koreksi',
         ])
         ->assertSessionHasErrors('reason');
@@ -200,21 +204,21 @@ test('Admin: POST unlock validasi reason min 10 karakter', function () {
     $this->assertDatabaseCount('nilai_unlock_log', 0);
     $this->assertDatabaseHas('nilai', [
         'id_guru' => $guru->id,
-        'kelas' => 'X-A',
-        'mata_pelajaran' => 'Matematika',
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 });
 
 test('Admin: POST unlock hanya membuka combo spesifik, bukan combo lain dari guru yang sama', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika']);
+    $guru = Guru::create(['nama_guru' => 'Guru 2 Combo']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
 
     foreach (['X-A', 'X-B'] as $kelas) {
-        $s = Siswa::factory()->create(['kelas' => $kelas]);
+        $s = Siswa::create(['nis' => str_pad((string) (int) (microtime(true) * 1000 + crc32($kelas)), 5, '0', STR_PAD_LEFT), 'nama_siswa' => "S-{$kelas}", 'kelas_id' => $this->kelasId($kelas)]);
         Nilai::create([
-            'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas' => $kelas, 'mata_pelajaran' => 'Matematika',
+            'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId($kelas), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
             'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
         ]);
@@ -225,18 +229,18 @@ test('Admin: POST unlock hanya membuka combo spesifik, bukan combo lain dari gur
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Buka kunci hanya X-A Matematika, X-B tetap Final.',
         ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('nilai', [
-        'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'status_validasi' => Nilai::STATUS_DRAFT,
     ]);
     $this->assertDatabaseHas('nilai', [
-        'id_guru' => $guru->id, 'kelas' => 'X-B', 'mata_pelajaran' => 'Matematika',
+        'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-B'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 });
@@ -247,8 +251,8 @@ test('Admin: POST unlock dengan id_guru tidak valid ditolak', function () {
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => 9999,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Alasan yang valid minimal 10 karakter.',
         ])
         ->assertSessionHasErrors('id_guru');
@@ -261,8 +265,8 @@ test('Admin: POST unlock idempotent — call kedua affected_rows=0, log tetap te
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Unlock pertama untuk audit log.',
         ])
         ->assertSessionHas('success');
@@ -270,8 +274,8 @@ test('Admin: POST unlock idempotent — call kedua affected_rows=0, log tetap te
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Unlock kedua (idempotent test) tetap dicatat di log.',
         ])
         ->assertSessionHas('info');
@@ -294,22 +298,22 @@ test('Admin: setelah unlock, guru dapat mengedit nilai yang sebelumnya Final', f
     $guruUser = User::factory()->guru()->create();
     $guru->update(['user_id' => $guruUser->id]);
 
-    $nilai = Nilai::where('id_guru', $guru->id)->where('kelas', 'X-A')->first();
+    $nilai = Nilai::where('id_guru', $guru->id)->where('kelas_id', $this->kelasId('X-A'))->first();
     expect($nilai->status_validasi)->toBe(Nilai::STATUS_FINAL);
 
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Koreksi nilai akan diedit ulang oleh guru.',
         ])
         ->assertSessionHas('success');
 
     $this->actingAs($guruUser)
         ->post('/guru/input-nilai/save', [
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'nilai' => [
                 ['nis' => $nilai->nis, 'nilai_tugas' => 85, 'nilai_uts' => 85, 'nilai_uas' => 85],
             ],
@@ -326,22 +330,22 @@ test('Guru dan Siswa tidak dapat akses /admin/nilai (role middleware)', function
     $guru = Guru::create(['user_id' => $guruUser->id, 'nama_guru' => 'Test Guru']);
 
     $siswaUser = User::factory()->siswa()->create();
-    $siswa = Siswa::create(['nis' => '99999', 'user_id' => $siswaUser->id, 'nama_siswa' => 'Test Siswa', 'kelas' => 'X-A']);
+    $siswa = Siswa::create(['nis' => '99999', 'user_id' => $siswaUser->id, 'nama_siswa' => 'Test Siswa', 'kelas_id' => $this->kelasId('X-A')]);
 
     $this->actingAs($guruUser)->get('/admin/nilai')->assertStatus(403);
     $this->actingAs($siswaUser)->get('/admin/nilai')->assertStatus(403);
     $this->actingAs($guruUser)->post('/admin/nilai/unlock', [
-        'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'reason' => 'Alasan valid minimal 10 karakter.',
     ])->assertStatus(403);
 });
 
 test('Admin: halaman menampilkan log buka-kunci terbaru (desc by created_at)', function () {
-    $guru = Guru::factory()->create();
-    GuruMengajar::create(['id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika']);
-    $s = Siswa::factory()->create(['kelas' => 'X-A']);
+    $guru = Guru::create(['nama_guru' => 'Pak Log']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+    $s = Siswa::create(['nis' => '00999', 'nama_siswa' => 'S Log', 'kelas_id' => $this->kelasId('X-A')]);
     Nilai::create([
-        'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas' => 'X-A', 'mata_pelajaran' => 'Matematika',
+        'nis' => $s->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
         'nilai_tugas' => 80, 'nilai_uts' => 80, 'nilai_uas' => 80, 'nilai_akhir' => 80,
         'status_lulus' => Nilai::LULUS, 'status_validasi' => Nilai::STATUS_FINAL,
     ]);
@@ -351,8 +355,8 @@ test('Admin: halaman menampilkan log buka-kunci terbaru (desc by created_at)', f
     $this->actingAs($admin)
         ->post('/admin/nilai/unlock', [
             'id_guru' => $guru->id,
-            'kelas' => 'X-A',
-            'mata_pelajaran' => 'Matematika',
+            'kelas_id' => $this->kelasId('X-A'),
+            'mata_pelajaran_id' => $this->mapelId('Matematika'),
             'reason' => 'Log entry pertama untuk testing.',
         ])
         ->assertRedirect();

@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\Nilai;
 use App\Models\NilaiUnlockLog;
 use Illuminate\Http\RedirectResponse;
@@ -34,50 +36,58 @@ class NilaiController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->input('search');
-        $kelas = $request->input('kelas');
+        $kelasNama = $request->input('kelas');
+        $kelasId = $kelasNama ? Kelas::where('nama', $kelasNama)->value('id') : null;
 
         $combos = DB::table('nilai')
             ->join('guru', 'guru.id', '=', 'nilai.id_guru')
+            ->join('kelas', 'kelas.id', '=', 'nilai.kelas_id')
+            ->join('mata_pelajaran', 'mata_pelajaran.id', '=', 'nilai.mata_pelajaran_id')
             ->where('nilai.status_validasi', Nilai::STATUS_FINAL)
-            ->groupBy('nilai.id_guru', 'guru.nama_guru', 'nilai.kelas', 'nilai.mata_pelajaran')
+            ->groupBy('nilai.id_guru', 'guru.nama_guru', 'nilai.kelas_id', 'nilai.mata_pelajaran_id', 'kelas.nama', 'mata_pelajaran.nama')
             ->select([
                 'nilai.id_guru',
                 'guru.nama_guru',
-                'nilai.kelas',
-                'nilai.mata_pelajaran',
+                'nilai.kelas_id',
+                'nilai.mata_pelajaran_id',
+                'kelas.nama as kelas_nama',
+                'mata_pelajaran.nama as mata_pelajaran_nama',
                 DB::raw('COUNT(*) as total_siswa'),
                 DB::raw('MAX(nilai.updated_at) as validated_at'),
             ])
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('guru.nama_guru', 'like', "%{$search}%")
-                        ->orWhere('nilai.mata_pelajaran', 'like', "%{$search}%")
-                        ->orWhere('nilai.kelas', 'like', "%{$search}%");
+                        ->orWhere('mata_pelajaran.nama', 'like', "%{$search}%")
+                        ->orWhere('kelas.nama', 'like', "%{$search}%");
                 });
             })
-            ->when($kelas, fn ($q) => $q->where('nilai.kelas', $kelas))
+            ->when($kelasId, fn ($q) => $q->where('nilai.kelas_id', $kelasId))
             ->orderByDesc('validated_at')
-            ->orderBy('nilai.kelas')
-            ->orderBy('nilai.mata_pelajaran')
+            ->orderBy('kelas.nama')
+            ->orderBy('mata_pelajaran.nama')
             ->paginate(15)
             ->withQueryString()
             ->through(fn ($r) => [
                 'id_guru' => (int) $r->id_guru,
+                'kelas_id' => (int) $r->kelas_id,
+                'mata_pelajaran_id' => (int) $r->mata_pelajaran_id,
                 'nama_guru' => $r->nama_guru,
-                'kelas' => $r->kelas,
-                'mata_pelajaran' => $r->mata_pelajaran,
+                'kelas' => $r->kelas_nama,
+                'mata_pelajaran' => $r->mata_pelajaran_nama,
                 'total_siswa' => (int) $r->total_siswa,
                 'validated_at' => $r->validated_at,
             ]);
 
         $kelasOptions = DB::table('nilai')
-            ->where('status_validasi', Nilai::STATUS_FINAL)
+            ->join('kelas', 'kelas.id', '=', 'nilai.kelas_id')
+            ->where('nilai.status_validasi', Nilai::STATUS_FINAL)
             ->distinct()
-            ->orderBy('kelas')
-            ->pluck('kelas')
+            ->orderBy('kelas.nama')
+            ->pluck('kelas.nama')
             ->all();
 
-        $logs = NilaiUnlockLog::with(['admin:id,name', 'guru:id,nama_guru'])
+        $logs = NilaiUnlockLog::with(['admin:id,name', 'guru:id,nama_guru', 'kelas:id,nama', 'mataPelajaran:id,nama'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get()
@@ -85,8 +95,8 @@ class NilaiController extends Controller
                 'id' => $log->id,
                 'admin_name' => $log->admin?->name ?? '(admin dihapus)',
                 'nama_guru' => $log->guru?->nama_guru ?? '(guru dihapus)',
-                'kelas' => $log->kelas,
-                'mata_pelajaran' => $log->mata_pelajaran,
+                'kelas' => $log->kelas?->nama,
+                'mata_pelajaran' => $log->mataPelajaran?->nama,
                 'affected_rows' => $log->affected_rows,
                 'reason' => $log->reason,
                 'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
@@ -99,7 +109,7 @@ class NilaiController extends Controller
             'kelas_options' => $kelasOptions,
             'filters' => [
                 'search' => $search,
-                'kelas' => $kelas,
+                'kelas' => $kelasNama,
             ],
         ]);
     }
@@ -119,25 +129,27 @@ class NilaiController extends Controller
     {
         $validated = $request->validate([
             'id_guru' => ['required', 'integer', 'exists:guru,id'],
-            'kelas' => ['required', 'string', 'max:20'],
-            'mata_pelajaran' => ['required', 'string', 'max:100'],
+            'kelas_id' => ['required', 'integer', 'exists:kelas,id'],
+            'mata_pelajaran_id' => ['required', 'integer', 'exists:mata_pelajaran,id'],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
         ]);
 
         $guru = Guru::findOrFail($validated['id_guru']);
+        $kelasNama = Kelas::where('id', $validated['kelas_id'])->value('nama');
+        $mapelNama = MataPelajaran::where('id', $validated['mata_pelajaran_id'])->value('nama');
 
         $affected = DB::transaction(function () use ($validated) {
             $updated = Nilai::where('id_guru', $validated['id_guru'])
-                ->where('kelas', $validated['kelas'])
-                ->where('mata_pelajaran', $validated['mata_pelajaran'])
+                ->where('kelas_id', $validated['kelas_id'])
+                ->where('mata_pelajaran_id', $validated['mata_pelajaran_id'])
                 ->where('status_validasi', Nilai::STATUS_FINAL)
                 ->update(['status_validasi' => Nilai::STATUS_DRAFT]);
 
             NilaiUnlockLog::create([
                 'id_admin' => auth()->id(),
                 'id_guru' => $validated['id_guru'],
-                'kelas' => $validated['kelas'],
-                'mata_pelajaran' => $validated['mata_pelajaran'],
+                'kelas_id' => $validated['kelas_id'],
+                'mata_pelajaran_id' => $validated['mata_pelajaran_id'],
                 'affected_rows' => $updated,
                 'reason' => $validated['reason'],
             ]);
@@ -148,8 +160,8 @@ class NilaiController extends Controller
         return back()->with(
             $affected > 0 ? 'success' : 'info',
             $affected > 0
-                ? "Nilai {$validated['mata_pelajaran']} kelas {$validated['kelas']} ({$guru->nama_guru}) berhasil dibuka. {$affected} baris dikembalikan ke Draft. Alasan tercatat di log."
-                : "Tidak ada nilai berstatus Final untuk {$validated['mata_pelajaran']} kelas {$validated['kelas']} ({$guru->nama_guru}). Alasan tetap dicatat."
+                ? "Nilai {$mapelNama} kelas {$kelasNama} ({$guru->nama_guru}) berhasil dibuka. {$affected} baris dikembalikan ke Draft. Alasan tercatat di log."
+                : "Tidak ada nilai berstatus Final untuk {$mapelNama} kelas {$kelasNama} ({$guru->nama_guru}). Alasan tetap dicatat."
         );
     }
 }
