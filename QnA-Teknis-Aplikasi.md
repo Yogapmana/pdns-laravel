@@ -129,4 +129,38 @@ Dokumen ini berisi daftar pertanyaan yang sangat mungkin ditanyakan oleh penguji
 > **A:** Buka `app/Http/Controllers/Admin/ReportController.php`. Cari prosedur yang mengatur *export* file Excel (via *helper class* `XlsxWriter`). Anda tinggal menambahkan teks `'NISN'` pada *array header* baris pertama, lalu pada *looping array data* siswa yang sedang di-_generate_, sertakan parameter `$siswa->nisn` ke dalam _array_ baris baru tersebut.
 
 ---
+
+## 7. Kumpulan Pertanyaan Teknis & Teori (10 Q&A Tambahan)
+
+**Q11: Apa perbedaan antara fungsi `get()` dan `first()` atau `find()` pada Eloquent ORM di aplikasi ini?**
+> **A:** `get()` mengambil seluruh baris data yang memenuhi kriteria pencarian sebagai sekumpulan *Array/Collection*, sedangkan `first()` hanya mengambil satu data urutan teratas sebagai bentuk *Object* tunggal. Adapun `find($id)` digunakan secara khusus (dan lebih cepat) untuk mencari tepat satu baris data berdasarkan nilai *Primary Key* (seperti ID atau NIS).
+
+**Q12: Kenapa di Controller (misalnya saat menyimpan nilai secara massal) menggunakan `DB::transaction()`?**
+> **A:** Untuk menjaga integritas data (berpegang pada prinsip ACID). Jika aplikasi memproses penyimpanan nilai untuk 40 murid, namun tiba-tiba terjadi _error_ saat memproses murid ke-20, fitur transaksi ini akan membatalkan (_rollback_) seluruh proses sejak murid pertama sehingga database tidak tersimpan secara setengah-setengah.
+
+**Q13: Apa itu CSRF Token dan bagaimana aplikasi berbasis React ini menanganinya?**
+> **A:** CSRF (Cross-Site Request Forgery) Token adalah sistem perlindungan keamanan wajib dari Laravel untuk memblokir serangan pemalsuan _request_ lintas situs. Laravel otomatis memproduksi token ini, dan _Inertia.js_ di sisi klien (React) secara otomatis menyisipkannya pada *headers* setiap kali formulir di-POST ke _backend_.
+
+**Q14: Mengapa Anda lebih memilih Tailwind CSS dibandingkan _framework_ klasik seperti Bootstrap?**
+> **A:** Tailwind berkonsep _utility-first_, artinya kita membangun UI secara dinamis langsung pada file TSX tanpa perlu berpindah-pindah antar file untuk menulis *custom CSS* class. Lebih penting lagi, *Vite bundler* di proyek ini melakukan proses *purging* (membuang ribuan class yang tidak terpakai), sehingga ukuran file CSS di ranah *production* sangat kecil.
+
+**Q15: Kenapa aplikasi seperti ini ideal dijalankan di PostgreSQL atau MySQL?**
+> **A:** Keduanya adalah _Relational Database Management System_ (RDBMS). Arsitektur sekolah sangat terikat dengan relasi (siswa milik kelas, kelas dihubungkan dengan mapel, dan nilai menghubungkan keduanya). RDBMS dapat memastikan konsistensi konstrain _Foreign Key_ agar tidak ada "data yatim", hal yang jauh lebih sulit ditegakkan jika menggunakan NoSQL seperti MongoDB.
+
+**Q16: Apa fungsi dari file konfigurasi `vite.config.ts` di proyek ini?**
+> **A:** Vite adalah _build tool_ modern pengganti Webpack. File tersebut bertugas menginstruksikan sistem agar menyatukan kompilasi skrip React (TSX) dan Tailwind CSS ke format *Vanilla* Javascript/CSS yang lebih ringan agar dapat dibaca _browser_ klien. Di mode *development*, Vite memfasilitasi _Hot Module Replacement_ (HMR) sehingga setiap perubahan yang diketik langsung merefresh UI dengan sangat cepat.
+
+**Q17: Bagaimana aplikasi mencegah terjadinya duplikasi pendaftaran data (misalnya ada 2 Siswa menggunakan NIS yang sama)?**
+> **A:** Pencegahan berlapis dilakukan: Pada tingkat level database (*Migration*), kolom `nis` di-set sebagai `primary()` atau `unique()`. Di tingkat aplikasi (Sistem Validasi), `SiswaRequest` memakai validasi wajib bersyarat `'nis' => 'required|unique:siswa,nis'`. Ini akan langsung mencegah dan menampilkan pesan error pada halaman React secara instan sebelum menyentuh lapisan _database_.
+
+**Q18: Bagaimana Laravel memastikan kata sandi (Password) dijaga aman di basis data?**
+> **A:** Password pengguna tidak pernah disimpan berupa teks telanjang (_plaintext_). Sistem _backend_ menggunakan algoritma enkripsi _hashing_ **Bcrypt**. Hashing bekerja satu arah yang sangat mustahil didekripsi mundur; saat seseorang mencoba *login*, aplikasi hanya mem-bcrypt ulang apa yang mereka ketik, kemudian membandingkan dengan nilai _hash_ di pangkalan data.
+
+**Q19: Kenapa definisi rute di `web.php` sering disematkan `.name('admin.siswa.index')`?**
+> **A:** Itu disebut *Named Route* (Rute Bernama). Dengan mendaftarkan nama alih-alih URL asli, kita bisa memanggil URL tersebut di React melalui fungsi _helper_ `route('admin.siswa.index')`. Jika suatu hari *link path* diubah (misalnya `/admin/siswa` jadi `/admin/murid`), kita tidak perlu pusing mengubah kode URL *hardcode* yang tersebar di belasan dokumen, karena penamaan identitasnya tetap utuh.
+
+**Q20: Mengapa tabel-tabel esensial (seperti tabel Users atau tabel Nilai) memuat kolom dengan tipe data `ENUM`?**
+> **A:** Tipe data *ENUM* bertugas mengunci perbendaharaan masukan data agar hanya menerima sekumpulan kata kaku tertentu (misalnya pada tabel `users` dibatasi hanya boleh berisi string `'admin'`, `'guru'`, atau `'siswa'`). Jika hal ini tidak diterapkan, sistem rentan mengalami kesalahan ketik (_typo_) dari aplikasi ketiga yang dapat membingungkan _Middleware_ pembatas hak akses.
+
+---
 _Dokumen ini dapat terus diperbarui jika terdapat modul baru dalam aplikasi._
