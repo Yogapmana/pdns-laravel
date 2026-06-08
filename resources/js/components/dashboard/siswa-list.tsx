@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { formatAvg } from './mapel-bar-chart';
+import { edit } from '@/routes/admin/siswa';
 
 export type SiswaEntry = {
     nis: string;
@@ -56,7 +57,7 @@ export function SiswaList({
                         return (
                             <Link
                                 key={s.nis}
-                                href={`/admin/siswa/${s.nis}/edit`}
+                                href={edit.url({ nis: s.nis })}
                                 prefetch
                                 className="flex items-center gap-4 py-3 px-3 rounded-2xl hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-slate-100 transition-all group"
                             >

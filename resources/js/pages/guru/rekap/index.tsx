@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { index as guruRekapIndex } from '@/routes/guru/rekap';
 import {
     CheckCircle,
     XCircle,
@@ -86,7 +87,7 @@ export default function RekapIndex({
         const kelasNama = daftar_kelas.find((k) => String(k.id) === selectedKelasId)?.nama;
         const mapelNama = availableMapel.find((m) => String(m.id) === selectedMapelId)?.nama;
 
-        router.get('/guru/rekap', {
+        router.get(guruRekapIndex.url(), {
             kelas: kelasNama,
             kelas_id: Number(selectedKelasId),
             mata_pelajaran: mapelNama,

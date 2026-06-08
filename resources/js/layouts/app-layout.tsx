@@ -1,4 +1,19 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { logout as logoutRoute } from '@/routes';
+import { dashboard as adminDashboard } from '@/routes/admin';
+import { index as adminSiswaIndex } from '@/routes/admin/siswa';
+import { index as adminGuruIndex } from '@/routes/admin/guru';
+import { index as adminKelasIndex } from '@/routes/admin/kelas';
+import { index as adminMapelIndex } from '@/routes/admin/mata-pelajaran';
+import { index as adminAccountsIndex } from '@/routes/admin/accounts';
+import { index as adminNilaiIndex } from '@/routes/admin/nilai';
+import { index as adminReportsIndex } from '@/routes/admin/reports';
+import { dashboard as guruDashboard } from '@/routes/guru';
+import { index as guruNilaiIndex } from '@/routes/guru/nilai';
+import { index as guruRekapIndex } from '@/routes/guru/rekap';
+import { dashboard as siswaDashboard } from '@/routes/siswa';
+import { index as siswaNilaiIndex } from '@/routes/siswa/nilai';
+import { index as siswaStatistikIndex } from '@/routes/siswa/statistik';
 import { LayoutDashboard, Users, GraduationCap, UserCog, FileText, LogOut, ClipboardList, BarChart3, BookOpenCheck, PanelLeftClose, PanelLeftOpen, School, Library, ClipboardCheck, Menu, X, Search, Calendar } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import type {ReactNode} from 'react';
@@ -25,26 +40,26 @@ type PageProps = {
 };
 
 const NAV_ADMIN: NavItem[] = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { label: 'Manajemen Siswa', href: '/admin/siswa', icon: <Users className="h-5 w-5" /> },
-    { label: 'Manajemen Guru', href: '/admin/guru', icon: <GraduationCap className="h-5 w-5" /> },
-    { label: 'Manajemen Kelas', href: '/admin/kelas', icon: <School className="h-5 w-5" /> },
-    { label: 'Mata Pelajaran', href: '/admin/mata-pelajaran', icon: <Library className="h-5 w-5" /> },
-    { label: 'Manajemen Akun', href: '/admin/akun', icon: <UserCog className="h-5 w-5" /> },
-    { label: 'Manajemen Nilai', href: '/admin/nilai', icon: <ClipboardCheck className="h-5 w-5" /> },
-    { label: 'Laporan', href: '/admin/laporan', icon: <FileText className="h-5 w-5" /> },
+    { label: 'Dashboard', href: adminDashboard.url(), icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Manajemen Siswa', href: adminSiswaIndex.url(), icon: <Users className="h-5 w-5" /> },
+    { label: 'Manajemen Guru', href: adminGuruIndex.url(), icon: <GraduationCap className="h-5 w-5" /> },
+    { label: 'Manajemen Kelas', href: adminKelasIndex.url(), icon: <School className="h-5 w-5" /> },
+    { label: 'Mata Pelajaran', href: adminMapelIndex.url(), icon: <Library className="h-5 w-5" /> },
+    { label: 'Manajemen Akun', href: adminAccountsIndex.url(), icon: <UserCog className="h-5 w-5" /> },
+    { label: 'Manajemen Nilai', href: adminNilaiIndex.url(), icon: <ClipboardCheck className="h-5 w-5" /> },
+    { label: 'Laporan', href: adminReportsIndex.url(), icon: <FileText className="h-5 w-5" /> },
 ];
 
 const NAV_GURU: NavItem[] = [
-    { label: 'Dashboard', href: '/guru/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { label: 'Input Nilai', href: '/guru/input-nilai', icon: <ClipboardList className="h-5 w-5" /> },
-    { label: 'Rekap Nilai', href: '/guru/rekap', icon: <BarChart3 className="h-5 w-5" /> },
+    { label: 'Dashboard', href: guruDashboard.url(), icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Input Nilai', href: guruNilaiIndex.url(), icon: <ClipboardList className="h-5 w-5" /> },
+    { label: 'Rekap Nilai', href: guruRekapIndex.url(), icon: <BarChart3 className="h-5 w-5" /> },
 ];
 
 const NAV_SISWA: NavItem[] = [
-    { label: 'Dashboard', href: '/siswa/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { label: 'Nilai Saya', href: '/siswa/nilai', icon: <BookOpenCheck className="h-5 w-5" /> },
-    { label: 'Statistik', href: '/siswa/statistik', icon: <BarChart3 className="h-5 w-5" /> },
+    { label: 'Dashboard', href: siswaDashboard.url(), icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Nilai Saya', href: siswaNilaiIndex.url(), icon: <BookOpenCheck className="h-5 w-5" /> },
+    { label: 'Statistik', href: siswaStatistikIndex.url(), icon: <BarChart3 className="h-5 w-5" /> },
 ];
 
 function getNav(role: string, currentPath: string): NavItem[] {
@@ -148,7 +163,7 @@ const getServerToday = (): string => '';
 const getClientToday = (): string => DATE_FORMATTER.format(new Date());
 
 function logout() {
-    router.post('/logout');
+    router.post(logoutRoute.url());
 }
 
 export default function AppLayout({ children, title }: { children: ReactNode; title?: string }) {

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
+import { index, store } from '@/routes/admin/siswa';
+import { create as createKelas } from '@/routes/admin/kelas';
 
 type Props = { daftar_kelas: { id: number; nama: string }[] };
 
@@ -17,7 +19,7 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
         <Container>
             <div className="mb-4 flex items-center gap-3">
                 <Link
-                    href="/admin/siswa"
+                    href={index.url()}
                     className="text-muted-foreground hover:text-foreground"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -31,7 +33,7 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
             <Card className="max-w-2xl">
                 <CardContent>
                     <Form
-                        action="/admin/siswa"
+                        action={store.url()}
                         method="post"
                         className="space-y-4"
                     >
@@ -85,7 +87,7 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         Belum ada kelas yang sesuai?{' '}
                                         <Link
-                                            href="/admin/kelas/create"
+                                            href={createKelas.url()}
                                             className="text-primary hover:underline"
                                         >
                                             Tambah kelas baru
@@ -134,7 +136,7 @@ export default function SiswaCreate({ daftar_kelas }: Props) {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/siswa">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">
                                             Batal
                                         </Button>

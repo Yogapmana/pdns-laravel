@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
+import { index, update } from '@/routes/admin/kelas';
+import { index as mapelIndex } from '@/routes/admin/mata-pelajaran';
 
 type Mapel = { id: number; nama: string };
 
@@ -33,7 +35,7 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/kelas" className="text-muted-foreground hover:text-foreground">
+                <Link href={index.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader
@@ -44,7 +46,7 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
 
             <Card className="max-w-3xl">
                 <CardContent>
-                    <Form action={`/admin/kelas/${kelas.id}`} method="put" className="space-y-6">
+                    <Form action={update.url(kelas.id)} method="put" className="space-y-6">
                         {({ processing, errors }) => (
                             <>
                                 <div>
@@ -82,7 +84,7 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
                                     {semua_mapel.length === 0 ? (
                                         <div className="rounded-lg border border-dashed border-border bg-surface p-4 text-sm text-muted-foreground">
                                             Belum ada mata pelajaran di master.{' '}
-                                            <Link href="/admin/mata-pelajaran" className="text-primary hover:underline">Tambah mata pelajaran dulu</Link>.
+                                            <Link href={mapelIndex.url()} className="text-primary hover:underline">Tambah mata pelajaran dulu</Link>.
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -122,7 +124,7 @@ export default function KelasEdit({ kelas, semua_mapel, selected_mapel }: Props)
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/kelas">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { index as reportsIndex } from '@/routes/admin/reports';
 import {
     Users,
     GraduationCap,
@@ -15,11 +16,11 @@ import { useState } from 'react';
 import { ActionChecklist } from '@/components/dashboard/action-checklist';
 import {
     KelasBarChart
-    
+
 } from '@/components/dashboard/kelas-bar-chart';
-import type {RekapKelas} from '@/components/dashboard/kelas-bar-chart';
-import { SiswaList  } from '@/components/dashboard/siswa-list';
-import type {SiswaEntry} from '@/components/dashboard/siswa-list';
+import type { RekapKelas } from '@/components/dashboard/kelas-bar-chart';
+import { SiswaList } from '@/components/dashboard/siswa-list';
+import type { SiswaEntry } from '@/components/dashboard/siswa-list';
 import {
     Card,
     CardHeader,
@@ -72,11 +73,6 @@ export default function AdminDashboard({
             <PageHeader
                 title="Dashboard Admin"
                 description="Ringkasan data akademik sekolah"
-                action={
-                    <span className="text-sm font-medium text-muted-foreground">
-                        Semester Ganjil 2025/2026 • Data per hari ini
-                    </span>
-                }
             />
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -174,7 +170,7 @@ export default function AdminDashboard({
                     <CardHeader
                         action={
                             <Link
-                                href="/admin/laporan?kelas=all&sort=ranking&sort_type=paralel"
+                                href={reportsIndex.url({ query: { kelas: 'all', sort: 'ranking', sort_type: 'paralel' } })}
                                 className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
                             >
                                 Selengkapnya <ChevronRight className="h-3 w-3" />
@@ -200,7 +196,7 @@ export default function AdminDashboard({
                     <CardHeader
                         action={
                             <Link
-                                href="/admin/laporan?kelas=all&sort=perhatian&sort_type=paralel"
+                                href={reportsIndex.url({ query: { kelas: 'all', sort: 'perhatian', sort_type: 'paralel' } })}
                                 className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
                             >
                                 Selengkapnya <ChevronRight className="h-3 w-3" />

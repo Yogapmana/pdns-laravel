@@ -10,9 +10,9 @@ use Illuminate\Validation\Rules\Password;
 trait PasswordValidationRules
 {
     /**
-     * Get the validation rules used to validate passwords.
+     * Mendapatkan aturan validasi yang digunakan untuk memvalidasi password.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|array<mixed>|string> Aturan validasi password.
      */
     protected function passwordRules(): array
     {
@@ -20,9 +20,9 @@ trait PasswordValidationRules
     }
 
     /**
-     * Get the validation rules used to validate the current password.
+     * Mendapatkan aturan validasi yang digunakan untuk memvalidasi password saat ini.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|array<mixed>|string> Aturan validasi password saat ini.
      */
     protected function currentPasswordRules(): array
     {

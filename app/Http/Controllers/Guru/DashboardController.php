@@ -16,15 +16,15 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     /**
-     * Display the guru dashboard with personal teaching statistics.
+     * Menampilkan dashboard guru dengan statistik mengajar pribadi.
      *
-     * Aggregates the guru's mengajar combinations, the total siswa taught,
-     * overall nilai counters (total, draft, final, lulus, tidak_lulus, average),
-     * and a per-combo breakdown (jumlah_siswa, jumlah_input, jumlah_final,
-     * jumlah_draft) so the guru can see exactly which (kelas, mapel) pairs
-     * still need work.
+     * Mengagregasikan kombinasi mengajar guru, total siswa yang diajar,
+     * penghitung nilai keseluruhan (total, draft, final, lulus, tidak_lulus, rata-rata),
+     * dan rincian per kombinasi (jumlah_siswa, jumlah_input, jumlah_final, jumlah_draft)
+     * sehingga guru dapat melihat dengan tepat pasangan (kelas, mapel) mana saja yang
+     * masih memerlukan pengisian.
      *
-     * @return Response Inertia response rendering `guru/dashboard`.
+     * @return Response Respon Inertia yang merender view `guru/dashboard`.
      */
     public function index(): Response
     {
@@ -77,16 +77,16 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build a per-combo breakdown for the guru's mengajar rows.
+     * Membangun rincian statistik per kombinasi mengajar untuk baris mengajar guru.
      *
-     * For every (kelas, mata_pelajaran) row in `guru_mengajar` owned by
-     * `$guru`, return an entry containing the jumlah_siswa in that kelas,
-     * the number of `Nilai` rows the guru has for the combo that have a
-     * non-null `nilai_akhir` (jumlah_input), and the draft/final split
-     * among those rows. Combos are sorted by kelas, then mata_pelajaran.
+     * Untuk setiap baris (kelas, mata_pelajaran) di tabel `guru_mengajar` yang dimiliki oleh
+     * `$guru`, mengembalikan entri yang berisi jumlah_siswa di kelas tersebut,
+     * jumlah baris data `Nilai` yang dimiliki guru untuk kombinasi tersebut yang memiliki
+     * `nilai_akhir` tidak null (jumlah_input), serta pembagian draft/final di antara baris-baris tersebut.
+     * Kombinasi diurutkan berdasarkan kelas, kemudian mata_pelajaran.
      *
-     * @param  Guru  $guru  The authenticated guru.
-     * @return array<int, array<string, mixed>>
+     * @param  Guru  $guru  Guru yang terautentikasi.
+     * @return array<int, array<string, mixed>> Rincian statistik per kombinasi mengajar.
      */
     private function buildPerComboStats(Guru $guru): array
     {

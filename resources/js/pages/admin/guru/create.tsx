@@ -1,4 +1,7 @@
 import { Form, Link } from '@inertiajs/react';
+import { index, store } from '@/routes/admin/guru';
+import { index as kelasIndex } from '@/routes/admin/kelas';
+import { index as mapelIndex } from '@/routes/admin/mata-pelajaran';
 import {
     ArrowLeft,
     Save,
@@ -61,7 +64,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
         <Container>
             <div className="mb-4 flex items-center gap-3">
                 <Link
-                    href="/admin/guru"
+                    href={index.url()}
                     className="text-muted-foreground hover:text-foreground"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -75,7 +78,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
             <Card className="max-w-3xl">
                 <CardContent>
                     <Form
-                        action="/admin/guru"
+                        action={store.url()}
                         method="post"
                         className="space-y-4"
                     >
@@ -277,7 +280,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                                                 belum punya
                                                                 mapel diizinkan.{' '}
                                                                 <Link
-                                                                    href="/admin/kelas"
+                                                                    href={kelasIndex.url()}
                                                                     className="underline"
                                                                 >
                                                                     Atur di
@@ -323,7 +326,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                             <p className="mt-1">
                                                 {emptyKelas.map((k) => k.nama).join(', ')}.{' '}
                                                 <Link
-                                                    href="/admin/kelas"
+                                                    href={kelasIndex.url()}
                                                     className="underline font-medium"
                                                 >
                                                     Atur mata pelajaran di
@@ -338,14 +341,14 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                         Belum ada kelas atau mata pelajaran yang
                                         sesuai?{' '}
                                         <Link
-                                            href="/admin/kelas"
+                                            href={kelasIndex.url()}
                                             className="text-primary hover:underline"
                                         >
                                             Kelola kelas
                                         </Link>
                                         {' atau '}
                                         <Link
-                                            href="/admin/mata-pelajaran"
+                                            href={mapelIndex.url()}
                                             className="text-primary hover:underline"
                                         >
                                             kelola mata pelajaran
@@ -359,7 +362,7 @@ export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/guru">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">
                                             Batal
                                         </Button>

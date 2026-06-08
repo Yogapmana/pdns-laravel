@@ -10,6 +10,7 @@ import {
     UserCog,
 } from 'lucide-react';
 import { useState } from 'react';
+import { index, unlock } from '@/routes/admin/nilai';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -102,7 +103,7 @@ export default function AdminNilaiIndex({
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/nilai',
+        url: index.url(),
         initialFilters: { search: filters.search, kelas: filters.kelas },
         only: ['combos', 'logs', 'kelas_options', 'filters'],
     });
@@ -141,7 +142,7 @@ export default function AdminNilaiIndex({
 
         setSubmitting(true);
         router.post(
-            '/admin/nilai/unlock',
+            unlock.url(),
             {
                 id_guru: unlockTarget.id_guru,
                 kelas_id: unlockTarget.kelas_id,

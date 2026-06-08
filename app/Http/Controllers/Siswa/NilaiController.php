@@ -15,15 +15,14 @@ use Inertia\Response;
 class NilaiController extends Controller
 {
     /**
-     * Display the read-only personal nilai page for the authenticated siswa.
+     * Menampilkan halaman nilai pribadi read-only untuk siswa yang terautentikasi.
      *
-     * Loads the siswa's `Nilai` rows (eager-loading the `guru` profile),
-     * groups them by the `(kelas, mata_pelajaran)` composite key. Only
-     * rows that have been validated (`status_validasi = Final`) are
-     * surfaced — Draft rows remain hidden from the siswa until the
-     * guru locks them.
+     * Memuat baris `Nilai` siswa (eager-load profil `guru`), mengelompokkannya
+     * berdasarkan composite key `(kelas, mata_pelajaran)`. Hanya baris data yang telah divalidasi
+     * (`status_validasi = Final`) yang ditampilkan — baris Draft akan tetap disembunyikan
+     * dari siswa sampai guru mengunci nilai tersebut.
      *
-     * @return Response Inertia response rendering `siswa/nilai/index`.
+     * @return Response Respon Inertia yang merender view `siswa/nilai/index`.
      */
     public function index(): Response
     {
@@ -56,6 +55,11 @@ class NilaiController extends Controller
         ]);
     }
 
+    /**
+     * Menampilkan halaman statistik nilai pribadi untuk siswa yang terautentikasi.
+     *
+     * @return Response Respon Inertia yang merender view `siswa/statistik/index`.
+     */
     public function statistik(): Response
     {
         $siswa = Siswa::with('kelas:id,nama')->where('user_id', auth()->id())->firstOrFail();
@@ -85,17 +89,17 @@ class NilaiController extends Controller
     }
 
     /**
-     * Compute aggregated chart data from grouped nilai collection.
+     * Menghitung data bagan (chart) teragregasi dari koleksi nilai yang dikelompokkan.
      *
-     * Walks the `(kelas_id, mata_pelajaran_id)`-keyed collection once, building
-     * the per-mapel rows and the pass/fail counters.
+     * Melakukan iterasi sekali pada koleksi dengan kunci `(kelas_id, mata_pelajaran_id)`,
+     * membangun baris per mapel serta penghitung lulus/tidak lulus.
      *
-     * @param  Collection<string, Collection<int, Nilai>>  $nilai  Grouped nilai rows, keyed by `"kelas_id|mata_pelajaran_id"`.
+     * @param  Collection<string, Collection<int, Nilai>>  $nilai  Baris nilai terkelompok, dengan kunci `"kelas_id|mata_pelajaran_id"`.
      * @return array{
      *     per_mapel: array<int, array{mapel: string, tugas: float|null, uts: float|null, uas: float|null, akhir: float|null, status: string|null, kkm: float}>,
      *     kkm: float,
      *     stats: array{total_mapel: int, lulus: int, tidak_lulus: int}
-     * }  Aggregated chart data.
+     * } Data chart teragregasi.
      */
     private function buildChartData($nilai): array
     {

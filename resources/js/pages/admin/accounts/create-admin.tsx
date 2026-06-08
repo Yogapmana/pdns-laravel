@@ -1,5 +1,7 @@
 import { Form, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { index as accountsIndex, createAdmin } from '@/routes/admin/accounts';
+import { store as createAdminStore } from '@/routes/admin/accounts/create-admin';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +13,7 @@ export default function AccountCreateAdmin() {
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/akun" className="text-muted-foreground hover:text-foreground">
+                <Link href={accountsIndex.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader
@@ -22,7 +24,7 @@ export default function AccountCreateAdmin() {
 
             <Card className="max-w-2xl">
                 <CardContent>
-                    <Form action="/admin/akun/create-admin" method="post" className="space-y-4">
+                    <Form action={createAdminStore.url()} method="post" className="space-y-4">
                         {({ processing, errors }) => (
                             <>
                                 <Alert variant="info">
@@ -91,7 +93,7 @@ export default function AccountCreateAdmin() {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Membuat Akun...' : 'Buat Akun'}
                                     </Button>
-                                    <Link href="/admin/akun">
+                                    <Link href={accountsIndex.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

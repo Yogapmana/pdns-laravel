@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { index } from '@/routes/admin/siswa';
 
 export type RekapKelas = {
     kelas: string;
@@ -26,7 +27,7 @@ export function KelasBarChart({ rekap, isExpanded = true }: { rekap: RekapKelas[
         return (
             <Link
                 key={r.kelas}
-                href={`/admin/siswa?kelas=${encodeURIComponent(r.kelas)}`}
+                href={index.url({ query: { kelas: r.kelas } })}
                 prefetch
                 className="flex items-center gap-4 group hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-slate-100 py-3 px-3 rounded-2xl transition-all"
                 title={`Klik untuk lihat siswa di ${r.kelas}`}

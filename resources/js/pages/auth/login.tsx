@@ -1,4 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
+import { store as loginStore } from '@/routes/login';
 import { Eye, EyeOff, User, Lock, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
@@ -31,7 +32,7 @@ export default function Login({ status }: Props) {
                 {status && <Alert variant="info" className="mb-5">{status}</Alert>}
                 {errors.credentials && <Alert variant="error" className="mb-5">Username atau password salah.</Alert>}
 
-                <Form action="/login" method="post" resetOnSuccess={['password']} className="space-y-4">
+                <Form action={loginStore.form.post().action} method="post" resetOnSuccess={['password']} className="space-y-4">
                     {({ processing }) => (
                         <>
                             <div>

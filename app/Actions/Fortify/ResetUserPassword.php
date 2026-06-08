@@ -11,24 +11,24 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
 
 /**
- * Default Fortify action that validates a password-reset payload and
- * updates the `password` column of the affected user.
+ * Aksi Fortify default yang memvalidasi payload reset password dan
+ * memperbarui kolom `password` dari user yang bersangkutan.
  *
- * Note: in this project the password-reset feature is disabled (see
- * `config/fortify.php`); admins reset passwords through the dedicated
- * admin endpoint instead.
+ * Catatan: dalam proyek ini fitur reset password dinonaktifkan (lihat
+ * `config/fortify.php`); sebagai gantinya, admin mereset password melalui
+ * endpoint admin khusus.
  */
 class ResetUserPassword implements ResetsUserPasswords
 {
     use PasswordValidationRules;
 
     /**
-     * Validate and reset the user's forgotten password.
+     * Memvalidasi dan mereset password pengguna yang lupa.
      *
-     * @param  User  $user  The user whose password will be updated.
-     * @param  array<string, string>  $input  The reset form input, expected to contain the new `password` (and confirmation).
+     * @param  User  $user  Pengguna yang password-nya akan diperbarui.
+     * @param  array<string, string>  $input  Input form reset, diharapkan berisi `password` baru (dan konfirmasinya).
      *
-     * @throws ValidationException When validation fails.
+     * @throws ValidationException Ketika validasi gagal.
      */
     public function reset(User $user, array $input): void
     {

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
+import { index, update } from '@/routes/admin/mata-pelajaran';
 
 type Props = {
     mataPelajaran: { id: number; nama: string };
@@ -14,7 +15,7 @@ export default function MataPelajaranEdit({ mataPelajaran }: Props) {
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/mata-pelajaran" className="text-muted-foreground hover:text-foreground">
+                <Link href={index.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader title="Edit Mata Pelajaran" description={`Mengubah nama mata pelajaran akan mempengaruhi tampilan di mengajar & nilai siswa.`} />
@@ -22,7 +23,7 @@ export default function MataPelajaranEdit({ mataPelajaran }: Props) {
 
             <Card className="max-w-xl">
                 <CardContent>
-                    <Form action={`/admin/mata-pelajaran/${mataPelajaran.id}`} method="put" className="space-y-4">
+                    <Form action={update.url(mataPelajaran.id)} method="put" className="space-y-4">
                         {({ processing, errors }) => (
                             <>
                                 <div>
@@ -39,7 +40,7 @@ export default function MataPelajaranEdit({ mataPelajaran }: Props) {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/mata-pelajaran">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

@@ -12,11 +12,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
- * Eloquent model representing a subject (`mata_pelajaran`).
+ * Model Eloquent yang merepresentasikan mata pelajaran (`mata_pelajaran`).
  *
- * Backed by the `mata_pelajaran` table. The subject is identified by
- * its `nama` and is referenced by guru-mengajar and nilai rows through
- * the `mata_pelajaran_id` foreign key.
+ * Didukung oleh tabel `mata_pelajaran`. Mata pelajaran diidentifikasi oleh
+ * `nama` nya dan direferensikan oleh baris guru_mengajar dan nilai melalui
+ * foreign key `mata_pelajaran_id`.
  *
  * @property int $id
  * @property string $nama
@@ -31,9 +31,9 @@ class MataPelajaran extends Model
     protected $table = 'mata_pelajaran';
 
     /**
-     * The guru-mengajar combinations that target this mata pelajaran.
+     * Kombinasi guru_mengajar yang ditargetkan ke mata pelajaran ini.
      *
-     * @return HasMany<GuruMengajar>
+     * @return HasMany<GuruMengajar> Relasi ke model GuruMengajar.
      */
     public function guruMengajar(): HasMany
     {
@@ -41,9 +41,9 @@ class MataPelajaran extends Model
     }
 
     /**
-     * The nilai rows whose `mata_pelajaran_id` matches this row.
+     * Baris data nilai yang memiliki `mata_pelajaran_id` sesuai dengan mata pelajaran ini.
      *
-     * @return HasMany<Nilai>
+     * @return HasMany<Nilai> Relasi ke model Nilai.
      */
     public function nilai(): HasMany
     {
@@ -51,11 +51,10 @@ class MataPelajaran extends Model
     }
 
     /**
-     * The kelas rows that this mata-pelajaran belongs to, joined through
-     * the `kelas_mata_pelajaran` pivot using the `(kelas_id, mata_pelajaran_id)`
-     * composite key.
+     * Kelas yang memiliki mata pelajaran ini, dihubungkan melalui pivot
+     * `kelas_mata_pelajaran` menggunakan composite key `(kelas_id, mata_pelajaran_id)`.
      *
-     * @return BelongsToMany<Kelas>
+     * @return BelongsToMany<Kelas> Relasi ke model Kelas.
      */
     public function kelas(): BelongsToMany
     {
@@ -68,9 +67,9 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Accessor: the count of guru-mengajar rows that target this subject.
+     * Accessor: jumlah baris data guru_mengajar yang ditargetkan ke mata pelajaran ini.
      *
-     * @return int The number of guru-mengajar rows.
+     * @return int Jumlah baris data guru_mengajar.
      */
     public function getJumlahGuruMengajarAttribute(): int
     {
@@ -78,9 +77,9 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Accessor: the count of nilai rows for this subject.
+     * Accessor: jumlah baris data nilai untuk mata pelajaran ini.
      *
-     * @return int The number of nilai rows.
+     * @return int Jumlah baris data nilai.
      */
     public function getJumlahNilaiAttribute(): int
     {
@@ -88,9 +87,9 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Accessor: the count of kelas rows that allow this mata-pelajaran.
+     * Accessor: jumlah kelas yang memperbolehkan mata pelajaran ini.
      *
-     * @return int The number of `kelas_mata_pelajaran` rows for this mapel.
+     * @return int Jumlah baris data `kelas_mata_pelajaran` untuk mapel ini.
      */
     public function getJumlahKelasAttribute(): int
     {
@@ -98,11 +97,11 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Static helper that returns all `nama` values, ordered ascending.
+     * Helper statis yang mengembalikan semua nilai `nama` mata pelajaran, diurutkan secara menaik.
      *
-     * Used by forms and dropdowns that need the canonical list of subjects.
+     * Digunakan oleh form dan dropdown yang membutuhkan daftar kanonikal mata pelajaran.
      *
-     * @return Collection<int, string> Collection of `nama` strings.
+     * @return Collection<int, string> Koleksi string `nama` mata pelajaran.
      */
     public static function pluckNamaOrdered(): Collection
     {
@@ -110,12 +109,12 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Static helper that returns `id` and `nama` for every mata pelajaran, ordered ascending by `nama`.
+     * Helper statis yang mengembalikan `id` dan `nama` untuk setiap mata pelajaran, diurutkan menaik berdasarkan `nama`.
      *
-     * Used by FK-aware forms that need to submit the mapel id but display
-     * the name in the option label.
+     * Digunakan oleh form yang memproses FK dan membutuhkan pengiriman ID mapel namun menampilkan
+     * nama mapel pada label opsi.
      *
-     * @return Collection<int, static> Collection of MataPelajaran models with only `id` and `nama` selected.
+     * @return Collection<int, static> Koleksi model MataPelajaran dengan hanya memilih kolom `id` dan `nama`.
      */
     public static function pluckIdNamaOrdered(): Collection
     {
@@ -123,13 +122,13 @@ class MataPelajaran extends Model
     }
 
     /**
-     * Query scope: filter the builder by a `nama` LIKE search.
+     * Query scope: menyaring query builder berdasarkan pencarian LIKE pada `nama` mata pelajaran.
      *
-     * Empty search terms leave the query untouched.
+     * Kata kunci pencarian yang kosong tidak akan mengubah kueri.
      *
-     * @param  Builder<MataPelajaran>  $query  The active query builder.
-     * @param  string  $term  The search term (already trimmed by the caller).
-     * @return Builder<MataPelajaran> The (possibly filtered) query builder.
+     * @param  Builder<MataPelajaran>  $query  Query builder yang sedang aktif.
+     * @param  string  $term  Kata kunci pencarian yang dicari.
+     * @return Builder<MataPelajaran> Query builder yang (mungkin) sudah disaring.
      */
     public function scopeSearch(Builder $query, string $term): Builder
     {

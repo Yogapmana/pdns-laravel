@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Eloquent model representing a single (kelas, mata_pelajaran) assignment for a guru.
+ * Model Eloquent yang merepresentasikan satu penugasan (kelas, mata_pelajaran) untuk seorang guru.
  *
- * Backed by the `guru_mengajar` table. A row exists for every (guru, kelas,
- * mata_pelajaran) combination the guru is allowed to teach. The `kelas_id`
- * and `mata_pelajaran_id` columns are FKs to the `kelas` and `mata_pelajaran`
- * master tables.
+ * Didukung oleh tabel `guru_mengajar`. Baris data ada untuk setiap kombinasi
+ * (guru, kelas, mata_pelajaran) yang diizinkan untuk diajar oleh guru tersebut.
+ * Kolom `kelas_id` dan `mata_pelajaran_id` merupakan Foreign Key ke tabel master
+ * `kelas` dan `mata_pelajaran`.
  *
  * @property int $id
  * @property int $id_guru
@@ -27,9 +27,9 @@ class GuruMengajar extends Model
     protected $table = 'guru_mengajar';
 
     /**
-     * The guru owning this mengajar row.
+     * Guru yang memiliki baris mengajar ini.
      *
-     * @return BelongsTo<Guru, GuruMengajar>
+     * @return BelongsTo<Guru, GuruMengajar> Relasi ke model Guru.
      */
     public function guru(): BelongsTo
     {
@@ -37,9 +37,9 @@ class GuruMengajar extends Model
     }
 
     /**
-     * The kelas this mengajar row targets.
+     * Kelas yang ditargetkan oleh baris mengajar ini.
      *
-     * @return BelongsTo<Kelas, GuruMengajar>
+     * @return BelongsTo<Kelas, GuruMengajar> Relasi ke model Kelas.
      */
     public function kelas(): BelongsTo
     {
@@ -47,9 +47,9 @@ class GuruMengajar extends Model
     }
 
     /**
-     * The mata pelajaran this mengajar row targets.
+     * Mata pelajaran yang ditargetkan oleh baris mengajar ini.
      *
-     * @return BelongsTo<MataPelajaran, GuruMengajar>
+     * @return BelongsTo<MataPelajaran, GuruMengajar> Relasi ke model MataPelajaran.
      */
     public function mataPelajaran(): BelongsTo
     {

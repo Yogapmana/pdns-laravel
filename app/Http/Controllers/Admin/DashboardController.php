@@ -18,16 +18,16 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     /**
-     * Display the admin dashboard with aggregated statistics.
+     * Menampilkan dashboard admin dengan statistik teragregasi.
      *
-     * Renders the global counters (total siswa, guru, nilai, mata pelajaran),
-     * the per-kelas rekap, per-mapel averages, top 5 siswa by average score,
-     * and the 5 siswa with the highest "perhatian" ratio (most "Tidak Lulus"
-     * values). Uses eager loading and grouped queries to keep database
-     * round-trips at a constant count regardless of dataset size.
+     * Merender penghitung global (total siswa, guru, nilai, mata pelajaran),
+     * rekap per kelas, rata-rata per mapel, 5 siswa terbaik berdasarkan nilai rata-rata,
+     * dan 5 siswa yang membutuhkan perhatian tertinggi (nilai "Tidak Lulus" terbanyak).
+     * Menggunakan eager loading dan kueri terkelompok untuk menjaga jumlah kueri ke database
+     * tetap konstan tanpa terpengaruh oleh ukuran data.
      *
-     * @param  Request  $request  The current HTTP request (currently unused beyond type-hint).
-     * @return Response Inertia response rendering the `admin/dashboard` page.
+     * @param  Request  $request  Request HTTP saat ini.
+     * @return Response Respon Inertia yang merender halaman `admin/dashboard`.
      */
     public function index(Request $request): Response
     {
@@ -108,12 +108,12 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build per-kelas rekapitulasi: jumlah siswa, lulus, tidak lulus, dan persentase kelulusan.
+     * Membangun rekapitulasi per kelas: jumlah siswa, lulus, tidak lulus, dan persentase kelulusan.
      *
-     * Performs a single grouped SELECT against `siswa` for the student counts
-     * and a single grouped JOIN against `nilai` for the lulus/tidak_lulus counts,
-     * then merges them in PHP. This avoids the N+1 trap that would otherwise
-     * occur when iterating over every class.
+     * Melakukan satu SELECT terkelompok pada tabel `siswa` untuk menghitung jumlah siswa,
+     * dan satu JOIN terkelompok pada tabel `nilai` untuk menghitung jumlah lulus/tidak_lulus,
+     * kemudian menggabungkannya di PHP. Hal ini menghindari jebakan query N+1 yang dapat terjadi
+     * jika melakukan perulangan pada setiap kelas.
      *
      * @return array<int, array{
      *     kelas: string,
@@ -122,7 +122,7 @@ class DashboardController extends Controller
      *     tidak_lulus: int,
      *     total_nilai: int,
      *     persentase_lulus: float
-     * }>  List of rekap rows, sorted by class name ascending.
+     * }> Daftar baris rekapitulasi, diurutkan menaik berdasarkan nama kelas.
      */
     private function buildRekapPerKelas(): array
     {
@@ -163,18 +163,15 @@ class DashboardController extends Controller
             ];
         }
 
-
-
         return $rekap;
     }
 
     /**
-     * Build per-mata-pelajaran averages aggregated from the entire `nilai` table.
+     * Membangun rata-rata per mata pelajaran yang diagregasikan dari keseluruhan tabel `nilai`.
      *
-     * Uses MySQL `AVG()` and conditional `SUM(CASE WHEN ...)` expressions in a
-     * single grouped query to compute the average, the pass/fail totals and
-     * the pass-rate percentage per subject. Results are then sorted in PHP
-     * by `rata_rata` descending.
+     * Menggunakan fungsi MySQL `AVG()` dan ekspresi kondisional `SUM(CASE WHEN ...)` dalam satu
+     * kueri terkelompok untuk menghitung rata-rata, total lulus/tidak lulus, dan persentase tingkat
+     * kelulusan per mata pelajaran. Hasilnya kemudian diurutkan di PHP berdasarkan `rata_rata` menurun.
      *
      * @return array<int, array{
      *     mata_pelajaran: string,
@@ -183,7 +180,7 @@ class DashboardController extends Controller
      *     lulus: int,
      *     tidak_lulus: int,
      *     persentase_lulus: float
-     * }>  List of mapel rows, sorted by `rata_rata` descending.
+     * }> Daftar baris mata pelajaran, diurutkan menurun berdasarkan `rata_rata`.
      */
     private function buildRataRataPerMapel(): array
     {
@@ -225,12 +222,12 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build the top-N siswa leaderboard ordered by average `nilai_akhir` descending.
+     * Membangun papan peringkat (leaderboard) siswa terbaik diurutkan berdasarkan rata-rata `nilai_akhir` menurun.
      *
-     * Only siswa with at least one row in the `nilai` table are included
-     * (enforced via `HAVING COUNT(*) > 0`).
+     * Hanya siswa yang memiliki minimal satu baris data di tabel `nilai` yang dimasukkan
+     * (dipaksakan melalui klausul `HAVING COUNT(*) > 0`).
      *
-     * @param  int  $limit  Maximum number of siswa to return. Defaults to 5.
+     * @param  int  $limit  Jumlah maksimal siswa yang akan dikembalikan. Defaultnya adalah 5.
      * @return array<int, array{
      *     nis: string,
      *     nama_siswa: string,
@@ -239,7 +236,7 @@ class DashboardController extends Controller
      *     total_mapel: int,
      *     lulus: int,
      *     tidak_lulus: int
-     * }>  Leaderboard rows, sorted by `rata_rata` descending.
+     * }> Baris papan peringkat, diurutkan menurun berdasarkan `rata_rata`.
      */
     private function buildTopSiswa(int $limit = 5): array
     {
@@ -276,13 +273,13 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build the "siswa perhatian" list — siswa with at least one `Tidak Lulus`
-     * subject, ordered by the absolute number of failed subjects descending,
-     * and then by average score ascending (so the worst cases float to the top).
+     * Membangun daftar "siswa perhatian" — siswa dengan setidaknya satu mata pelajaran `Tidak Lulus`,
+     * diurutkan berdasarkan jumlah mutlak mata pelajaran yang gagal menurun, dan kemudian
+     * berdasarkan rata-rata nilai menaik (sehingga kasus terburuk muncul di paling atas).
      *
-     * Includes an additional `rasio_tidak_lulus` percentage for the UI badge.
+     * Menyertakan persentase tambahan `rasio_tidak_lulus` untuk lencana pada UI.
      *
-     * @param  int  $limit  Maximum number of siswa to return. Defaults to 5.
+     * @param  int  $limit  Jumlah maksimal siswa yang dikembalikan. Defaultnya adalah 5.
      * @return array<int, array{
      *     nis: string,
      *     nama_siswa: string,
@@ -292,7 +289,7 @@ class DashboardController extends Controller
      *     lulus: int,
      *     tidak_lulus: int,
      *     rasio_tidak_lulus: float
-     * }>  Siswa rows, sorted by `tidak_lulus` descending, then `rata_rata` ascending.
+     * }> Baris data siswa, diurutkan menurun berdasarkan `tidak_lulus`, lalu menaik berdasarkan `rata_rata`.
      */
     private function buildSiswaPerhatian(int $limit = 5): array
     {

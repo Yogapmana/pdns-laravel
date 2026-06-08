@@ -13,10 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
- * Eloquent model representing a student (`siswa`).
+ * Model Eloquent yang merepresentasikan siswa (`siswa`).
  *
- * Backed by the `siswa` table. The primary key is the string `nis`
- * (Nomor Induk Siswa) — this is also the route-model binding key.
+ * Didukung oleh tabel `siswa`. Primary key berupa string `nis`
+ * (Nomor Induk Siswa) — kolom ini juga menjadi route-model binding key.
  *
  * @property string $nis
  * @property int|null $user_id
@@ -40,9 +40,9 @@ class Siswa extends Model
     protected $keyType = 'string';
 
     /**
-     * Use `nis` for route-model binding (see the `Route::resource('siswa', ...)` definitions).
+     * Menggunakan `nis` untuk route-model binding (lihat definisi `Route::resource('siswa', ...)`).
      *
-     * @return string The route key name.
+     * @return string Nama kunci rute (route key name).
      */
     public function getRouteKeyName(): string
     {
@@ -50,9 +50,9 @@ class Siswa extends Model
     }
 
     /**
-     * The login account associated with this siswa (1:1, optional).
+     * Akun login yang terkait dengan siswa ini (1:1, opsional).
      *
-     * @return BelongsTo<User, Siswa>
+     * @return BelongsTo<User, Siswa> Relasi ke model User.
      */
     public function user(): BelongsTo
     {
@@ -60,9 +60,9 @@ class Siswa extends Model
     }
 
     /**
-     * The `Kelas` this siswa belongs to.
+     * `Kelas` tempat siswa ini terdaftar.
      *
-     * @return BelongsTo<Kelas, Siswa>
+     * @return BelongsTo<Kelas, Siswa> Relasi ke model Kelas.
      */
     public function kelas(): BelongsTo
     {
@@ -70,9 +70,9 @@ class Siswa extends Model
     }
 
     /**
-     * The `Nilai` rows belonging to this siswa.
+     * Baris data `Nilai` yang dimiliki oleh siswa ini.
      *
-     * @return HasMany<Nilai>
+     * @return HasMany<Nilai> Relasi ke model Nilai.
      */
     public function nilai(): HasMany
     {
@@ -80,9 +80,9 @@ class Siswa extends Model
     }
 
     /**
-     * Convenience accessor: the display name of the siswa's kelas, or
-     * `null` when the siswa is not assigned to a kelas. Useful in views
-     * that previously relied on the now-removed string `kelas` column.
+     * Accessor kemudahan: nama tampilan dari kelas siswa, atau
+     * `null` jika siswa belum dimasukkan ke kelas manapun. Berguna untuk view
+     * yang sebelumnya mengandalkan kolom string `kelas` yang sekarang sudah dihapus.
      */
     protected function getKelasNamaAttribute(): ?string
     {

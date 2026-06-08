@@ -20,14 +20,14 @@ use Inertia\Response;
 class GuruController extends Controller
 {
     /**
-     * Display the paginated guru list with search, kelas, and mapel filters.
+     * Menampilkan daftar guru ter-paginasi dengan filter pencarian, kelas, dan mapel.
      *
-     * Eager-loads the related `user` account and the `mengajar` combinations
-     * to prevent N+1 queries when rendering the table. Uses `whereHas()` to
-     * filter guru by their associated kelas/mapel.
+     * Eager-load akun `user` terkait dan kombinasi `mengajar` untuk mencegah kueri N+1
+     * saat merender tabel. Menggunakan `whereHas()` untuk memfilter guru berdasarkan kelas/mapel
+     * yang terkait dengan mereka.
      *
-     * @param  Request  $request  Current HTTP request; reads `search`, `kelas`, and `mapel` query parameters.
-     * @return Response Inertia response rendering `admin/guru/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `search`, `kelas`, dan `mapel`.
+     * @return Response Respon Inertia yang merender view `admin/guru/index`.
      */
     public function index(Request $request): Response
     {
@@ -66,9 +66,9 @@ class GuruController extends Controller
     }
 
     /**
-     * Show the form to create a new guru record.
+     * Menampilkan form untuk membuat data guru baru.
      *
-     * @return Response Inertia response rendering `admin/guru/create` with the available kelas and mapel lists.
+     * @return Response Respon Inertia yang merender view `admin/guru/create` dengan daftar kelas dan mapel yang tersedia.
      */
     public function create(): Response
     {
@@ -84,18 +84,16 @@ class GuruController extends Controller
     }
 
     /**
-     * Persist a new guru record together with their mengajar combinations and
-     * a freshly-generated login account.
+     * Menyimpan data guru baru beserta kombinasi mengajar dan akun login yang baru dibuat.
      *
-     * All three writes (User, Guru, guru_mengajar) are wrapped in a single
-     * database transaction so a failure on any side rolls everything back.
-     * The username is auto-generated from the guru's name (lowercase, with
-     * honorifics stripped and a numeric suffix appended when the chosen
-     * username is already taken). The admin-supplied password is hashed
-     * before storage. The created user is `is_active = true` by default.
+     * Ketiga proses tulis (User, Guru, guru_mengajar) dibungkus dalam satu transaksi database
+     * sehingga kegagalan di bagian mana pun akan membatalkan (rollback) seluruhnya.
+     * Username dibuat otomatis dari nama guru (huruf kecil, gelar dihilangkan, dan akhiran numerik
+     * ditambahkan jika username pilihan sudah digunakan). Password yang diinput oleh admin di-hash
+     * sebelum disimpan. Pengguna yang dibuat berstatus aktif (`is_active = true`) secara default.
      *
-     * @param  GuruRequest  $request  The validated form-request (includes `password`).
-     * @return RedirectResponse Redirect to the guru index with a success flash message containing the new username.
+     * @param  GuruRequest  $request  Form request yang telah divalidasi (termasuk `password`).
+     * @return RedirectResponse Pengalihan ke indeks guru dengan pesan sukses flash berisi username baru.
      */
     public function store(GuruRequest $request): RedirectResponse
     {
@@ -128,10 +126,10 @@ class GuruController extends Controller
     }
 
     /**
-     * Show the form to edit an existing guru.
+     * Menampilkan form untuk mengedit guru yang sudah ada.
      *
-     * @param  Guru  $guru  The guru to edit, resolved by route-model binding.
-     * @return Response Inertia response rendering `admin/guru/edit`.
+     * @param  Guru  $guru  Data guru yang akan diedit, di-resolve oleh route-model binding.
+     * @return Response Respon Inertia yang merender view `admin/guru/edit`.
      */
     public function edit(Guru $guru): Response
     {
@@ -149,17 +147,16 @@ class GuruController extends Controller
     }
 
     /**
-     * Update an existing guru record and re-sync their mengajar combinations.
+     * Memperbarui data guru yang sudah ada dan mensinkronisasikan ulang kombinasi mengajar mereka.
      *
-     * Both writes are wrapped in a database transaction. The sync helper
-     * deletes the previous `guru_mengajar` rows and recreates them from the
-     * submitted (deduplicated) pairs. The associated login account is not
-     * touched; password resets and account activation are handled in
+     * Kedua proses tulis dibungkus dalam transaksi database. Fungsi pembantu sync akan menghapus
+     * baris `guru_mengajar` sebelumnya dan membuatnya kembali dari pasangan data (yang sudah dideduplikasi)
+     * yang dikirimkan. Akun login terkait tidak diubah; reset password dan aktivasi akun ditangani di
      * `Admin/AccountController`.
      *
-     * @param  GuruRequest  $request  The validated form-request.
-     * @param  Guru  $guru  The guru to update, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the guru index with a success flash message.
+     * @param  GuruRequest  $request  Form request yang telah divalidasi.
+     * @param  Guru  $guru  Data guru yang akan diperbarui, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks guru dengan pesan sukses flash.
      */
     public function update(GuruRequest $request, Guru $guru): RedirectResponse
     {
@@ -172,14 +169,13 @@ class GuruController extends Controller
     }
 
     /**
-     * Replace the `guru_mengajar` rows for a guru with the supplied pairs.
+     * Mengganti baris data `guru_mengajar` untuk seorang guru dengan pasangan data yang diberikan.
      *
-     * Existing rows are deleted first; new rows are then inserted in a
-     * deduplicated manner (the `(kelas_id, mata_pelajaran_id)` pair must be
-     * unique for a given guru).
+     * Baris data yang ada akan dihapus terlebih dahulu; baris data baru kemudian dimasukkan secara
+     * dideduplikasi (pasangan `(kelas_id, mata_pelajaran_id)` harus unik untuk guru tertentu).
      *
-     * @param  Guru  $guru  The guru whose mengajar rows will be replaced.
-     * @param  array<int, array{kelas_id: int, mata_pelajaran_id: int}>  $mengajar  The new mengajar pairs (using FK ids).
+     * @param  Guru  $guru  Guru yang baris mengajarnya akan diganti.
+     * @param  array<int, array{kelas_id: int, mata_pelajaran_id: int}>  $mengajar  Pasangan mengajar baru (menggunakan ID foreign key).
      */
     private function syncMengajar(Guru $guru, array $mengajar): void
     {
@@ -200,13 +196,12 @@ class GuruController extends Controller
     }
 
     /**
-     * Delete a guru record. Refuses with an error flash if the guru has
-     * ever input nilai (database-level RESTRICT on the foreign key), and
-     * otherwise cascades the deletion to the linked user account and
-     * mengajar combinations inside a transaction.
+     * Menghapus data guru. Menolak dengan pesan kesalahan flash jika guru tersebut sudah pernah
+     * menginput nilai (karena RESTRICT pada level database untuk foreign key), dan jika tidak,
+     * akan menghapus akun user terkait secara berantai serta kombinasi mengajar mereka dalam satu transaksi.
      *
-     * @param  Guru  $guru  The guru to delete, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the guru index with a success or error flash message.
+     * @param  Guru  $guru  Guru yang akan dihapus, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks guru dengan pesan sukses atau kesalahan flash.
      */
     public function destroy(Guru $guru): RedirectResponse
     {
@@ -224,20 +219,19 @@ class GuruController extends Controller
     }
 
     /**
-     * Generate a unique `users.username` from the guru's display name.
+     * Membuat `users.username` yang unik dari nama tampilan guru.
      *
-     * Strategy (mirrors `DatabaseSeeder::generateGuruUsername`):
-     *   - lowercase the input
-     *   - split on whitespace
-     *   - drop honorifics (`ibu`, `pak`, `bu`, `bpk`, `bapak`, `ibu.`)
-     *   - concatenate the remaining tokens
+     * Strategi (menyerupai `DatabaseSeeder::generateGuruUsername`):
+     *   - ubah input menjadi huruf kecil
+     *   - pisahkan berdasarkan spasi
+     *   - hapus panggilan penghormatan (`ibu`, `pak`, `bu`, `bpk`, `bapak`, `ibu.`)
+     *   - gabungkan token yang tersisa
      *
-     * If the resulting base is already taken, append `2`, `3`, ... until
-     * a free username is found. Falls back to `guru` when the cleaned
-     * name is empty.
+     * Jika nama dasar yang dihasilkan sudah digunakan, tambahkan `2`, `3`, ... hingga
+     * ditemukan username yang kosong. Menggunakan default `guru` jika nama bersih bernilai kosong.
      *
-     * @param  string  $namaGuru  The display name to derive a username from.
-     * @return string The unique username to insert.
+     * @param  string  $namaGuru  Nama tampilan guru yang akan dijadikan dasar username.
+     * @return string Username unik yang akan disimpan.
      */
     private function generateUniqueUsername(string $namaGuru): string
     {
@@ -263,15 +257,14 @@ class GuruController extends Controller
     }
 
     /**
-     * Build a nested `[kelas_id => [mapel_id, ...]]` map describing
-     * which mata-pelajaran each kelas currently allows, based on the
-     * `kelas_mata_pelajaran` pivot table.
+     * Membangun peta bersarang `[kelas_id => [mapel_id, ...]]` yang menjelaskan
+     * mata pelajaran mana saja yang diperbolehkan untuk setiap kelas saat ini,
+     * berdasarkan tabel pivot `kelas_mata_pelajaran`.
      *
-     * Used to populate the dependent mapel dropdown in the guru
-     * create/edit forms. The map is keyed by `kelas.id` so the form can
-     * submit FK ids directly.
+     * Digunakan untuk mengisi dropdown mapel dependen pada form buat/edit guru.
+     * Peta menggunakan kunci `kelas.id` sehingga form dapat mengirimkan ID foreign key secara langsung.
      *
-     * @return array<int, array<int, int>> Map keyed by `kelas.id` (cast to int), values are sorted `mata_pelajaran.id`.
+     * @return array<int, array<int, int>> Peta dengan kunci `kelas.id` (di-cast ke int), nilainya adalah ID `mata_pelajaran` yang terurut.
      */
     private function buildMapelByKelas(): array
     {

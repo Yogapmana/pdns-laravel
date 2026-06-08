@@ -1,4 +1,6 @@
 import { BookOpenCheck, Hash, Printer, School, User } from 'lucide-react';
+import { index as siswaNilaiIndex } from '@/routes/siswa/nilai';
+import { pdf as siswaRaporPdf } from '@/routes/siswa/rapor';
 import {
     Container,
     PageHeader,
@@ -56,7 +58,7 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
                     icon={<BookOpenCheck />}
                     title="Lihat Nilai Anda"
                     description="Cek rincian nilai tugas, UTS, UAS, nilai akhir, dan status kelulusan untuk semua mata pelajaran."
-                    href="/siswa/nilai"
+                    href={siswaNilaiIndex.url()}
                     variant="primary"
                 />
 
@@ -65,7 +67,7 @@ export default function SiswaDashboard({ siswa, has_nilai }: Props) {
                         icon={<Printer />}
                         title="Cetak Rapor Digital"
                         description="Unduh rapor digital Anda dalam format PDF siap cetak. Sudah termasuk tabel nilai, ringkasan kelulusan, dan kolom tanda tangan."
-                        href="/siswa/rapor/pdf"
+                        href={siswaRaporPdf.url()}
                         variant="success"
                         external
                     />

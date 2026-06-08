@@ -17,21 +17,20 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Controller for the admin "Buka Kunci Nilai" (unlock-nilai) intervention.
+ * Controller untuk intervensi admin "Buka Kunci Nilai" (unlock-nilai).
  *
- * Lists all currently-Final `Nilai` groupings (by guru + kelas + mata
- * pelajaran) and lets an admin revert one of them back to `Draft` while
- * recording the action (admin, reason, affected count) to
- * `nilai_unlock_log` for audit.
+ * Menampilkan semua pengelompokan `Nilai` yang saat ini berstatus Final (berdasarkan guru + kelas + mata
+ * pelajaran) dan memungkinkan admin mengembalikan salah satunya kembali ke status `Draft` sambil
+ * mencatat tindakan tersebut (admin, alasan, jumlah baris terdampak) ke tabel `nilai_unlock_log` untuk audit.
  */
 class NilaiController extends Controller
 {
     /**
-     * Render the unlock page: a paginated table of Final combos (15/page)
-     * + the latest 10 unlock-log entries.
+     * Merender halaman unlock: tabel ter-paginasi untuk kombinasi Final (15/halaman)
+     * + 10 entri log unlock terbaru.
      *
-     * @param  Request  $request  Current HTTP request; reads `search`, `kelas`, and `page` query params.
-     * @return Response Inertia response rendering `admin/nilai/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `search`, `kelas`, dan `page`.
+     * @return Response Respon Inertia yang merender view `admin/nilai/index`.
      */
     public function index(Request $request): Response
     {
@@ -115,15 +114,15 @@ class NilaiController extends Controller
     }
 
     /**
-     * Revert a single (guru, kelas, mata_pelajaran) combo from `Final`
-     * back to `Draft`, logging the action.
+     * Mengembalikan status satu kombinasi (guru, kelas, mata_pelajaran) dari `Final`
+     * kembali ke `Draft`, dan mencatat tindakan tersebut.
      *
-     * Validates the request payload (reason is mandatory, min 10 chars),
-     * then inside a transaction: counts and updates the matching rows,
-     * then writes a `NilaiUnlockLog` entry.
+     * Memvalidasi data request (alasan bersifat wajib, minimal 10 karakter),
+     * kemudian di dalam transaksi: menghitung dan memperbarui baris data yang cocok,
+     * lalu menulis entri baru ke `NilaiUnlockLog`.
      *
-     * @param  Request  $request  Current HTTP request carrying the target combo + reason.
-     * @return RedirectResponse Redirect back with a success flash.
+     * @param  Request  $request  Request HTTP saat ini yang membawa kombinasi target + alasan.
+     * @return RedirectResponse Pengalihan kembali dengan pesan flash sukses.
      */
     public function unlock(Request $request): RedirectResponse
     {

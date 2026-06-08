@@ -9,13 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Eloquent model representing a single nilai entry.
+ * Model Eloquent yang merepresentasikan satu entri nilai.
  *
- * Backed by the `nilai` table. Each row is the (tugas, UTS, UAS) tuple
- * for a single siswa in a single (kelas, mata_pelajaran) pair, input by
- * a single guru. The `status_lulus` and `status_validasi` flags control
- * whether the value is read-only (Final) and whether the siswa passed
- * (Lulus) per the KKM threshold.
+ * Didukung oleh tabel `nilai`. Setiap baris data berisi tuple (tugas, UTS, UAS)
+ * untuk seorang siswa dalam pasangan (kelas, mata_pelajaran) tertentu, yang diinput oleh
+ * seorang guru. Flag `status_lulus` dan `status_validasi` mengontrol apakah
+ * nilai tersebut bersifat read-only (Final) dan apakah siswa tersebut lulus
+ * (Lulus) berdasarkan ambang batas KKM.
  *
  * @property int $id
  * @property string $nis
@@ -62,9 +62,9 @@ class Nilai extends Model
     public const KKM = 70.0;
 
     /**
-     * Attribute casts applied to the underlying table columns.
+     * Cast atribut yang diterapkan pada kolom tabel database.
      *
-     * @return array<string, string> The cast definitions.
+     * @return array<string, string> Definisi cast atribut.
      */
     protected function casts(): array
     {
@@ -77,15 +77,15 @@ class Nilai extends Model
     }
 
     /**
-     * Compute the weighted final score (Nilai Akhir) for a single siswa.
+     * Menghitung nilai akhir berbobot untuk seorang siswa.
      *
-     * Uses the configured `BOBOT_TUGAS` / `BOBOT_UTS` / `BOBOT_UAS` weights
-     * and rounds the result to 2 decimal places.
+     * Menggunakan bobot konfigurasi `BOBOT_TUGAS` / `BOBOT_UTS` / `BOBOT_UAS`
+     * dan membulatkan hasilnya hingga 2 tempat desimal.
      *
-     * @param  float  $tugas  The tugas score (0-100).
-     * @param  float  $uts  The UTS score (0-100).
-     * @param  float  $uas  The UAS score (0-100).
-     * @return float The computed nilai akhir, rounded to 2 decimals.
+     * @param  float  $tugas  Nilai tugas (0-100).
+     * @param  float  $uts  Nilai UTS (0-100).
+     * @param  float  $uas  Nilai UAS (0-100).
+     * @return float Nilai akhir yang dihitung, dibulatkan ke 2 desimal.
      */
     public static function hitungNilaiAkhir(float $tugas, float $uts, float $uas): float
     {
@@ -96,10 +96,10 @@ class Nilai extends Model
     }
 
     /**
-     * Resolve the pass/fail label for a given nilai akhir.
+     * Menentukan label kelulusan (lulus/tidak lulus) berdasarkan nilai akhir.
      *
-     * @param  float  $nilaiAkhir  The final score, typically produced by `hitungNilaiAkhir()`.
-     * @return string Either `LULUS` or `TIDAK_LULUS`, depending on the KKM threshold.
+     * @param  float  $nilaiAkhir  Nilai akhir, biasanya didapat dari `hitungNilaiAkhir()`.
+     * @return string Antara `LULUS` atau `TIDAK_LULUS`, tergantung ambang batas KKM.
      */
     public static function tentukanKelulusan(float $nilaiAkhir): string
     {
@@ -107,10 +107,10 @@ class Nilai extends Model
     }
 
     /**
-     * Validate that a single component score is within the allowed 0-100 range.
+     * Memvalidasi apakah skor komponen berada di rentang 0-100 yang diperbolehkan.
      *
-     * @param  float  $nilai  The score to validate.
-     * @return bool `true` when 0 ≤ `$nilai` ≤ 100, `false` otherwise.
+     * @param  float  $nilai  Nilai yang akan divalidasi.
+     * @return bool `true` jika 0 ≤ `$nilai` ≤ 100, sebaliknya `false`.
      */
     public static function validasiNilai(float $nilai): bool
     {
@@ -118,9 +118,9 @@ class Nilai extends Model
     }
 
     /**
-     * The siswa this nilai row belongs to.
+     * Siswa pemilik baris nilai ini.
      *
-     * @return BelongsTo<Siswa, Nilai>
+     * @return BelongsTo<Siswa, Nilai> Relasi ke model Siswa.
      */
     public function siswa(): BelongsTo
     {
@@ -128,9 +128,9 @@ class Nilai extends Model
     }
 
     /**
-     * The guru who input this nilai row.
+     * Guru yang menginput baris nilai ini.
      *
-     * @return BelongsTo<Guru, Nilai>
+     * @return BelongsTo<Guru, Nilai> Relasi ke model Guru.
      */
     public function guru(): BelongsTo
     {
@@ -138,9 +138,9 @@ class Nilai extends Model
     }
 
     /**
-     * The kelas this nilai row belongs to.
+     * Kelas tempat baris nilai ini bernaung.
      *
-     * @return BelongsTo<Kelas, Nilai>
+     * @return BelongsTo<Kelas, Nilai> Relasi ke model Kelas.
      */
     public function kelas(): BelongsTo
     {
@@ -148,9 +148,9 @@ class Nilai extends Model
     }
 
     /**
-     * The mata pelajaran this nilai row belongs to.
+     * Mata pelajaran tempat baris nilai ini bernaung.
      *
-     * @return BelongsTo<MataPelajaran, Nilai>
+     * @return BelongsTo<MataPelajaran, Nilai> Relasi ke model MataPelajaran.
      */
     public function mataPelajaran(): BelongsTo
     {

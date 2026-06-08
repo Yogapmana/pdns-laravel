@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { Plus, Power, KeyRound, Search, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { index, toggleActive as toggleActiveRoute, resetPassword, createAdmin } from '@/routes/admin/accounts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +49,7 @@ const ROLE_VARIANTS: Record<string, 'default' | 'success' | 'info'> = {
 };
 
 function toggleActive(a: Account) {
-    router.patch(`/admin/akun/${a.id}/toggle-active`);
+    router.patch(toggleActiveRoute.url(a.id));
 }
 
 export default function AccountsIndex({ accounts, filters }: Props) {
@@ -60,7 +61,7 @@ export default function AccountsIndex({ accounts, filters }: Props) {
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/akun',
+        url: index.url(),
         initialFilters: { search: filters.search, role: filters.role },
         only: ['accounts', 'filters'],
     });
@@ -74,7 +75,7 @@ export default function AccountsIndex({ accounts, filters }: Props) {
         }
 
         router.post(
-            `/admin/akun/${resetTarget.id}/reset-password`,
+            resetPassword.url(resetTarget.id),
             { password: newPassword },
             {
                 onSuccess: () => {
@@ -91,7 +92,7 @@ export default function AccountsIndex({ accounts, filters }: Props) {
                 title="Manajemen Akun"
                 description={`${accounts.total} akun`}
                 action={
-                    <Link href="/admin/akun/create-admin">
+                    <Link href={createAdmin.url()}>
                         <Button>
                             <Plus className="h-4 w-4" />
                             Buat Akun Admin

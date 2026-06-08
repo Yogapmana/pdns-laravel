@@ -9,17 +9,17 @@ use OpenSpout\Writer\Common\Entity\Sheet;
 use OpenSpout\Writer\XLSX\Writer;
 
 /**
- * Thin wrapper around `openspout/openspout` to produce a single-sheet
- * XLSX (Office Open XML SpreadsheetML) download.
+ * Wrapper tipis di sekitar `openspout/openspout` untuk menghasilkan unduhan single-sheet
+ * XLSX (Office Open XML SpreadsheetML).
  *
- * Why a wrapper:
- *  - Centralises the response headers (`Content-Type`, `Content-Disposition`,
- *    `Content-Length`, cache control) in one place.
- *  - Sanitises the supplied filename (only `[A-Za-z0-9_-]` allowed).
- *  - Lazily constructs the OpenSpout writer so callers can simply
- *    `addRow()` / `addRows()` and then call `download()` or `toString()`.
+ * Mengapa menggunakan wrapper:
+ *  - Memusatkan response header (`Content-Type`, `Content-Disposition`,
+ *    `Content-Length`, kontrol cache) di satu tempat.
+ *  - Membersihkan nama file yang diberikan (hanya `[A-Za-z0-9_-]` yang diizinkan).
+ *  - Membangun writer OpenSpout secara lazy (ditunda) sehingga pemanggil dapat dengan mudah
+ *    memanggil `addRow()` / `addRows()` kemudian memanggil `download()` atau `toString()`.
  *
- * Usage:
+ * Penggunaan:
  *
  *     $writer = new XlsxWriter();
  *     $writer->setTitle('Laporan X-A');
@@ -35,10 +35,10 @@ class XlsxWriter
     private ?string $title = null;
 
     /**
-     * Set the human-readable title used for the worksheet tab name.
+     * Menetapkan judul yang mudah dibaca manusia untuk nama tab worksheet.
      *
-     * @param  string  $title  The title string (will be HTML-escaped by OpenSpout).
-     * @return self Allows fluent chaining.
+     * @param  string  $title  String judul (akan di-HTML-escape oleh OpenSpout).
+     * @return self Memungkinkan fluent chaining.
      */
     public function setTitle(string $title): self
     {
@@ -48,10 +48,10 @@ class XlsxWriter
     }
 
     /**
-     * Append a single row to the workbook.
+     * Menambahkan satu baris ke workbook.
      *
-     * @param  array<int, string|int|float|null>  $row  The cell values for the new row.
-     * @return self Allows fluent chaining.
+     * @param  array<int, string|int|float|null>  $row  Nilai sel untuk baris baru.
+     * @return self Memungkinkan fluent chaining.
      */
     public function addRow(array $row): self
     {
@@ -61,10 +61,10 @@ class XlsxWriter
     }
 
     /**
-     * Append multiple rows in one call.
+     * Menambahkan banyak baris sekaligus dalam satu panggilan.
      *
-     * @param  iterable<int, array<int, string|int|float|null>>  $rows  Iterable of row arrays.
-     * @return self Allows fluent chaining.
+     * @param  iterable<int, array<int, string|int|float|null>>  $rows  Iterable dari array baris data.
+     * @return self Memungkinkan fluent chaining.
      */
     public function addRows(iterable $rows): self
     {
@@ -76,13 +76,13 @@ class XlsxWriter
     }
 
     /**
-     * Stream the workbook as an HTTP download and terminate the script.
+     * Mengalirkan (stream) workbook sebagai unduhan HTTP dan mengakhiri eksekusi skrip.
      *
-     * Filenames are sanitised to `[A-Za-z0-9_-]`; the `.xlsx` extension is
-     * appended automatically. Sends the standard `Content-Type` and
-     * `Content-Disposition` headers expected by browsers.
+     * Nama file dibersihkan menjadi `[A-Za-z0-9_-]`; ekstensi `.xlsx` akan
+     * ditambahkan secara otomatis. Mengirim header standar `Content-Type` dan
+     * `Content-Disposition` yang diharapkan oleh browser.
      *
-     * @param  string  $filename  The base filename (no extension).
+     * @param  string  $filename  Nama file dasar (tanpa ekstensi).
      */
     public function download(string $filename): void
     {
@@ -101,11 +101,11 @@ class XlsxWriter
     }
 
     /**
-     * Build the workbook in memory and return the binary XLSX payload.
+     * Membangun workbook di memori dan mengembalikan payload biner XLSX.
      *
-     * @return string The raw `.xlsx` bytes, ready to be written to a file or streamed.
+     * @return string Byte mentah `.xlsx` yang siap ditulis ke file atau dialirkan (streamed).
      *
-     * @throws \RuntimeException When the OpenSpout writer fails to open the temporary file.
+     * @throws \RuntimeException Ketika writer OpenSpout gagal membuka file sementara.
      */
     public function toString(): string
     {

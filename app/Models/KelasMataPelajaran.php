@@ -9,15 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Eloquent model representing the membership of a single
- * (kelas, mata_pelajaran) pair in the `kelas_mata_pelajaran` pivot table.
+ * Model Eloquent yang merepresentasikan keanggotaan satu pasangan
+ * (kelas, mata_pelajaran) di tabel pivot `kelas_mata_pelajaran`.
  *
- * The table holds the master list of "which subjects are valid for which
- * class". A row here is required before an admin can assign a guru to
- * that (kelas, mata_pelajaran) pair in `guru_mengajar`. The `kelas_id`
- * and `mata_pelajaran_id` columns are FKs to the `kelas` and
- * `mata_pelajaran` master tables, with `ON DELETE CASCADE` so deleting a
- * master automatically cleans its pivot entries.
+ * Tabel ini menyimpan daftar master mengenai "mata pelajaran apa saja yang valid untuk kelas
+ * mana". Satu baris data di tabel ini diperlukan sebelum admin dapat menugaskan guru ke
+ * pasangan (kelas, mata_pelajaran) tersebut di tabel `guru_mengajar`. Kolom `kelas_id`
+ * dan `mata_pelajaran_id` merupakan Foreign Key ke tabel master `kelas` dan
+ * `mata_pelajaran` dengan `ON DELETE CASCADE` sehingga penghapusan master akan
+ * secara otomatis membersihkan entri pivot-nya.
  *
  * @property int $id
  * @property int $kelas_id
@@ -29,9 +29,9 @@ class KelasMataPelajaran extends Model
     protected $table = 'kelas_mata_pelajaran';
 
     /**
-     * The kelas this pivot row belongs to.
+     * Kelas tempat baris pivot ini bernaung.
      *
-     * @return BelongsTo<Kelas, KelasMataPelajaran>
+     * @return BelongsTo<Kelas, KelasMataPelajaran> Relasi ke model Kelas.
      */
     public function kelas(): BelongsTo
     {
@@ -39,9 +39,9 @@ class KelasMataPelajaran extends Model
     }
 
     /**
-     * The mata pelajaran this pivot row belongs to.
+     * Mata pelajaran tempat baris pivot ini bernaung.
      *
-     * @return BelongsTo<MataPelajaran, KelasMataPelajaran>
+     * @return BelongsTo<MataPelajaran, KelasMataPelajaran> Relasi ke model MataPelajaran.
      */
     public function mataPelajaran(): BelongsTo
     {

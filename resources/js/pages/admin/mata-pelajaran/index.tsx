@@ -16,6 +16,7 @@ import { PaginationFooter } from '@/components/ui/pagination';
 import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
+import { index, create, edit, destroy as destroyRoute } from '@/routes/admin/mata-pelajaran';
 
 type MapelItem = {
     id: number;
@@ -46,7 +47,7 @@ function destroy(id: number, nama: string) {
         return;
     }
 
-    router.delete(`/admin/mata-pelajaran/${id}`);
+    router.delete(destroyRoute.url(id));
 }
 
 export default function MataPelajaranIndex({ mataPelajaran, search }: Props) {
@@ -58,7 +59,7 @@ export default function MataPelajaranIndex({ mataPelajaran, search }: Props) {
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/mata-pelajaran',
+        url: index.url(),
         initialFilters: { q: search },
         only: ['mataPelajaran', 'search'],
     });
@@ -69,7 +70,7 @@ export default function MataPelajaranIndex({ mataPelajaran, search }: Props) {
                 title="Manajemen Mata Pelajaran"
                 description={`${mataPelajaran.total} Mata Pelajaran`}
                 action={
-                    <Link href="/admin/mata-pelajaran/create">
+                    <Link href={create.url()}>
                         <Button>
                             <Plus className="h-4 w-4" />
                             Tambah Mata Pelajaran
@@ -180,7 +181,7 @@ export default function MataPelajaranIndex({ mataPelajaran, search }: Props) {
                                         <td className="px-4 py-3 text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 <Link
-                                                    href={`/admin/mata-pelajaran/${m.id}/edit`}
+                                                    href={edit.url({ id: m.id })}
                                                 >
                                                     <button
                                                         type="button"

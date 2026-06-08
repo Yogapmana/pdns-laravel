@@ -1,4 +1,6 @@
 import { router } from '@inertiajs/react';
+import { preview as previewRoute } from '@/routes/admin/reports';
+import { pdf as exportPdf, csv as exportCsv, html as exportHtml } from '@/routes/admin/reports/export';
 import {
     Search,
     FileDown,
@@ -90,7 +92,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
             return;
         }
 
-        router.get('/admin/laporan/preview', {
+        router.get(previewRoute.url(), {
             kelas: selectedKelas,
             mata_pelajaran: selectedMapel,
             sort,
@@ -279,7 +281,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
 
                 <Button
                     onClick={() =>
-                        exportTo('/admin/laporan/export/pdf')
+                        exportTo(exportPdf.url())
                     }
                     disabled={selectedKelas.length === 0}
                     variant="danger"
@@ -290,7 +292,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                 </Button>
                 <Button
                     onClick={() =>
-                        exportTo('/admin/laporan/export/csv')
+                        exportTo(exportCsv.url())
                     }
                     disabled={selectedKelas.length === 0}
                     variant="success"
@@ -301,7 +303,7 @@ export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
                 </Button>
                 <Button
                     onClick={() =>
-                        exportTo('/admin/laporan/export/html')
+                        exportTo(exportHtml.url())
                     }
                     disabled={selectedKelas.length === 0}
                     variant="outline"

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
+import { index, update } from '@/routes/admin/siswa';
+import { create as createKelas } from '@/routes/admin/kelas';
 
 type Props = {
     siswa: { nis: string; nama_siswa: string; kelas_id: number; kelas_nama?: string };
@@ -19,7 +21,7 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/siswa" className="text-muted-foreground hover:text-foreground">
+                <Link href={index.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader title="Edit Siswa" description={`NIS: ${siswa.nis} (tidak dapat diubah)`} />
@@ -27,7 +29,7 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
 
             <Card className="max-w-2xl">
                 <CardContent>
-                    <Form action={`/admin/siswa/${siswa.nis}`} method="put" className="space-y-4">
+                    <Form action={update.url(siswa.nis)} method="put" className="space-y-4">
                         {({ processing }) => (
                             <>
                                 <div>
@@ -56,7 +58,7 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                                     </Select>
                                     <p className="text-xs text-muted-foreground mt-1">
                                         Belum ada kelas yang sesuai?{' '}
-                                        <Link href="/admin/kelas/create" className="text-primary hover:underline">
+                                        <Link href={createKelas.url()} className="text-primary hover:underline">
                                             Tambah kelas baru
                                         </Link>
                                     </p>
@@ -68,7 +70,7 @@ export default function SiswaEdit({ siswa, daftar_kelas }: Props) {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/siswa">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

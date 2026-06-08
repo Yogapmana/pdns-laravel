@@ -15,10 +15,10 @@ use Inertia\Response;
 class MataPelajaranController extends Controller
 {
     /**
-     * Display the paginated mata-pelajaran list with a search filter.
+     * Menampilkan daftar mata pelajaran ter-paginasi dengan filter pencarian.
      *
-     * @param  Request  $request  Current HTTP request; reads the `q` query parameter.
-     * @return Response Inertia response rendering `admin/mata-pelajaran/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `q`.
+     * @return Response Respon Inertia yang merender view `admin/mata-pelajaran/index`.
      */
     public function index(Request $request): Response
     {
@@ -38,9 +38,9 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Show the form to create a new mata pelajaran.
+     * Menampilkan form untuk membuat mata pelajaran baru.
      *
-     * @return Response Inertia response rendering `admin/mata-pelajaran/create`.
+     * @return Response Respon Inertia yang merender view `admin/mata-pelajaran/create`.
      */
     public function create(): Response
     {
@@ -48,10 +48,10 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Persist a new mata pelajaran record.
+     * Menyimpan data mata pelajaran baru.
      *
-     * @param  MataPelajaranRequest  $request  The validated form-request.
-     * @return RedirectResponse Redirect to the mata-pelajaran index with a success flash message.
+     * @param  MataPelajaranRequest  $request  Form request yang telah divalidasi.
+     * @return RedirectResponse Pengalihan ke indeks mata pelajaran dengan pesan sukses flash.
      */
     public function store(MataPelajaranRequest $request): RedirectResponse
     {
@@ -61,10 +61,10 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Show the form to edit an existing mata pelajaran.
+     * Menampilkan form untuk mengedit mata pelajaran yang sudah ada.
      *
-     * @param  MataPelajaran  $mata_pelajaran  The mata pelajaran to edit, resolved by route-model binding.
-     * @return Response Inertia response rendering `admin/mata-pelajaran/edit`.
+     * @param  MataPelajaran  $mata_pelajaran  Mata pelajaran yang akan diedit, di-resolve oleh route-model binding.
+     * @return Response Respon Inertia yang merender view `admin/mata-pelajaran/edit`.
      */
     public function edit(MataPelajaran $mata_pelajaran): Response
     {
@@ -74,11 +74,11 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Update an existing mata pelajaran record.
+     * Memperbarui data mata pelajaran yang sudah ada.
      *
-     * @param  MataPelajaranRequest  $request  The validated form-request.
-     * @param  MataPelajaran  $mata_pelajaran  The mata pelajaran to update, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the mata-pelajaran index with a success flash message.
+     * @param  MataPelajaranRequest  $request  Form request yang telah divalidasi.
+     * @param  MataPelajaran  $mata_pelajaran  Mata pelajaran yang akan diperbarui, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks mata pelajaran dengan pesan sukses flash.
      */
     public function update(MataPelajaranRequest $request, MataPelajaran $mata_pelajaran): RedirectResponse
     {
@@ -88,11 +88,11 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Delete a mata pelajaran record. Refuses with an error flash if the
-     * mata pelajaran is still referenced by guru-mengajar or nilai rows.
+     * Menghapus data mata pelajaran. Menolak dengan pesan kesalahan flash jika mata pelajaran
+     * tersebut masih direferensikan oleh baris data guru_mengajar atau nilai.
      *
-     * @param  MataPelajaran  $mata_pelajaran  The mata pelajaran to delete, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the mata-pelajaran index with a success or error flash message.
+     * @param  MataPelajaran  $mata_pelajaran  Mata pelajaran yang akan dihapus, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks mata pelajaran dengan pesan sukses atau kesalahan flash.
      */
     public function destroy(MataPelajaran $mata_pelajaran): RedirectResponse
     {

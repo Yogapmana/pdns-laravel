@@ -5,6 +5,7 @@ import {
     Printer,
     FileSpreadsheet,
 } from 'lucide-react';
+import { pdf as siswaRaporPdf } from '@/routes/siswa/rapor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardHeader } from '@/components/ui/card';
@@ -44,7 +45,7 @@ export default function SiswaNilai({ nilai, mapel_list, guru_map }: Props) {
                 {hasData && (
                     <Button asChild className="flex-shrink-0">
                         <a
-                            href="/siswa/rapor/pdf"
+                            href={siswaRaporPdf.url()}
                             target="_blank"
                             rel="noopener noreferrer"
                         >

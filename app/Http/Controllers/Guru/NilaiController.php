@@ -20,15 +20,15 @@ use Inertia\Response;
 class NilaiController extends Controller
 {
     /**
-     * Display the guru's nilai-input page for a single (kelas, mata pelajaran) pair.
+     * Menampilkan halaman input nilai guru untuk pasangan (kelas, mata pelajaran) tertentu.
      *
-     * Restricts the available kelas and mata-pelajaran options to the combos
-     * present in the guru's `guru_mengajar` rows. When a valid combo is
-     * selected, loads the siswa and any pre-existing `Nilai` rows so the form
-     * is pre-populated for editing.
+     * Membatasi opsi kelas dan mata pelajaran yang tersedia hanya pada kombinasi yang ada
+     * di baris data `guru_mengajar` guru bersangkutan. Ketika kombinasi valid dipilih,
+     * kueri memuat data siswa dan baris data `Nilai` yang sudah ada agar form terisi
+     * untuk proses pengeditan.
      *
-     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran` query parameters.
-     * @return Response Inertia response rendering `guru/nilai/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `kelas` dan `mata_pelajaran`.
+     * @return Response Respon Inertia yang merender view `guru/nilai/index`.
      */
     public function index(Request $request): Response
     {
@@ -119,16 +119,15 @@ class NilaiController extends Controller
     }
 
     /**
-     * Persist (create or update) one or more `Nilai` rows for the guru.
+     * Menyimpan (membuat atau memperbarui) satu atau beberapa baris `Nilai` untuk guru.
      *
-     * Validates the payload, aborts with 403 if the guru does not teach the
-     * requested (kelas, mata_pelajaran) pair, then performs the writes inside
-     * a transaction. Each row's `nilai_akhir` and `status_lulus` are
-     * recomputed via the `Nilai` static helpers. Status is always set to
-     * `Draft` on save.
+     * Memvalidasi payload, membatalkan request dengan status 403 jika guru tersebut tidak mengajar
+     * pasangan (kelas, mata_pelajaran) yang diminta, kemudian melakukan penulisan data di dalam
+     * transaksi database. Kolom `nilai_akhir` dan `status_lulus` untuk setiap baris dihitung ulang
+     * melalui helper statis model `Nilai`. Status validasi akan selalu diset menjadi `Draft` pada saat disimpan.
      *
-     * @param  Request  $request  Current HTTP request carrying the bulk nilai payload.
-     * @return RedirectResponse Redirect back with a success flash message.
+     * @param  Request  $request  Request HTTP saat ini yang membawa payload nilai massal.
+     * @return RedirectResponse Pengalihan kembali dengan pesan sukses flash.
      */
     public function save(Request $request): RedirectResponse
     {
@@ -194,11 +193,12 @@ class NilaiController extends Controller
     }
 
     /**
-     * Lock all of the guru's non-empty `Nilai` rows for a given
-     * (kelas, mata_pelajaran) pair by setting `status_validasi = Final`.
+     * Mengunci baris `Nilai` yang dipilih untuk pasangan (kelas, mata pelajaran) tertentu
+     * dengan menyetel `status_validasi = Final`. Hanya memengaruhi baris data yang tidak kosong
+     * dan cocok dengan daftar array `nis` yang diberikan.
      *
-     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran`.
-     * @return RedirectResponse Redirect back with a success flash message containing the number of affected rows.
+     * @param  Request  $request  Request HTTP saat ini; membaca `kelas_id`, `mata_pelajaran_id`, dan `nis` (array).
+     * @return RedirectResponse Pengalihan kembali dengan pesan flash sukses berisi jumlah baris yang terpengaruh.
      */
     public function validateFinal(Request $request): RedirectResponse
     {
@@ -207,6 +207,8 @@ class NilaiController extends Controller
         $validated = $request->validate([
             'kelas_id' => ['required', 'integer', 'exists:kelas,id'],
             'mata_pelajaran_id' => ['required', 'integer', 'exists:mata_pelajaran,id'],
+            'nis' => ['required', 'array', 'min:1'],
+            'nis.*' => ['string'],
         ]);
 
         if (! $guru->mengajarDiKelasMapelId((int) $validated['kelas_id'], (int) $validated['mata_pelajaran_id'])) {
@@ -216,6 +218,7 @@ class NilaiController extends Controller
         $updated = Nilai::where('id_guru', $guru->id)
             ->where('kelas_id', $validated['kelas_id'])
             ->where('mata_pelajaran_id', $validated['mata_pelajaran_id'])
+            ->whereIn('nis', $validated['nis'])
             ->whereNotNull('nilai_akhir')
             ->update(['status_validasi' => Nilai::STATUS_FINAL]);
 
@@ -223,14 +226,14 @@ class NilaiController extends Controller
     }
 
     /**
-     * Delete a single `Nilai` row owned by the guru.
+     * Menghapus satu baris `Nilai` milik guru bersangkutan.
      *
-     * Aborts with 403 if the row's `id_guru` does not match the guru
-     * associated with the authenticated user. Refuses to delete rows
-     * already in `Final` status (return an error flash instead).
+     * Membatalkan dengan status 403 jika kolom `id_guru` pada baris tersebut tidak cocok dengan
+     * guru yang terkait dengan pengguna yang sedang login. Menolak menghapus baris nilai yang
+     * sudah berstatus `Final` (mengembalikan pesan kesalahan flash).
      *
-     * @param  Nilai  $nilai  The nilai row to delete, resolved by route-model binding.
-     * @return RedirectResponse Redirect back with a success or error flash message.
+     * @param  Nilai  $nilai  Baris nilai yang akan dihapus, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan kembali dengan pesan sukses atau kesalahan flash.
      */
     public function destroy(Nilai $nilai): RedirectResponse
     {
@@ -250,13 +253,13 @@ class NilaiController extends Controller
     }
 
     /**
-     * Display the guru's rekapitulasi nilai page for a (kelas, mata pelajaran) pair.
+     * Menampilkan halaman rekapitulasi nilai guru untuk pasangan (kelas, mata pelajaran) tertentu.
      *
-     * Computes lulus / tidak_lulus / belum counts for the selected combination
-     * and returns a per-siswa row with the associated `Nilai` (or null).
+     * Menghitung jumlah lulus / tidak_lulus / belum untuk kombinasi terpilih
+     * dan mengembalikan data per baris siswa beserta `Nilai` terkait (atau null).
      *
-     * @param  Request  $request  Current HTTP request; reads `kelas` and `mata_pelajaran` query parameters.
-     * @return Response Inertia response rendering `guru/rekap/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `kelas` dan `mata_pelajaran`.
+     * @return Response Respon Inertia yang merender view `guru/rekap/index`.
      */
     public function rekap(Request $request): Response
     {

@@ -16,6 +16,7 @@ import { PaginationFooter } from '@/components/ui/pagination';
 import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
+import { index, create, edit, destroy as destroyRoute } from '@/routes/admin/kelas';
 
 type KelasItem = {
     id: number;
@@ -44,7 +45,7 @@ function destroy(id: number, nama: string) {
         return;
     }
 
-    router.delete(`/admin/kelas/${id}`);
+    router.delete(destroyRoute.url(id));
 }
 
 export default function KelasIndex({ kelas, search }: Props) {
@@ -56,7 +57,7 @@ export default function KelasIndex({ kelas, search }: Props) {
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/kelas',
+        url: index.url(),
         initialFilters: { q: search },
         only: ['kelas', 'search'],
     });
@@ -67,7 +68,7 @@ export default function KelasIndex({ kelas, search }: Props) {
                 title="Manajemen Kelas"
                 description={`${kelas.total} kelas`}
                 action={
-                    <Link href="/admin/kelas/create">
+                    <Link href={create.url()}>
                         <Button>
                             <Plus className="h-4 w-4" />
                             Tambah Kelas
@@ -178,7 +179,7 @@ export default function KelasIndex({ kelas, search }: Props) {
                                         <td className="px-4 py-3 text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 <Link
-                                                    href={`/admin/kelas/${k.id}/edit`}
+                                                    href={edit.url({ id: k.id })}
                                                 >
                                                     <button
                                                         type="button"

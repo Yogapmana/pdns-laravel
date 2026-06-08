@@ -13,13 +13,13 @@ use Illuminate\Http\Response;
 class RaporController extends Controller
 {
     /**
-     * Stream the authenticated siswa's personal rapor as a PDF download.
+     * Mengalirkan (stream) rapor pribadi siswa yang terautentikasi sebagai unduhan file PDF.
      *
-     * Only `Final` nilai rows are included — Draft values are kept
-     * hidden until the guru locks them, so the printed rapor matches
-     * what the siswa sees in the nilai page.
+     * Hanya baris nilai berstatus `Final` yang dimasukkan — nilai Draft disembunyikan
+     * sampai guru mengunci nilai tersebut, sehingga rapor yang dicetak cocok dengan
+     * apa yang dilihat siswa di halaman nilai.
      *
-     * @return Response A download response with `Content-Type: application/pdf` and a per-siswa filename.
+     * @return Response Respon unduhan dengan header `Content-Type: application/pdf` dan nama file per siswa.
      */
     public function pdf(): Response
     {
@@ -95,12 +95,11 @@ class RaporController extends Controller
     }
 
     /**
-     * Guess the current "tahun ajaran" string (e.g. `2025/2026`) based on
-     * the current month. Indonesian schools typically start the new tahun
-     * ajaran in July, so dates in the second half of the year use the
-     * current year as the start of the period.
+     * Menebak string "tahun ajaran" saat ini (contoh: `2025/2026`) berdasarkan bulan saat ini.
+     * Sekolah-sekolah di Indonesia biasanya memulai tahun ajaran baru di bulan Juli, sehingga
+     * tanggal di paruh kedua tahun akan menggunakan tahun saat ini sebagai awal periode.
      *
-     * @return string The formatted tahun ajaran (`YYYY/YYYY`).
+     * @return string Tahun ajaran yang diformat (`YYYY/YYYY`).
      */
     private function guessTahunAjaran(): string
     {
@@ -116,9 +115,9 @@ class RaporController extends Controller
     }
 
     /**
-     * Guess the active semester (Ganjil = Jul-Jan, Genap = Feb-Jun).
+     * Menebak semester yang sedang aktif (Ganjil = Jul-Jan, Genap = Feb-Jun).
      *
-     * @return string Either `Ganjil` or `Genap`.
+     * @return string Antara `Ganjil` atau `Genap`.
      */
     private function guessSemester(): string
     {
@@ -128,10 +127,10 @@ class RaporController extends Controller
     }
 
     /**
-     * Read the rapor-sized logo and return its base64 string for inline
-     * embedding in the PDF (avoids DomPDF remote/file path issues).
+     * Membaca file logo untuk ukuran rapor dan mengembalikan string base64 untuk disematkan
+     * secara inline di PDF (menghindari masalah path file/lokal pada DomPDF).
      *
-     * @return string|null The base64 payload, or null when the file is missing.
+     * @return string|null Data base64, atau null jika file tidak ditemukan.
      */
     private function getLogoBase64(): ?string
     {
@@ -145,9 +144,10 @@ class RaporController extends Controller
     }
 
     /**
-     * Compute the next kelas label (e.g. `X-A` -> `XI-A`, `XII-A` -> `LULUS`).
+     * Menghitung label kelas berikutnya (contoh: `X-A` -> `XI-A`, `XII-A` -> `LULUS`).
      *
-     * @return string The next kelas label, or `LULUS` for grade-12.
+     * @param  string|null  $kelas  Nama kelas saat ini.
+     * @return string Label kelas berikutnya, atau `LULUS` untuk kelas 12.
      */
     private function guessNextKelas(?string $kelas): string
     {

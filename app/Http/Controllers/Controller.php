@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 /**
- * Base controller class for all HTTP controllers in the application.
+ * Kelas base controller untuk semua HTTP controller di dalam aplikasi.
  *
- * Concrete controllers (Admin, Guru, Siswa namespaces) extend this class
- * to inherit shared behaviour and to provide a single common ancestor
- * for type-hinting and service-container binding.
+ * Controller konkret (namespace Admin, Guru, Siswa) mewarisi kelas ini
+ * untuk mendapatkan perilaku bersama dan menyediakan satu leluhur umum
+ * untuk type-hinting serta binding service-container.
  */
 abstract class Controller
 {

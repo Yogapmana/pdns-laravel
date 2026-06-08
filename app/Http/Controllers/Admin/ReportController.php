@@ -22,10 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReportController extends Controller
 {
     /**
-     * Display the report-builder landing page with the available kelas and mata pelajaran.
+     * Menampilkan halaman utama pembuat laporan dengan kelas dan mata pelajaran yang tersedia.
      *
-     * @param  Request  $request  Current HTTP request (currently unused).
-     * @return InertiaResponse Inertia response rendering `admin/reports/index`.
+     * @param  Request  $request  Request HTTP saat ini.
+     * @return InertiaResponse Respon Inertia yang merender view `admin/reports/index`.
      */
     public function index(Request $request): InertiaResponse
     {
@@ -39,11 +39,11 @@ class ReportController extends Controller
     }
 
     /**
-     * Render the preview page (HTML) for the report, applying the same filter
-     * and data-builder pipeline as the export endpoints.
+     * Merender halaman pratinjau (HTML) untuk laporan, menerapkan filter yang sama
+     * dan alur pembangunan data seperti endpoint ekspor.
      *
-     * @param  Request  $request  Current HTTP request; reads `kelas` (required array) and `mata_pelajaran` (optional array) query parameters.
-     * @return InertiaResponse Inertia response rendering `admin/reports/preview` with the aggregated report data.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `kelas` (wajib berupa array) dan `mata_pelajaran` (opsional berupa array).
+     * @return InertiaResponse Respon Inertia yang merender view `admin/reports/preview` dengan data laporan teragregasi.
      */
     public function preview(Request $request): InertiaResponse
     {
@@ -55,15 +55,19 @@ class ReportController extends Controller
     }
 
     /**
-     * Stream the report as an A4-landscape PDF file.
+     * Mengalirkan (stream) laporan sebagai file PDF lanskap berukuran A4.
      *
-     * Uses `barryvdh/laravel-dompdf` to render the `reports.pdf` Blade view.
+     * Menggunakan `barryvdh/laravel-dompdf` untuk merender view Blade `reports.pdf`.
      *
-     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
-     * @return Response A download response with `Content-Type: application/pdf`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter filter yang sama dengan `preview()`.
+     * @return Response Respon unduhan dengan header `Content-Type: application/pdf`.
      */
     public function exportPdf(Request $request): Response
     {
+        // Increase limits for DOMPDF when generating large datasets (e.g., all classes and subjects)
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', '300');
+
         $payload = $this->validateFilter($request);
         $data = $this->buildReportData($payload);
         $filename = $this->filenameFor($payload, 'pdf');
@@ -74,10 +78,10 @@ class ReportController extends Controller
     }
 
     /**
-     * Stream the report as a standalone, download-attached HTML file.
+     * Mengalirkan (stream) laporan sebagai file HTML mandiri yang dilampirkan untuk diunduh.
      *
-     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
-     * @return Response A download response with `Content-Type: text/html; charset=utf-8`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter filter yang sama dengan `preview()`.
+     * @return Response Respon unduhan dengan header `Content-Type: text/html; charset=utf-8`.
      */
     public function exportHtml(Request $request): Response
     {
@@ -94,12 +98,12 @@ class ReportController extends Controller
     }
 
     /**
-     * Stream the report as a CSV file. Uses a `StreamedResponse` so the
-     * payload is materialised into memory only as a 2-D array; a UTF-8 BOM
-     * is prepended so Excel opens the file with the correct encoding.
+     * Mengalirkan (stream) laporan sebagai file CSV. Menggunakan `StreamedResponse` sehingga data
+     * hanya dimuat ke memori sebagai array 2 dimensi; BOM UTF-8 ditambahkan di awal
+     * agar Excel membuka file dengan pengodean (encoding) yang benar.
      *
-     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
-     * @return StreamedResponse A streamed download response with `Content-Type: text/csv; charset=utf-8`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter filter yang sama dengan `preview()`.
+     * @return StreamedResponse Respon unduhan ter-stream dengan header `Content-Type: text/csv; charset=utf-8`.
      */
     public function exportCsv(Request $request): StreamedResponse
     {
@@ -121,12 +125,12 @@ class ReportController extends Controller
     }
 
     /**
-     * Stream the report as an XLSX (Office Open XML SpreadsheetML) file.
+     * Mengalirkan (stream) laporan sebagai file XLSX (Office Open XML SpreadsheetML).
      *
-     * Delegates the actual workbook assembly to the `XlsxWriter` support class.
+     * Mendelegasikan perakitan workbook yang sebenarnya ke kelas pembantu `XlsxWriter`.
      *
-     * @param  Request  $request  Current HTTP request; reads the same filter parameters as `preview()`.
-     * @return Response A download response with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter filter yang sama dengan `preview()`.
+     * @return Response Respon unduhan dengan header `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
      */
     public function exportXlsx(Request $request): Response
     {
@@ -149,22 +153,21 @@ class ReportController extends Controller
     }
 
     /**
-     * Validate and normalize the multi-kelas + multi-mapel filter.
+     * Memvalidasi dan menormalisasi filter multi-kelas + multi-mapel.
      *
-     * Reads `kelas` (required, at least one) and `mata_pelajaran` (optional)
-     * from the request, verifies that every entry exists in the corresponding
-     * master table, deduplicates, and sorts the resulting lists for a stable
-     * output filename. The returned payload uses `kelas_id`/`mata_pelajaran_id`
-     * internally; the human-readable names are preserved in the `kelas_names` /
-     * `mapel_names` keys for filename and display.
+     * Membaca `kelas` (wajib, minimal satu) dan `mata_pelajaran` (opsional) dari request,
+     * memastikan bahwa setiap entri ada di tabel master yang sesuai, mendeduplikasi,
+     * dan mengurutkan daftar hasilnya untuk nama file output yang stabil. Payload yang dikembalikan
+     * menggunakan `kelas_id`/`mata_pelajaran_id` secara internal; nama yang mudah dibaca manusia
+     * dipertahankan pada kunci `kelas_names` / `mapel_names` untuk nama file dan tampilan.
      *
-     * @param  Request  $request  Current HTTP request carrying the filter parameters.
+     * @param  Request  $request  Request HTTP saat ini yang membawa parameter filter.
      * @return array{
      *     kelas: array<int, int>,
      *     kelas_names: array<int, string>,
      *     mata_pelajaran: array<int, int>,
      *     mapel_names: array<int, string>
-     * } The normalized filter payload.
+     * } Payload filter yang telah dinormalisasi.
      */
     private function validateFilter(Request $request): array
     {
@@ -204,19 +207,19 @@ class ReportController extends Controller
     }
 
     /**
-     * Build the human-readable output filename for a given export.
+     * Membangun nama file output yang mudah dibaca manusia untuk ekspor tertentu.
      *
-     * Single-kelas payloads use the sanitized class name; multi-kelas payloads
-     * collapse to `multi_<n>kelas` to keep the filename short.
+     * Payload kelas tunggal menggunakan nama kelas yang telah dibersihkan; payload multi-kelas
+     * diringkas menjadi `multi_<n>kelas` agar nama file tetap pendek.
      *
      * @param  array{
      *     kelas: array<int, int>,
      *     kelas_names: array<int, string>,
      *     mata_pelajaran: array<int, int>,
      *     mapel_names: array<int, string>
-     * }  $payload  The normalized filter payload.
-     * @param  string  $ext  Extension suffix (currently unused in the produced filename but kept for future use).
-     * @return string The generated filename (without extension).
+     * }  $payload  Payload filter yang telah dinormalisasi.
+     * @param  string  $ext  Sufiks ekstensi (saat ini tidak digunakan dalam pembuatan nama file tetapi dipertahankan untuk masa depan).
+     * @return string Nama file yang dihasilkan (tanpa ekstensi).
      */
     private function filenameFor(array $payload, string $ext): string
     {
@@ -228,21 +231,21 @@ class ReportController extends Controller
     }
 
     /**
-     * Build the aggregated report data used by every export and the HTML preview.
+     * Membangun data laporan teragregasi yang digunakan oleh setiap ekspor dan pratinjau HTML.
      *
-     * Pipeline:
-     *  1. Load all `Siswa` rows whose `kelas_id` is in the filter (with `kelas` eager-loaded for display).
-     *  2. Load all `Nilai` rows for those siswa, optionally restricted to the
-     *     selected `mata_pelajaran_id` filter, grouped by `[nis][mata_pelajaran_id]`.
-     *  3. Group siswa by `kelas.nama` and, for every siswa, accumulate the
-     *     per-mapel nilai, the per-kelas pass/fail counts, and the global totals.
+     * Alur (Pipeline):
+     *  1. Memuat semua baris `Siswa` yang `kelas_id` nya ada dalam filter (dengan kelas di-eager-load untuk tampilan).
+     *  2. Memuat semua baris `Nilai` untuk siswa-siswa tersebut, secara opsional dibatasi pada filter
+     *     `mata_pelajaran_id` yang dipilih, dikelompokkan berdasarkan `[nis][mata_pelajaran_id]`.
+     *  3. Mengelompokkan siswa berdasarkan `kelas.nama` dan, untuk setiap siswa, mengakumulasikan
+     *     nilai per mapel, jumlah lulus/tidak lulus per kelas, dan total global.
      *
      * @param  array{
      *     kelas: array<int, int>,
      *     kelas_names: array<int, string>,
      *     mata_pelajaran: array<int, int>,
      *     mapel_names: array<int, string>
-     * }  $payload  The normalized filter payload.
+     * }  $payload  Payload filter yang telah dinormalisasi.
      * @return array{
      *     kelas_list: array<int, string>,
      *     mapel_list: array<int, string>,
@@ -253,7 +256,7 @@ class ReportController extends Controller
      *     }>,
      *     stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int},
      *     tanggal_cetak: string
-     * }  The fully aggregated report payload.
+     * } Payload laporan yang telah teragregasi sepenuhnya.
      */
     private function buildReportData(array $payload): array
     {
@@ -397,11 +400,10 @@ class ReportController extends Controller
     }
 
     /**
-     * Flatten the section-based report data into a 2-D array suitable for
-     * CSV and XLSX export. The first row is the header; subsequent rows
-     * contain one siswa per row with columns for `Kelas`, `NIS`, `Nama Siswa`,
-     * followed by `Tgs / UTS / UAS / Akhir` groups for every `mata_pelajaran`,
-     * and a final `Rata-rata` column.
+     * Meratakan (flatten) data laporan berbasis seksi menjadi array 2 dimensi yang cocok untuk
+     * ekspor CSV dan XLSX. Baris pertama adalah header; baris berikutnya berisi satu siswa
+     * per baris dengan kolom `Kelas`, `NIS`, `Nama Siswa`, diikuti oleh grup `Tgs / UTS / UAS / Akhir`
+     * untuk setiap `mata_pelajaran`, dan kolom akhir `Rata-rata`.
      *
      * @param  array{
      *     kelas_list: array<int, string>,
@@ -413,8 +415,8 @@ class ReportController extends Controller
      *     }>,
      *     stats: array{jumlah_siswa: int, jumlah_lulus: int, jumlah_tidak_lulus: int},
      *     tanggal_cetak: string
-     * }  $data  The aggregated report data produced by `buildReportData()`.
-     * @return array<int, array<int, string|int|float|null>> A 2-D array of header + data rows.
+     * }  $data  Data laporan teragregasi yang dihasilkan oleh `buildReportData()`.
+     * @return array<int, array<int, string|int|float|null>> Array 2 dimensi berisi header + baris data.
      */
     private function flattenRowsForExport(array $data): array
     {

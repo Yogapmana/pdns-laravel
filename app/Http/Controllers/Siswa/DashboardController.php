@@ -13,15 +13,14 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     /**
-     * Display the siswa dashboard with the profile and a flag indicating
-     * whether the siswa has any Final (validated) nilai rows yet.
+     * Menampilkan dashboard siswa beserta profil dan flag yang menandakan
+     * apakah siswa tersebut sudah memiliki baris nilai berstatus Final (tervalidasi).
      *
-     * The `has_nilai` flag deliberately ignores Draft rows: a guru that
-     * has only entered scores but not yet locked the combo is not
-     * surfaced to the siswa, mirroring the visibility rules of the
-     * `/siswa/nilai` page and the rapor PDF.
+     * Flag `has_nilai` sengaja mengabaikan baris Draft: jika guru baru menginput skor
+     * tetapi belum mengunci kombinasi tersebut, data tidak akan ditampilkan ke siswa,
+     * menyerupai aturan visibilitas halaman `/siswa/nilai` dan PDF rapor.
      *
-     * @return Response Inertia response rendering `siswa/dashboard`.
+     * @return Response Respon Inertia yang merender view `siswa/dashboard`.
      */
     public function index(): Response
     {

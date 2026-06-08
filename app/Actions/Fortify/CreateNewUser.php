@@ -12,25 +12,25 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 /**
- * Default Fortify action that validates a registration payload and creates
- * a new `User` row.
+ * Aksi Fortify default yang memvalidasi payload registrasi dan membuat
+ * baris `User` baru.
  *
- * Combines the shared `profileRules()` and `passwordRules()` traits with
- * the standard `User::create()` Eloquent call. Note: in this project the
- * self-registration feature is disabled (see `config/fortify.php`), so
- * this action is registered but only invoked by Fortify when enabled.
+ * Menggabungkan trait `profileRules()` dan `passwordRules()` bersama dengan
+ * pemanggilan standar Eloquent `User::create()`. Catatan: dalam proyek ini fitur
+ * registrasi mandiri dinonaktifkan (lihat `config/fortify.php`), sehingga aksi
+ * ini didaftarkan tetapi hanya dipanggil oleh Fortify ketika diaktifkan.
  */
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * Memvalidasi dan membuat pengguna baru yang terdaftar.
      *
-     * @param  array<string, string>  $input  The registration form input, expected to contain `name`, `email`, and `password`.
-     * @return User The freshly persisted user instance.
+     * @param  array<string, string>  $input  Input form registrasi, diharapkan berisi `name`, `email`, dan `password`.
+     * @return User Instance user yang baru disimpan.
      *
-     * @throws ValidationException When validation fails.
+     * @throws ValidationException Ketika validasi gagal.
      */
     public function create(array $input): User
     {

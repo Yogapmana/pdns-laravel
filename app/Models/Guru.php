@@ -12,12 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Eloquent model representing a teacher (`guru`).
+ * Model Eloquent yang merepresentasikan guru (`guru`).
  *
- * Backed by the `guru` table. A guru has many `GuruMengajar` rows that
- * describe the (kelas, mata_pelajaran) combinations they are allowed
- * to teach. The accessors and helpers below are used by the guru-facing
- * controllers to filter and authorise nilai input.
+ * Didukung oleh tabel `guru`. Seorang guru memiliki banyak baris `GuruMengajar`
+ * yang menjelaskan kombinasi (kelas, mata_pelajaran) yang boleh mereka ajar.
+ * Accessor dan helper di bawah ini digunakan oleh controller khusus guru
+ * untuk menyaring dan mengotorisasi input nilai.
  *
  * @property int $id
  * @property int|null $user_id
@@ -34,9 +34,9 @@ class Guru extends Model
     protected $table = 'guru';
 
     /**
-     * The login account associated with this guru (1:1, optional).
+     * Akun login yang terkait dengan guru ini (1:1, opsional).
      *
-     * @return BelongsTo<User, Guru>
+     * @return BelongsTo<User, Guru> Relasi ke model User.
      */
     public function user(): BelongsTo
     {
@@ -44,9 +44,9 @@ class Guru extends Model
     }
 
     /**
-     * The mengajar combinations owned by this guru.
+     * Kombinasi mengajar yang dimiliki oleh guru ini.
      *
-     * @return HasMany<GuruMengajar>
+     * @return HasMany<GuruMengajar> Relasi ke model GuruMengajar.
      */
     public function mengajar(): HasMany
     {
@@ -54,9 +54,9 @@ class Guru extends Model
     }
 
     /**
-     * The `Nilai` rows input by this guru.
+     * Baris data `Nilai` yang diinput oleh guru ini.
      *
-     * @return HasMany<Nilai>
+     * @return HasMany<Nilai> Relasi ke model Nilai.
      */
     public function nilai(): HasMany
     {
@@ -64,9 +64,9 @@ class Guru extends Model
     }
 
     /**
-     * Accessor: distinct list of kelas this guru teaches, sorted ascending.
+     * Accessor: daftar unik kelas yang diajar oleh guru ini, diurutkan secara menaik.
      *
-     * @return array<int, string>
+     * @return array<int, string> Daftar nama kelas.
      */
     public function getAllKelasAttribute(): array
     {
@@ -82,9 +82,9 @@ class Guru extends Model
     }
 
     /**
-     * Accessor: distinct list of mata pelajaran this guru teaches, sorted ascending.
+     * Accessor: daftar unik mata pelajaran yang diajar oleh guru ini, diurutkan secara menaik.
      *
-     * @return array<int, string>
+     * @return array<int, string> Daftar nama mata pelajaran.
      */
     public function getAllMapelAttribute(): array
     {
@@ -100,10 +100,10 @@ class Guru extends Model
     }
 
     /**
-     * Return the list of mata pelajaran this guru teaches for the given kelas.
+     * Mengembalikan daftar mata pelajaran yang diajar oleh guru ini untuk kelas tertentu.
      *
-     * @param  string  $kelas  The kelas name (e.g. "X-A").
-     * @return array<int, string> Sorted list of mata pelajaran taught in that kelas.
+     * @param  string  $kelas  Nama kelas (contoh: "X-A").
+     * @return array<int, string> Daftar terurut mata pelajaran yang diajar di kelas tersebut.
      */
     public function getMapelByKelas(string $kelas): array
     {
@@ -125,11 +125,11 @@ class Guru extends Model
     }
 
     /**
-     * Determine whether this guru teaches the supplied (kelas, mata_pelajaran) pair.
+     * Memeriksa apakah guru ini mengajar pasangan (kelas, mata_pelajaran) yang diberikan.
      *
-     * @param  string  $kelas  The kelas name.
-     * @param  string  $mataPelajaran  The mata pelajaran name.
-     * @return bool `true` when a `GuruMengajar` row exists for this combination.
+     * @param  string  $kelas  Nama kelas.
+     * @param  string  $mataPelajaran  Nama mata pelajaran.
+     * @return bool `true` jika baris `GuruMengajar` ada untuk kombinasi ini.
      */
     public function mengajarDiKelasMapel(string $kelas, string $mataPelajaran): bool
     {
@@ -144,11 +144,11 @@ class Guru extends Model
     }
 
     /**
-     * Determine whether this guru teaches the supplied (kelas_id, mata_pelajaran_id) pair.
+     * Memeriksa apakah guru ini mengajar pasangan ID (kelas_id, mata_pelajaran_id) yang diberikan.
      *
-     * @param  int  $kelasId  The kelas id.
-     * @param  int  $mataPelajaranId  The mata pelajaran id.
-     * @return bool `true` when a `GuruMengajar` row exists for this combination.
+     * @param  int  $kelasId  ID kelas.
+     * @param  int  $mataPelajaranId  ID mata pelajaran.
+     * @return bool `true` jika baris `GuruMengajar` ada untuk kombinasi ini.
      */
     public function mengajarDiKelasMapelId(int $kelasId, int $mataPelajaranId): bool
     {

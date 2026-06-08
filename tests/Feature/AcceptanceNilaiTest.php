@@ -141,10 +141,58 @@ test('Guru bisa validasi final sehingga status menjadi Final', function () {
     $this->actingAs($userGuru)->post('/guru/input-nilai/validate-final', [
         'kelas_id' => $this->kelasId('X-A'),
         'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nis' => ['00001'],
     ]);
 
     $nilai = Nilai::where('nis', '00001')->first();
     expect($nilai->status_validasi)->toBe('Final');
+});
+
+test('Guru bisa memvalidasi nilai sebagian siswa secara individual', function () {
+    $userGuru = User::factory()->guru()->create();
+    $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
+    GuruMengajar::create(['id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika')]);
+
+    Siswa::create(['nis' => '00001', 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
+    Siswa::create(['nis' => '00002', 'nama_siswa' => 'Budi', 'kelas_id' => $this->kelasId('X-A')]);
+
+    Nilai::create([
+        'nis' => '00001',
+        'id_guru' => $guru->id,
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nilai_tugas' => 80,
+        'nilai_uts' => 70,
+        'nilai_uas' => 90,
+        'nilai_akhir' => 81,
+        'status_lulus' => 'Lulus',
+        'status_validasi' => 'Draft',
+    ]);
+
+    Nilai::create([
+        'nis' => '00002',
+        'id_guru' => $guru->id,
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nilai_tugas' => 50,
+        'nilai_uts' => 50,
+        'nilai_uas' => 50,
+        'nilai_akhir' => 50,
+        'status_lulus' => 'Tidak Lulus',
+        'status_validasi' => 'Draft',
+    ]);
+
+    $this->actingAs($userGuru)->post('/guru/input-nilai/validate-final', [
+        'kelas_id' => $this->kelasId('X-A'),
+        'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nis' => ['00001'],
+    ]);
+
+    $nilaiAhmad = Nilai::where('nis', '00001')->first();
+    $nilaiBudi = Nilai::where('nis', '00002')->first();
+
+    expect($nilaiAhmad->status_validasi)->toBe('Final');
+    expect($nilaiBudi->status_validasi)->toBe('Draft');
 });
 
 test('Guru tidak bisa input nilai untuk kelas+mapel yang tidak diajar (403)', function () {

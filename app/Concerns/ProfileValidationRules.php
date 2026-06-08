@@ -11,9 +11,9 @@ use Illuminate\Validation\Rule;
 trait ProfileValidationRules
 {
     /**
-     * Get the validation rules used to validate user profiles.
+     * Mendapatkan aturan validasi yang digunakan untuk memvalidasi profil pengguna.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, array<int, ValidationRule|array<mixed>|string>> Aturan validasi profil.
      */
     protected function profileRules(?int $userId = null): array
     {
@@ -24,9 +24,9 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user names.
+     * Mendapatkan aturan validasi yang digunakan untuk memvalidasi nama pengguna.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|array<mixed>|string> Aturan validasi nama.
      */
     protected function nameRules(): array
     {
@@ -34,9 +34,9 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user emails.
+     * Mendapatkan aturan validasi yang digunakan untuk memvalidasi email pengguna.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|array<mixed>|string> Aturan validasi email.
      */
     protected function emailRules(?int $userId = null): array
     {

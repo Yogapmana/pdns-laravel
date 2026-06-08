@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { index, create, edit, destroy } from '@/routes/admin/guru';
 import {
     Plus,
     Edit,
@@ -66,7 +67,7 @@ export default function GuruIndex({
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/guru',
+        url: index.url(),
         initialFilters: {
             search: filters.search,
             kelas: filters.kelas,
@@ -83,7 +84,7 @@ export default function GuruIndex({
             return;
         }
 
-        router.delete(`/admin/guru/${deleteTarget.id}`, {
+        router.delete(destroy.url(deleteTarget.id), {
             onSuccess: () => setDeleteTarget(null),
         });
     }
@@ -123,7 +124,7 @@ export default function GuruIndex({
                 title="Manajemen Guru"
                 description={`${guru.total} guru`}
                 action={
-                    <Link href="/admin/guru/create">
+                    <Link href={create.url()}>
                         <Button>
                             <Plus className="h-4 w-4" />
                             Tambah Guru
@@ -279,7 +280,7 @@ export default function GuruIndex({
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <Link
-                                                        href={`/admin/guru/${g.id}/edit`}
+                                                        href={edit.url({ id: g.id })}
                                                         className="rounded p-1.5 text-primary transition hover:bg-blue-100"
                                                         aria-label={`Edit ${g.nama_guru}`}
                                                     >
@@ -335,7 +336,7 @@ export default function GuruIndex({
                             >
                                 Tutup
                             </Button>
-                            <Link href={`/admin/guru/${selected.id}/edit`}>
+                            <Link href={edit.url({ id: selected.id })}>
                                 <Button>
                                     <Edit className="h-4 w-4" />
                                     Edit

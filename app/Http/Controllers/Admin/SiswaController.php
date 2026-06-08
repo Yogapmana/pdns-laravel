@@ -19,15 +19,14 @@ use Inertia\Response;
 class SiswaController extends Controller
 {
     /**
-     * Display the paginated siswa list with optional search and class filters.
+     * Menampilkan daftar siswa ter-paginasi dengan filter pencarian dan kelas opsional.
      *
-     * Eager-loads the related `user` account (`id`, `username`, `is_active`,
-     * `created_at`) and a `nilai_count` aggregate to avoid N+1 queries when
-     * rendering the list and the detail drawer. Query string parameters are
-     * preserved across pagination links via `withQueryString()`.
+     * Eager-load akun `user` terkait (`id`, `username`, `is_active`, `created_at`)
+     * dan agregasi `nilai_count` untuk menghindari query N+1 saat merender daftar dan detail laci (drawer).
+     * Parameter query string dipertahankan di seluruh link paginasi melalui `withQueryString()`.
      *
-     * @param  Request  $request  Current HTTP request. Reads `search` and `kelas` query parameters.
-     * @return Response Inertia response rendering `admin/siswa/index`.
+     * @param  Request  $request  Request HTTP saat ini. Membaca parameter kueri `search` dan `kelas`.
+     * @return Response Respon Inertia yang merender view `admin/siswa/index`.
      */
     public function index(Request $request): Response
     {
@@ -61,9 +60,9 @@ class SiswaController extends Controller
     }
 
     /**
-     * Show the form to create a new siswa.
+     * Menampilkan form untuk membuat siswa baru.
      *
-     * @return Response Inertia response rendering `admin/siswa/create` with the list of available kelas.
+     * @return Response Respon Inertia yang merender view `admin/siswa/create` dengan daftar kelas yang tersedia.
      */
     public function create(): Response
     {
@@ -75,17 +74,15 @@ class SiswaController extends Controller
     }
 
     /**
-     * Persist a new siswa record together with a freshly-generated login
-     * account.
+     * Menyimpan data siswa baru beserta akun login yang baru dibuat.
      *
-     * Both writes (User, Siswa) are wrapped in a single database transaction
-     * so a failure on either side rolls back both. The `username` is the
-     * `nis` (mirroring the seeder), `name` is the siswa's display name,
-     * and the `password` is the admin-supplied value from the form. The
-     * new user is `is_active = true` by default.
+     * Kedua proses tulis (User, Siswa) dibungkus dalam satu transaksi database sehingga kegagalan
+     * di salah satu pihak akan membatalkan keduanya. `username` diisi dengan `nis` (menyerupai seeder),
+     * `name` adalah nama tampilan siswa, dan `password` adalah nilai yang diinput oleh admin dari form.
+     * User baru berstatus aktif (`is_active = true`) secara default.
      *
-     * @param  SiswaRequest  $request  The validated form-request (includes `password`).
-     * @return RedirectResponse Redirect to the siswa index with a success flash message containing the new username.
+     * @param  SiswaRequest  $request  Form request yang telah divalidasi (termasuk `password`).
+     * @return RedirectResponse Pengalihan ke indeks siswa dengan pesan sukses flash berisi username baru.
      */
     public function store(SiswaRequest $request): RedirectResponse
     {
@@ -116,13 +113,13 @@ class SiswaController extends Controller
     }
 
     /**
-     * Show the form to edit an existing siswa.
+     * Menampilkan form untuk mengedit siswa yang sudah ada.
      *
-     * Route-model binding resolves the `Siswa` instance from the `nis`
-     * URL parameter (see `Siswa::getRouteKeyName()`).
+     * Route-model binding men-resolve instance `Siswa` dari parameter URL `nis`
+     * (lihat `Siswa::getRouteKeyName()`).
      *
-     * @param  Siswa  $siswa  The siswa to edit, resolved by route-model binding.
-     * @return Response Inertia response rendering `admin/siswa/edit`.
+     * @param  Siswa  $siswa  Siswa yang akan diedit, di-resolve oleh route-model binding.
+     * @return Response Respon Inertia yang merender view `admin/siswa/edit`.
      */
     public function edit(Siswa $siswa): Response
     {
@@ -135,16 +132,16 @@ class SiswaController extends Controller
     }
 
     /**
-     * Update an existing siswa record. The `nis` field is immutable: the
-     * form-request removes it from the payload on PUT/PATCH.
+     * Memperbarui data siswa yang sudah ada. Kolom `nis` tidak dapat diubah (immutable):
+     * form request akan menghapusnya dari payload pada request PUT/PATCH.
      *
-     * When a non-empty `password` is supplied, the linked login account's
-     * password is reset in the same transaction. Passing an empty password
-     * leaves the existing password unchanged.
+     * Jika password yang dikirim tidak kosong, password akun login yang ditautkan
+     * akan direset dalam transaksi yang sama. Mengirim password kosong tidak akan mengubah
+     * password yang sudah ada.
      *
-     * @param  SiswaRequest  $request  The validated form-request.
-     * @param  Siswa  $siswa  The siswa to update, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the siswa index with a success flash message.
+     * @param  SiswaRequest  $request  Form request yang telah divalidasi.
+     * @param  Siswa  $siswa  Siswa yang akan diperbarui, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks siswa dengan pesan sukses flash.
      */
     public function update(SiswaRequest $request, Siswa $siswa): RedirectResponse
     {
@@ -163,11 +160,11 @@ class SiswaController extends Controller
     }
 
     /**
-     * Delete a siswa record. Related `nilai` rows are removed automatically
-     * via the database-level `ON DELETE CASCADE` foreign key.
+     * Menghapus data siswa. Baris data `nilai` terkait akan dihapus secara otomatis
+     * melalui foreign key `ON DELETE CASCADE` pada tingkat database.
      *
-     * @param  Siswa  $siswa  The siswa to delete, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the siswa index with a success flash message.
+     * @param  Siswa  $siswa  Siswa yang akan dihapus, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks siswa dengan pesan sukses flash.
      */
     public function destroy(Siswa $siswa): RedirectResponse
     {

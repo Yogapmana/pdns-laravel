@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { index as reportsIndex } from '@/routes/admin/reports';
 
 export type RataRataMapel = {
     mata_pelajaran: string;
@@ -35,7 +36,7 @@ export function MapelBarChart({ data, kkm }: { data: RataRataMapel[]; kkm: numbe
                     return (
                         <Link
                             key={m.mata_pelajaran}
-                            href={`/admin/laporan?mapel=${encodeURIComponent(m.mata_pelajaran)}`}
+                            href={reportsIndex.url({ query: { mapel: m.mata_pelajaran } })}
                             prefetch
                             className="block group"
                             title={`Klik untuk lihat laporan ${m.mata_pelajaran}`}

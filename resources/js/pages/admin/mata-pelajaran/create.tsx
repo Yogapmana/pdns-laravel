@@ -5,12 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputError, PageHeader, Container } from '@/components/ui/shared';
+import { index, store } from '@/routes/admin/mata-pelajaran';
 
 export default function MataPelajaranCreate() {
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/mata-pelajaran" className="text-muted-foreground hover:text-foreground">
+                <Link href={index.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader title="Tambah Mata Pelajaran" description="Buat mata pelajaran baru untuk diajarkan dan dinilai" />
@@ -18,7 +19,7 @@ export default function MataPelajaranCreate() {
 
             <Card className="max-w-xl">
                 <CardContent>
-                    <Form action="/admin/mata-pelajaran" method="post" className="space-y-4">
+                    <Form action={store.url()} method="post" className="space-y-4">
                         {({ processing, errors }) => (
                             <>
                                 <div>
@@ -35,7 +36,7 @@ export default function MataPelajaranCreate() {
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/mata-pelajaran">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

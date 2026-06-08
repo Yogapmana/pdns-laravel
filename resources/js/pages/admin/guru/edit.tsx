@@ -1,4 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
+import { index, update } from '@/routes/admin/guru';
+import { index as kelasIndex } from '@/routes/admin/kelas';
 import { ArrowLeft, Save, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
@@ -74,7 +76,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
     return (
         <Container>
             <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/guru" className="text-muted-foreground hover:text-foreground">
+                <Link href={index.url()} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <PageHeader
@@ -94,7 +96,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
 
             <Card className="max-w-3xl">
                 <CardContent>
-                    <Form action={`/admin/guru/${guru.id}`} method="put" className="space-y-4">
+                    <Form action={update.url(guru.id)} method="put" className="space-y-4">
                         {({ processing, errors }) => (
                             <>
                                 <div>
@@ -170,7 +172,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                                                             <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
                                                                 <AlertTriangle className="h-3 w-3" />
                                                                 Kelas "{kelasNama(row.kelas_id)}" belum punya mapel diizinkan.{' '}
-                                                                <Link href="/admin/kelas" className="underline">Atur di Manajemen Kelas</Link>.
+                                                                 <Link href={kelasIndex.url()} className="underline">Atur di Manajemen Kelas</Link>.
                                                             </p>
                                                         )}
                                                         <InputError message={errors[`mengajar.${i}.mata_pelajaran_id`]} />
@@ -194,7 +196,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
 
                                     {emptyKelas.length > 0 && (
                                         <Alert variant="warning" className="mt-3">
-                                            {emptyKelas.map((k) => k.nama).join(', ')} belum punya mapel. <Link href="/admin/kelas" className="underline font-medium">Atur di Manajemen Kelas</Link>.
+                                            {emptyKelas.map((k) => k.nama).join(', ')} belum punya mapel. <Link href={kelasIndex.url()} className="underline font-medium">Atur di Manajemen Kelas</Link>.
                                         </Alert>
                                     )}
                                 </div>
@@ -206,7 +208,7 @@ export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) 
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Menyimpan...' : 'Simpan'}
                                     </Button>
-                                    <Link href="/admin/guru">
+                                    <Link href={index.url()}>
                                         <Button type="button" variant="outline">Batal</Button>
                                     </Link>
                                 </div>

@@ -17,13 +17,13 @@ use Inertia\Response;
 class AccountController extends Controller
 {
     /**
-     * Display the paginated user account list with search and role filters.
+     * Menampilkan daftar akun pengguna ter-paginasi dengan filter pencarian dan role.
      *
-     * Eager-loads the linked `siswa` and `guru` profiles (and the guru's
-     * mengajar combinations) so the table can be rendered without N+1 queries.
+     * Eager-load profil `siswa` dan `guru` yang ditautkan (serta kombinasi mengajar guru)
+     * agar tabel dapat dirender tanpa query N+1.
      *
-     * @param  Request  $request  Current HTTP request; reads `search` and `role` query parameters.
-     * @return Response Inertia response rendering `admin/accounts/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `search` dan `role`.
+     * @return Response Respon Inertia yang merender view `admin/accounts/index`.
      */
     public function index(Request $request): Response
     {
@@ -55,13 +55,12 @@ class AccountController extends Controller
     }
 
     /**
-     * Show the form to create a new admin account.
+     * Menampilkan form untuk membuat akun admin baru.
      *
-     * Only the `admin` role is creatable from this form. Guru and siswa
-     * accounts are created automatically as part of their respective
-     * Tambah Guru / Tambah Siswa flows.
+     * Hanya role `admin` yang dapat dibuat dari form ini. Akun guru dan siswa
+     * dibuat secara otomatis sebagai bagian dari alur Tambah Guru / Tambah Siswa masing-masing.
      *
-     * @return Response Inertia response rendering `admin/accounts/create-admin`.
+     * @return Response Respon Inertia yang merender view `admin/accounts/create-admin`.
      */
     public function showCreateAdmin(): Response
     {
@@ -69,11 +68,11 @@ class AccountController extends Controller
     }
 
     /**
-     * Persist a new admin account. The admin supplies `username`,
-     * `name`, and `password` directly (no auto-generation).
+     * Menyimpan akun admin baru. Admin memasukkan `username`,
+     * `name`, dan `password` secara langsung (tidak dibuat otomatis).
      *
-     * @param  Request  $request  Current HTTP request; reads `username`, `name`, `password`, and `password_confirmation`.
-     * @return RedirectResponse Redirect to the accounts index with a success flash message.
+     * @param  Request  $request  Request HTTP saat ini; membaca `username`, `name`, `password`, dan `password_confirmation`.
+     * @return RedirectResponse Pengalihan (redirect) ke indeks akun dengan pesan sukses flash.
      */
     public function createAdmin(Request $request): RedirectResponse
     {
@@ -98,13 +97,13 @@ class AccountController extends Controller
     }
 
     /**
-     * Toggle the `is_active` flag of a user account.
+     * Mengaktifkan/menonaktifkan status `is_active` dari suatu akun pengguna.
      *
-     * Refuses with an error flash if the target account is the currently
-     * authenticated user (prevents admins from locking themselves out).
+     * Menolak dengan pesan kesalahan flash jika akun target adalah pengguna yang saat ini
+     * sedang login (mencegah admin mengunci akun mereka sendiri).
      *
-     * @param  User  $user  The target account, resolved by route-model binding.
-     * @return RedirectResponse Redirect back with a success or error flash message.
+     * @param  User  $user  Akun target, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan kembali dengan pesan flash sukses atau error.
      */
     public function toggleActive(User $user): RedirectResponse
     {
@@ -120,11 +119,11 @@ class AccountController extends Controller
     }
 
     /**
-     * Reset the password of a user account.
+     * Mereset password akun pengguna.
      *
-     * @param  Request  $request  Current HTTP request; reads the new `password` field (min 6 chars).
-     * @param  User  $user  The target account, resolved by route-model binding.
-     * @return RedirectResponse Redirect back with a success flash message naming the affected username.
+     * @param  Request  $request  Request HTTP saat ini; membaca kolom password baru (minimal 6 karakter).
+     * @param  User  $user  Akun target, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan kembali dengan pesan flash sukses yang menyebutkan username yang bersangkutan.
      */
     public function resetPassword(Request $request, User $user): RedirectResponse
     {

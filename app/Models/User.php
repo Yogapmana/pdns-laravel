@@ -13,11 +13,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 
 /**
- * Eloquent model representing an authenticated user.
+ * Model Eloquent yang merepresentasikan pengguna terautentikasi.
  *
- * Backed by the `users` table. The `role` column discriminates between
- * admin / guru / siswa accounts and is used for both authorisation
- * (via the `role` middleware) and dashboard routing.
+ * Didukung oleh tabel `users`. Kolom `role` membedakan antara
+ * akun admin / guru / siswa dan digunakan untuk otorisasi
+ * (melalui middleware `role`) dan pengalihan rute dashboard.
  *
  * @property int $id
  * @property string $username
@@ -41,9 +41,9 @@ class User extends Authenticatable
     public const ROLE_SISWA = 'siswa';
 
     /**
-     * Attribute casts applied to the underlying table columns.
+     * Cast atribut yang diterapkan pada kolom tabel database.
      *
-     * @return array<string, string> The cast definitions.
+     * @return array<string, string> Definisi cast atribut.
      */
     protected function casts(): array
     {
@@ -54,9 +54,9 @@ class User extends Authenticatable
     }
 
     /**
-     * The 1:1 profile relation for siswa-role users.
+     * Relasi profil 1:1 untuk pengguna dengan role siswa.
      *
-     * @return HasOne<Siswa>
+     * @return HasOne<Siswa> Relasi ke model Siswa.
      */
     public function siswa(): HasOne
     {
@@ -64,9 +64,9 @@ class User extends Authenticatable
     }
 
     /**
-     * The 1:1 profile relation for guru-role users.
+     * Relasi profil 1:1 untuk pengguna dengan role guru.
      *
-     * @return HasOne<Guru>
+     * @return HasOne<Guru> Relasi ke model Guru.
      */
     public function guru(): HasOne
     {
@@ -74,10 +74,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the user has at least one of the supplied roles.
+     * Memeriksa apakah pengguna memiliki salah satu dari role yang diberikan.
      *
-     * @param  string  ...$roles  The roles to test against.
-     * @return bool `true` when the user's `role` is in `$roles`.
+     * @param  string  ...$roles  Daftar role yang akan diuji.
+     * @return bool `true` jika role pengguna ada dalam `$roles`.
      */
     public function hasRole(string ...$roles): bool
     {
@@ -85,9 +85,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the user has the admin role.
+     * Memeriksa apakah pengguna memiliki role admin.
      *
-     * @return bool `true` when `role === ROLE_ADMIN`.
+     * @return bool `true` jika `role === ROLE_ADMIN`.
      */
     public function isAdmin(): bool
     {
@@ -95,9 +95,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the user has the guru role.
+     * Memeriksa apakah pengguna memiliki role guru.
      *
-     * @return bool `true` when `role === ROLE_GURU`.
+     * @return bool `true` jika `role === ROLE_GURU`.
      */
     public function isGuru(): bool
     {
@@ -105,9 +105,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the user has the siswa role.
+     * Memeriksa apakah pengguna memiliki role siswa.
      *
-     * @return bool `true` when `role === ROLE_SISWA`.
+     * @return bool `true` jika `role === ROLE_SISWA`.
      */
     public function isSiswa(): bool
     {
@@ -115,9 +115,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Resolve the dashboard route name for this user, based on their role.
+     * Mendapatkan nama rute dashboard untuk pengguna berdasarkan role mereka.
      *
-     * @return string The named route for the role-specific dashboard, or `login` for any unknown role.
+     * @return string Nama rute dashboard khusus role, atau `login` jika role tidak dikenal.
      */
     public function dashboardRoute(): string
     {

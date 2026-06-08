@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { index as guruNilaiIndex } from '@/routes/guru/nilai';
 import {
     Users,
     FileEdit,
@@ -108,7 +109,7 @@ export default function GuruDashboard({
                     <div className="flex flex-wrap items-center gap-2"></div>
                 }
                 action={
-                    <Link href="/guru/input-nilai">
+                    <Link href={guruNilaiIndex.url()}>
                         <Button>
                             <Edit3 className="h-4 w-4" />
                             Input Nilai
@@ -260,7 +261,7 @@ export default function GuruDashboard({
                                                     </td>
                                                     <td className="px-2 py-2 text-right">
                                                         <Link
-                                                            href={`/guru/input-nilai?kelas=${encodeURIComponent(c.kelas)}&mata_pelajaran=${encodeURIComponent(c.mata_pelajaran)}`}
+                                                            href={guruNilaiIndex.url({ query: { kelas: c.kelas, mata_pelajaran: c.mata_pelajaran } })}
                                                             className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary transition hover:bg-blue-100"
                                                             title="Buka Input Nilai"
                                                         >

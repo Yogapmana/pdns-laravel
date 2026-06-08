@@ -1,4 +1,6 @@
 import { Link } from '@inertiajs/react';
+import { index } from '@/routes/admin/reports';
+import { pdf as exportPdf, csv as exportCsv, html as exportHtml } from '@/routes/admin/reports/export';
 import {
     ArrowLeft,
     FileDown,
@@ -95,7 +97,7 @@ export default function ReportsPreview({
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                     <Link
-                        href="/admin/laporan"
+                        href={index.url()}
                         className="text-muted-foreground hover:text-foreground"
                     >
                         <ArrowLeft className="h-4 w-4" />
@@ -112,7 +114,7 @@ export default function ReportsPreview({
                 <div className="flex flex-wrap gap-2">
                     <a
                         href={buildExportUrl(
-                            '/admin/laporan/export/pdf',
+                            exportPdf.url(),
                             exportParams,
                         )}
                         target="_blank"
@@ -126,7 +128,7 @@ export default function ReportsPreview({
 
                     <a
                         href={buildExportUrl(
-                            '/admin/laporan/export/csv',
+                            exportCsv.url(),
                             exportParams,
                         )}
                         target="_blank"
@@ -139,7 +141,7 @@ export default function ReportsPreview({
                     </a>
                     <a
                         href={buildExportUrl(
-                            '/admin/laporan/export/html',
+                            exportHtml.url(),
                             exportParams,
                         )}
                         target="_blank"

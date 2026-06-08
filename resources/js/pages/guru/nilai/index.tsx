@@ -1,4 +1,5 @@
 import { Form, router } from '@inertiajs/react';
+import { index as guruNilaiIndex, save, validateFinal } from '@/routes/guru/nilai';
 import {
     Save,
     Lock,
@@ -8,7 +9,7 @@ import {
     Filter,
     FileSpreadsheet,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,18 @@ export default function NilaiIndex({
     const [selectedKelasId, setSelectedKelasId] = useState(kelas_id ? String(kelas_id) : '');
     const [selectedMapelId, setSelectedMapelId] = useState(mata_pelajaran_id ? String(mata_pelajaran_id) : '');
     const [showValidasiModal, setShowValidasiModal] = useState(false);
+    const [selectedNis, setSelectedNis] = useState<string[]>([]);
     const isFinal = status_validasi_global === 'Final';
+
+    // Populate selectedNis when the page loads with draft students
+    React.useEffect(() => {
+        if (!isFinal && siswa.length > 0) {
+            const draftNis = siswa
+                .filter(s => nilai_map[s.nis]?.status_validasi !== 'Final' && nilai_map[s.nis]?.nilai_akhir !== null)
+                .map(s => s.nis);
+            setSelectedNis(draftNis);
+        }
+    }, [siswa, nilai_map, isFinal]);
 
     const availableMapel = selectedKelasId
         ? (mapel_by_kelas[selectedKelasId] ?? [])
@@ -80,7 +92,7 @@ export default function NilaiIndex({
         const kelasNama = daftar_kelas.find((k) => String(k.id) === selectedKelasId)?.nama;
         const mapelNama = availableMapel.find((m) => String(m.id) === selectedMapelId)?.nama;
 
-        router.get('/guru/input-nilai', {
+        router.get(guruNilaiIndex.url(), {
             kelas: kelasNama,
             kelas_id: Number(selectedKelasId),
             mata_pelajaran: mapelNama,
@@ -231,7 +243,7 @@ export default function NilaiIndex({
                             </Alert>
                         )}
 
-                    <Form action="/guru/input-nilai/save" method="post">
+                    <Form action={save.form.post().action} method="post">
                         {({ processing }) => (
                             <>
                                 <input
@@ -288,31 +300,73 @@ export default function NilaiIndex({
                                                     <th className="px-3 py-3 text-center text-xs font-bold tracking-wide uppercase">
                                                         Akhir
                                                     </th>
-                                                    <th className="px-3 py-3 text-center text-xs font-bold tracking-wide uppercase">
+                                                    <th className="w-[100px] px-2 py-3 text-center text-xs font-semibold tracking-wider uppercase">
                                                         Status
                                                     </th>
+                                                    {!isFinal && (
+                                                        <th className="w-[50px] px-2 py-3 text-center text-xs font-semibold tracking-wider uppercase">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                                                checked={selectedNis.length > 0 && selectedNis.length === siswa.filter(s => nilai_map[s.nis]?.status_validasi !== 'Final' && nilai_map[s.nis]?.nilai_akhir !== null).length}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setSelectedNis(siswa.filter(s => nilai_map[s.nis]?.status_validasi !== 'Final' && nilai_map[s.nis]?.nilai_akhir !== null).map(s => s.nis));
+                                                                    } else {
+                                                                        setSelectedNis([]);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </th>
+                                                    )}
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {siswa.map((s) => {
+                                            <tbody className="divide-y divide-border bg-white">
+                                                {siswa.map((s, idx) => {
                                                     const rowStatus =
-                                                        nilai_map[s.nis]
-                                                            ?.status_validasi;
-                                                    const rowIsFinal =
-                                                        rowStatus === 'Final';
+                                                        nilai_map[s.nis]?.status_validasi;
+                                                    const rowIsFinal = rowStatus === 'Final';
+                                                    const hasGrade = nilai_map[s.nis]?.nilai_akhir !== null && nilai_map[s.nis]?.nilai_akhir !== undefined;
 
                                                     return (
-                                                        <NilaiRow
-                                                            key={s.nis}
-                                                            siswa={s}
-                                                            initial={
-                                                                nilai_map[s.nis]
-                                                            }
-                                                            disabled={isFinal}
-                                                            rowLocked={
-                                                                rowIsFinal
-                                                            }
-                                                        />
+                                                        <tr key={s.nis} className={cn("transition-colors hover:bg-slate-50/50", rowIsFinal && "bg-slate-50/50")}>
+                                                            <td className="px-2 py-2 text-center text-sm font-medium text-slate-500">
+                                                                {idx + 1}
+                                                            </td>
+                                                            <td className="px-2 py-2 text-sm">
+                                                                <div className="font-semibold text-slate-900">{s.nama_siswa}</div>
+                                                                <div className="text-xs text-slate-500">{s.nis}</div>
+                                                            </td>
+                                                            <NilaiRowInputs
+                                                                nis={s.nis}
+                                                                initial={nilai_map[s.nis]}
+                                                                disabled={isFinal}
+                                                                rowLocked={rowIsFinal}
+                                                            />
+                                                            <td className="px-2 py-2 text-center">
+                                                                {rowStatus ? (
+                                                                    <Badge variant={rowIsFinal ? 'success' : 'warning'} className="text-[10px]">{rowStatus}</Badge>
+                                                                ) : <span className="text-xs text-muted-foreground">-</span>}
+                                                            </td>
+                                                            {!isFinal && (
+                                                                <td className="px-2 py-2 text-center">
+                                                                    {!rowIsFinal && hasGrade ? (
+                                                                        <input 
+                                                                            type="checkbox"
+                                                                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                                                            checked={selectedNis.includes(s.nis)}
+                                                                            onChange={(e) => {
+                                                                                if (e.target.checked) {
+                                                                                    setSelectedNis([...selectedNis, s.nis]);
+                                                                                } else {
+                                                                                    setSelectedNis(selectedNis.filter(n => n !== s.nis));
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    ) : null}
+                                                                </td>
+                                                            )}
+                                                        </tr>
                                                     );
                                                 })}
                                             </tbody>
@@ -360,10 +414,11 @@ export default function NilaiIndex({
                                             type="button"
                                             variant="success"
                                             onClick={() => setShowValidasiModal(true)}
+                                            disabled={selectedNis.length === 0}
                                             className="h-11 w-full shrink-0 px-5 text-xs sm:w-auto"
                                         >
                                             <Lock className="mr-1.5 h-3.5 w-3.5" />
-                                            Validasi Semua Nilai
+                                            Validasi Terpilih ({selectedNis.length})
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -373,7 +428,7 @@ export default function NilaiIndex({
                                 open={showValidasiModal}
                                 onClose={() => setShowValidasiModal(false)}
                                 title="Konfirmasi Validasi"
-                                description={`Apakah Anda yakin ingin memvalidasi semua nilai ${mapelNama(selectedMapelId)} di kelas ${kelasNama(selectedKelasId)} ke Final? Nilai yang sudah Final tidak dapat diubah kembali.`}
+                                description={`Apakah Anda yakin ingin memvalidasi ${selectedNis.length} nilai ${mapelNama(selectedMapelId)} di kelas ${kelasNama(selectedKelasId)} ke Final? Nilai yang sudah Final tidak dapat diubah kembali.`}
                                 footer={
                                     <>
                                         <Button
@@ -382,21 +437,23 @@ export default function NilaiIndex({
                                         >
                                             Batal
                                         </Button>
-                                        <Form
-                                            action="/guru/input-nilai/validate-final"
-                                            method="post"
-                                            onSubmit={() => setShowValidasiModal(false)}
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                router.post(validateFinal.url(), {
+                                                    kelas_id: kelas_id,
+                                                    mata_pelajaran_id: mata_pelajaran_id,
+                                                    nis: selectedNis,
+                                                }, {
+                                                    onSuccess: () => setShowValidasiModal(false),
+                                                    preserveScroll: true
+                                                });
+                                            }}
                                         >
-                                            <input type="hidden" name="kelas_id" value={kelas_id ?? ''} />
-                                            <input
-                                                type="hidden"
-                                                name="mata_pelajaran_id"
-                                                value={mata_pelajaran_id ?? ''}
-                                            />
                                             <Button type="submit" variant="success">
-                                                Ya, Validasi Final
+                                                Ya, Validasi {selectedNis.length} Siswa
                                             </Button>
-                                        </Form>
+                                        </form>
                                     </>
                                 }
                             />
@@ -446,7 +503,7 @@ function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
                 }
                 disabled={disabled}
                 className={cn(
-                    'w-24 rounded-md border px-2 py-1.5 text-center font-mono text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface',
+                    'w-20 rounded-md border px-2 py-1.5 text-center font-mono text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface',
                     invalid
                         ? 'border-danger focus:ring-danger'
                         : 'border-border focus:ring-primary',
@@ -457,24 +514,20 @@ function NilaiInput({ name, nis, value, onChange, disabled }: NilaiInputProps) {
     );
 }
 
-function NilaiRow({
-    siswa,
+type NilaiItem = NilaiMap[string];
+
+function NilaiRowInputs({
+    nis,
     initial,
     disabled,
     rowLocked,
 }: {
-    siswa: Siswa;
-    initial?: {
-        nilai_tugas: number | null;
-        nilai_uts: number | null;
-        nilai_uas: number | null;
-        nilai_akhir: number | null;
-        status_lulus: string | null;
-        status_validasi: string;
-    };
-    disabled: boolean;
+    nis: string;
+    initial?: NilaiItem;
+    disabled?: boolean;
     rowLocked?: boolean;
 }) {
+    const isInputDisabled = disabled || rowLocked;
     const [tugas, setTugas] = useState<number | null>(
         initial?.nilai_tugas ?? null,
     );
@@ -482,75 +535,44 @@ function NilaiRow({
     const [uas, setUas] = useState<number | null>(initial?.nilai_uas ?? null);
 
     const akhir = calculateNilaiAkhir(tugas, uts, uas);
-    const status = calculateStatusLulus(akhir);
 
-    const hasInvalid =
+    const hasError =
         isInvalidScore(tugas) || isInvalidScore(uts) || isInvalidScore(uas);
 
-    const inputDisabled = disabled || (rowLocked ?? false);
-
     return (
-        <tr
-            className={cn(
-                'hover:bg-blue-50/50',
-                inputDisabled && initial && rowLocked ? 'bg-surface' : '',
-            )}
-        >
-            <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">
-                {siswa.nis}
-            </td>
-            <td className="px-3 py-2 font-medium whitespace-nowrap">
-                <div className="flex items-center gap-2">
-                    {siswa.nama_siswa}
-                    {rowLocked && (
-                        <Badge variant="success" className="!text-[10px]">
-                            Final
-                        </Badge>
-                    )}
-                </div>
-            </td>
+        <>
             <NilaiInput
-                name={`nilai[${siswa.nis}][nilai_tugas]`}
-                nis={siswa.nis}
+                name={`nilai[${nis}][nilai_tugas]`}
+                nis={nis}
                 value={tugas}
                 onChange={setTugas}
-                disabled={inputDisabled}
+                disabled={isInputDisabled}
             />
             <NilaiInput
-                name={`nilai[${siswa.nis}][nilai_uts]`}
-                nis={siswa.nis}
+                name={`nilai[${nis}][nilai_uts]`}
+                nis={nis}
                 value={uts}
                 onChange={setUts}
-                disabled={inputDisabled}
+                disabled={isInputDisabled}
             />
             <NilaiInput
-                name={`nilai[${siswa.nis}][nilai_uas]`}
-                nis={siswa.nis}
+                name={`nilai[${nis}][nilai_uas]`}
+                nis={nis}
                 value={uas}
                 onChange={setUas}
-                disabled={inputDisabled}
+                disabled={isInputDisabled}
             />
-            <td className="px-3 py-2 text-center font-mono font-semibold whitespace-nowrap text-navy">
-                {hasInvalid ? (
-                    <span className="inline-flex items-center gap-1 text-danger">
-                        <AlertCircle className="h-3 w-3" /> —
-                    </span>
-                ) : akhir !== null ? (
-                    akhir.toFixed(2)
-                ) : (
-                    '—'
-                )}
+            <td className="px-2 py-2 text-center align-middle">
+                <span
+                    className={cn(
+                        'inline-flex min-w-[3rem] items-center justify-center font-mono text-sm font-bold',
+                        hasError ? 'text-destructive' : 'text-slate-700',
+                    )}
+                >
+                    {hasError ? 'ERR' : (akhir !== null ? akhir.toFixed(2) : '-')}
+                </span>
             </td>
-            <td className="px-3 py-2 text-center">
-                {status === null ? (
-                    <Badge variant="neutral">—</Badge>
-                ) : status === 'Lulus' ? (
-                    <Badge variant="success">Lulus</Badge>
-                ) : (
-                    <Badge variant="danger">Tidak Lulus</Badge>
-                )}
-            </td>
-        </tr>
+        </>
     );
 }
 

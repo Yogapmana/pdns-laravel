@@ -9,15 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Audit log row capturing a single admin "unlock" intervention on a
- * previously-Final `Nilai` group.
+ * Baris log audit yang mencatat satu intervensi "unlock" (pembukaan kunci) admin pada
+ * kelompok `Nilai` yang sebelumnya sudah berstatus Final.
  *
- * Each row records the admin who performed the unlock, the targeted
- * (guru, kelas, mata_pelajaran) combination, the number of `Nilai` rows
- * that were reverted from `Final` to `Draft`, and the mandatory reason
- * provided at unlock time. The log is intentionally append-only: the
- * table has no `updated_at` column and the model disables update
- * timestamps.
+ * Setiap baris mencatat admin yang melakukan unlock, kombinasi target (guru, kelas, mata_pelajaran),
+ * jumlah baris `Nilai` yang dikembalikan dari `Final` ke `Draft`, dan alasan wajib yang
+ * diberikan saat proses unlock. Log ini sengaja dibuat bersifat append-only (hanya tambah):
+ * tabel tidak memiliki kolom `updated_at` dan model menonaktifkan timestamp pembaruan.
  *
  * @property int $id
  * @property int $id_admin
@@ -35,7 +33,7 @@ class NilaiUnlockLog extends Model
     public const UPDATED_AT = null;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      *
      * @var list<string>
      */
@@ -49,9 +47,9 @@ class NilaiUnlockLog extends Model
     ];
 
     /**
-     * Attribute casts applied to the underlying table columns.
+     * Cast atribut yang diterapkan pada kolom tabel database.
      *
-     * @return array<string, string> The cast definitions.
+     * @return array<string, string> Definisi cast atribut.
      */
     protected function casts(): array
     {
@@ -62,9 +60,9 @@ class NilaiUnlockLog extends Model
     }
 
     /**
-     * The admin (User) who performed the unlock.
+     * Admin (User) yang melakukan unlock.
      *
-     * @return BelongsTo<User, NilaiUnlockLog>
+     * @return BelongsTo<User, NilaiUnlockLog> Relasi ke model User (Admin).
      */
     public function admin(): BelongsTo
     {
@@ -72,9 +70,9 @@ class NilaiUnlockLog extends Model
     }
 
     /**
-     * The guru whose nilai group was unlocked.
+     * Guru yang kelompok nilainya di-unlock.
      *
-     * @return BelongsTo<Guru, NilaiUnlockLog>
+     * @return BelongsTo<Guru, NilaiUnlockLog> Relasi ke model Guru.
      */
     public function guru(): BelongsTo
     {
@@ -82,9 +80,9 @@ class NilaiUnlockLog extends Model
     }
 
     /**
-     * The kelas targeted by this unlock.
+     * Kelas yang ditargetkan oleh proses unlock ini.
      *
-     * @return BelongsTo<Kelas, NilaiUnlockLog>
+     * @return BelongsTo<Kelas, NilaiUnlockLog> Relasi ke model Kelas.
      */
     public function kelas(): BelongsTo
     {
@@ -92,9 +90,9 @@ class NilaiUnlockLog extends Model
     }
 
     /**
-     * The mata pelajaran targeted by this unlock.
+     * Mata pelajaran yang ditargetkan oleh proses unlock ini.
      *
-     * @return BelongsTo<MataPelajaran, NilaiUnlockLog>
+     * @return BelongsTo<MataPelajaran, NilaiUnlockLog> Relasi ke model MataPelajaran.
      */
     public function mataPelajaran(): BelongsTo
     {

@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Container, DataTable, PageHeader, TableEmpty } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useInertiaSearch } from '@/hooks/use-inertia-search';
+import { index, create, edit, destroy } from '@/routes/admin/siswa';
 
 type Siswa = {
     nis: string;
@@ -49,7 +50,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
         setFilter,
         reset,
     } = useInertiaSearch({
-        url: '/admin/siswa',
+        url: index.url(),
         initialFilters: { search: filters.search, kelas: filters.kelas },
         only: ['siswa', 'filters'],
     });
@@ -62,7 +63,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
             return;
         }
 
-        router.delete(`/admin/siswa/${deleteTarget.nis}`, {
+        router.delete(destroy.url(deleteTarget.nis), {
             onSuccess: () => setDeleteTarget(null),
         });
     }
@@ -91,7 +92,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                 title="Manajemen Siswa"
                 description={`${siswa.total} siswa`}
                 action={
-                    <Link href="/admin/siswa/create">
+                    <Link href={create.url()}>
                         <Button>
                             <Plus className="h-4 w-4" />
                             Tambah Siswa
@@ -204,7 +205,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 <Link
-                                                    href={`/admin/siswa/${s.nis}/edit`}
+                                                    href={edit.url({ nis: s.nis })}
                                                     className="rounded p-1.5 text-primary transition hover:bg-blue-100"
                                                     aria-label={`Edit ${s.nama_siswa}`}
                                                 >
@@ -251,7 +252,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                             >
                                 Tutup
                             </Button>
-                            <Link href={`/admin/siswa/${selected.nis}/edit`}>
+                            <Link href={edit.url({ nis: selected.nis })}>
                                 <Button>
                                     <Edit className="h-4 w-4" />
                                     Edit

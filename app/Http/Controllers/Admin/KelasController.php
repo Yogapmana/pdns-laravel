@@ -16,14 +16,14 @@ use Inertia\Response;
 class KelasController extends Controller
 {
     /**
-     * Display the paginated kelas list with a search filter.
+     * Menampilkan daftar kelas ter-paginasi dengan filter pencarian.
      *
-     * Uses the `Kelas::search()` scope and `withCount` to load the related
-     * siswa and guru-mengajar counts in a single query, avoiding N+1 in the
-     * rendering pass.
+     * Menggunakan scope `Kelas::search()` dan `withCount` untuk memuat jumlah siswa,
+     * guruMengajar, dan mataPelajaran terkait dalam satu kueri tunggal, guna menghindari query N+1
+     * saat proses perenderan.
      *
-     * @param  Request  $request  Current HTTP request; reads the `q` query parameter.
-     * @return Response Inertia response rendering `admin/kelas/index`.
+     * @param  Request  $request  Request HTTP saat ini; membaca parameter kueri `q`.
+     * @return Response Respon Inertia yang merender view `admin/kelas/index`.
      */
     public function index(Request $request): Response
     {
@@ -43,9 +43,9 @@ class KelasController extends Controller
     }
 
     /**
-     * Show the form to create a new kelas.
+     * Menampilkan form untuk membuat kelas baru.
      *
-     * @return Response Inertia response rendering `admin/kelas/create`.
+     * @return Response Respon Inertia yang merender view `admin/kelas/create`.
      */
     public function create(): Response
     {
@@ -55,10 +55,10 @@ class KelasController extends Controller
     }
 
     /**
-     * Persist a new kelas record.
+     * Menyimpan data kelas baru.
      *
-     * @param  KelasRequest  $request  The validated form-request.
-     * @return RedirectResponse Redirect to the kelas index with a success flash message.
+     * @param  KelasRequest  $request  Form request yang telah divalidasi.
+     * @return RedirectResponse Pengalihan ke indeks kelas dengan pesan sukses flash.
      */
     public function store(KelasRequest $request): RedirectResponse
     {
@@ -74,10 +74,10 @@ class KelasController extends Controller
     }
 
     /**
-     * Show the form to edit an existing kelas.
+     * Menampilkan form untuk mengedit kelas yang sudah ada.
      *
-     * @param  Kelas  $kela  The kelas to edit, resolved by route-model binding (`Kela` alias used for URL disambiguation).
-     * @return Response Inertia response rendering `admin/kelas/edit`.
+     * @param  Kelas  $kela  Kelas yang akan diedit, di-resolve oleh route-model binding (alias `kela` digunakan untuk menghindari ambiguitas URL).
+     * @return Response Respon Inertia yang merender view `admin/kelas/edit`.
      */
     public function edit(Kelas $kela): Response
     {
@@ -91,11 +91,11 @@ class KelasController extends Controller
     }
 
     /**
-     * Update an existing kelas record.
+     * Memperbarui data kelas yang sudah ada.
      *
-     * @param  KelasRequest  $request  The validated form-request.
-     * @param  Kelas  $kela  The kelas to update, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the kelas index with a success flash message.
+     * @param  KelasRequest  $request  Form request yang telah divalidasi.
+     * @param  Kelas  $kela  Kelas yang akan diperbarui, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks kelas dengan pesan sukses flash.
      */
     public function update(KelasRequest $request, Kelas $kela): RedirectResponse
     {
@@ -113,11 +113,11 @@ class KelasController extends Controller
     }
 
     /**
-     * Delete a kelas record. Refuses with an error flash if the kelas is
-     * still referenced by siswa or guru-mengajar rows.
+     * Menghapus data kelas. Menolak dengan pesan kesalahan flash jika kelas tersebut
+     * masih direferensikan oleh baris data siswa atau guru_mengajar.
      *
-     * @param  Kelas  $kela  The kelas to delete, resolved by route-model binding.
-     * @return RedirectResponse Redirect to the kelas index with a success or error flash message.
+     * @param  Kelas  $kela  Kelas yang akan dihapus, di-resolve oleh route-model binding.
+     * @return RedirectResponse Pengalihan ke indeks kelas dengan pesan sukses atau kesalahan flash.
      */
     public function destroy(Kelas $kela): RedirectResponse
     {
@@ -132,12 +132,12 @@ class KelasController extends Controller
     }
 
     /**
-     * Replace the `kelas_mata_pelajaran` rows for the supplied kelas with
-     * the supplied list of mata-pelajaran ids. Existing rows are detached;
-     * new rows are attached in the supplied order.
+     * Mengganti baris data `kelas_mata_pelajaran` untuk kelas yang diberikan dengan
+     * daftar ID mata pelajaran yang diberikan. Baris yang ada akan dilepas (detached);
+     * baris baru kemudian dikaitkan (attached) sesuai urutan yang diberikan.
      *
-     * @param  Kelas  $kela  The kelas whose mapel allow-list is being replaced.
-     * @param  array<int, int>  $mapel  Deduplicated, sorted list of mapel ids.
+     * @param  Kelas  $kela  Kelas yang daftar izin mapelnya akan diganti.
+     * @param  array<int, int>  $mapel  Daftar ID mapel yang telah dideduplikasi dan diurutkan.
      */
     private function syncAvailableMapel(Kelas $kela, array $mapel): void
     {
@@ -149,14 +149,14 @@ class KelasController extends Controller
     }
 
     /**
-     * Build the Indonesian flash message for store/update. Includes a
-     * summary of how many mapel are now allowed for the kelas, and a
-     * "(sebelumnya: N)" tag on update when the count changed.
+     * Membangun pesan flash bahasa Indonesia untuk operasi store/update. Menyertakan
+     * ringkasan tentang berapa banyak mapel yang diperbolehkan untuk kelas tersebut, dan
+     * label "(sebelumnya: N)" pada operasi update saat jumlahnya berubah.
      *
-     * @param  string  $verb  "ditambahkan" | "diperbarui"
-     * @param  string  $kelasName  The kelas display name.
-     * @param  int  $count  The new mapel count (after sync).
-     * @param  int|null  $previousCount  The previous mapel count (only on update).
+     * @param  string  $verb  Kata kerja operasi: "ditambahkan" | "diperbarui".
+     * @param  string  $kelasName  Nama tampilan kelas.
+     * @param  int  $count  Jumlah mapel baru (setelah sinkronisasi).
+     * @param  int|null  $previousCount  Jumlah mapel sebelumnya (hanya diisi pada operasi update).
      */
     private function buildSyncMessage(string $verb, string $kelasName, int $count, ?int $previousCount): string
     {
