@@ -144,7 +144,7 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-primary text-white">
+                            <tr className="bg-navy text-white">
                                 <th className="px-4 py-3 text-left text-xs font-bold tracking-wide uppercase">
                                     NIS
                                 </th>

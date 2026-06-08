@@ -33,7 +33,7 @@ beforeEach(function () {
     $this->seedMataPelajaran();
 });
 
-test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', function () {
+test('Siswa statistik page mengirimkan chart_data dengan per_mapel', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
     $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
@@ -52,15 +52,11 @@ test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', funct
         'status_validasi' => Nilai::STATUS_FINAL,
     ]);
 
-    $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
+    $response = $this->actingAs($userSiswa)->get('/siswa/statistik');
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('siswa/nilai/index')
-        ->where('chart_data.overall.tugas', 70)
-        ->where('chart_data.overall.uts', 60)
-        ->where('chart_data.overall.uas', 72.5)
-        ->where('chart_data.overall.count', 2)
+        ->component('siswa/statistik/index')
         ->where('chart_data.kkm', 70)
         ->where('chart_data.stats.total_mapel', 2)
         ->where('chart_data.stats.lulus', 1)
@@ -69,18 +65,15 @@ test('Siswa nilai page mengirimkan chart_data dengan overall + per_mapel', funct
     );
 });
 
-test('Siswa nilai page chart_data menghitung ulang untuk siswa tanpa nilai', function () {
+test('Siswa statistik page chart_data menghitung ulang untuk siswa tanpa nilai', function () {
     $userSiswa = User::factory()->siswa()->create();
     Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
 
-    $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
+    $response = $this->actingAs($userSiswa)->get('/siswa/statistik');
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('siswa/nilai/index')
-        ->where('chart_data.overall.count', 0)
-        ->where('chart_data.overall.tugas', null)
-        ->where('chart_data.overall.akhir', null)
+        ->component('siswa/statistik/index')
         ->where('chart_data.stats.total_mapel', 0)
         ->has('chart_data.per_mapel', 0)
     );

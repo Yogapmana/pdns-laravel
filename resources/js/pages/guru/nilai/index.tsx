@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { Container, DataTable, PageHeader } from '@/components/ui/shared';
+import { Modal } from '@/components/ui/modal';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { calculateNilaiAkhir, calculateStatusLulus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -67,6 +68,7 @@ export default function NilaiIndex({
     useFlashToast();
     const [selectedKelasId, setSelectedKelasId] = useState(kelas_id ? String(kelas_id) : '');
     const [selectedMapelId, setSelectedMapelId] = useState(mata_pelajaran_id ? String(mata_pelajaran_id) : '');
+    const [showValidasiModal, setShowValidasiModal] = useState(false);
     const isFinal = status_validasi_global === 'Final';
 
     const availableMapel = selectedKelasId
@@ -258,7 +260,7 @@ export default function NilaiIndex({
                                                 <col className="w-28" />
                                             </colgroup>
                                             <thead>
-                                                <tr className="bg-primary text-white">
+                                                <tr className="bg-navy text-white">
                                                     <th className="px-3 py-3 text-left text-xs font-bold tracking-wide uppercase">
                                                         NIS
                                                     </th>
@@ -337,16 +339,7 @@ export default function NilaiIndex({
                     </Form>
 
                     {!isFinal && (
-                        <Form
-                            action="/guru/input-nilai/validate-final"
-                            method="post"
-                        >
-                            <input type="hidden" name="kelas_id" value={kelas_id ?? ''} />
-                            <input
-                                type="hidden"
-                                name="mata_pelajaran_id"
-                                value={mata_pelajaran_id ?? ''}
-                            />
+                        <>
                             <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
                                 <CardContent className="p-4 sm:px-5">
                                     <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
@@ -367,8 +360,9 @@ export default function NilaiIndex({
                                             </p>
                                         </div>
                                         <Button
-                                            type="submit"
+                                            type="button"
                                             variant="success"
+                                            onClick={() => setShowValidasiModal(true)}
                                             className="h-11 w-full shrink-0 px-5 text-xs sm:w-auto"
                                         >
                                             <Lock className="mr-1.5 h-3.5 w-3.5" />
@@ -377,7 +371,39 @@ export default function NilaiIndex({
                                     </div>
                                 </CardContent>
                             </Card>
-                        </Form>
+
+                            <Modal
+                                open={showValidasiModal}
+                                onClose={() => setShowValidasiModal(false)}
+                                title="Konfirmasi Validasi"
+                                description={`Apakah Anda yakin ingin memvalidasi semua nilai ${mapelNama(selectedMapelId)} di kelas ${kelasNama(selectedKelasId)} ke Final? Nilai yang sudah Final tidak dapat diubah kembali.`}
+                                footer={
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setShowValidasiModal(false)}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <Form
+                                            action="/guru/input-nilai/validate-final"
+                                            method="post"
+                                            onSubmit={() => setShowValidasiModal(false)}
+                                        >
+                                            <input type="hidden" name="kelas_id" value={kelas_id ?? ''} />
+                                            <input
+                                                type="hidden"
+                                                name="mata_pelajaran_id"
+                                                value={mata_pelajaran_id ?? ''}
+                                            />
+                                            <Button type="submit" variant="success">
+                                                Ya, Validasi Final
+                                            </Button>
+                                        </Form>
+                                    </>
+                                }
+                            />
+                        </>
                     )}
                 </>
             )}

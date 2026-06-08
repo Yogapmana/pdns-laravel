@@ -47,6 +47,46 @@ class DashboardController extends Controller
         $daftarKelas = Kelas::pluckNamaOrdered();
         $kkm = Nilai::KKM;
 
+        $tindakanPenting = [];
+
+        $siswaTanpaNilai = Siswa::doesntHave('nilai')->count();
+        if ($siswaTanpaNilai > 0) {
+            $tindakanPenting[] = [
+                'id' => 'siswa-no-nilai',
+                'title' => 'Siswa Tanpa Nilai',
+                'description' => "{$siswaTanpaNilai} siswa belum memiliki rekam nilai sama sekali.",
+                'priority' => 'high',
+                'href' => '/admin/siswa',
+            ];
+        }
+
+        $guruTanpaMengajar = Guru::doesntHave('mengajar')->count();
+        if ($guruTanpaMengajar > 0) {
+            $tindakanPenting[] = [
+                'id' => 'guru-no-jadwal',
+                'title' => 'Guru Belum Dijadwalkan',
+                'description' => "{$guruTanpaMengajar} guru belum ditugaskan mengajar kelas/mapel apa pun.",
+                'priority' => 'medium',
+                'href' => '/admin/guru',
+            ];
+        }
+
+        $kelasKritisCount = 0;
+        foreach ($rekapPerKelas as $rekap) {
+            if ($rekap['persentase_lulus'] < 70) {
+                $kelasKritisCount++;
+            }
+        }
+        if ($kelasKritisCount > 0) {
+            $tindakanPenting[] = [
+                'id' => 'kelas-kritis',
+                'title' => 'Kelas Butuh Intervensi',
+                'description' => "{$kelasKritisCount} kelas memiliki tingkat kelulusan di bawah 70%.",
+                'priority' => 'high',
+                'href' => '/admin/siswa',
+            ];
+        }
+
         return Inertia::render('admin/dashboard', [
             'stats' => [
                 'total_siswa' => $totalSiswa,
@@ -63,6 +103,7 @@ class DashboardController extends Controller
             'siswa_perhatian' => $siswaPerhatian,
             'daftar_kelas' => $daftarKelas,
             'kkm' => (float) $kkm,
+            'tindakan_penting' => $tindakanPenting,
         ]);
     }
 
@@ -122,6 +163,10 @@ class DashboardController extends Controller
             ];
         }
 
+        usort($rekap, function ($a, $b) {
+            return $a['persentase_lulus'] <=> $b['persentase_lulus'];
+        });
+
         return $rekap;
     }
 
@@ -175,7 +220,8 @@ class DashboardController extends Controller
                     'persentase_lulus' => $persentase,
                 ];
             })
-            ->sortByDesc('rata_rata')
+            ->sortBy('rata_rata')
+            ->take(5)
             ->values()
             ->all();
     }

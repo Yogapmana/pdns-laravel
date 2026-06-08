@@ -58,7 +58,7 @@
                     <th>No</th>
                     <th>NIS</th>
                     <th>Nama</th>
-                    @foreach($mapel_list as $mapel)
+                    @foreach($section['mapel_list'] as $mapel)
                         <th>{{ $mapel }}<br><small>(T/UTS/UAS/Akhir)</small></th>
                     @endforeach
                     <th>Rata-rata</th>
@@ -70,7 +70,7 @@
                         <td>{{ $i + 1 }}</td>
                         <td class="nis">{{ $row['siswa']->nis }}</td>
                         <td class="nama">{{ $row['siswa']->nama_siswa }}</td>
-                        @foreach($mapel_list as $mapel)
+                        @foreach($section['mapel_list'] as $mapel)
                             @php $n = $row['nilai_per_mapel'][$mapel] ?? null; @endphp
                             <td>
                                 {{ $n?->nilai_tugas ?? '—' }} / {{ $n?->nilai_uts ?? '—' }} / {{ $n?->nilai_uas ?? '—' }}

@@ -6,6 +6,7 @@ import {
     Search,
     X,
     Loader2,
+    BookOpen,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -186,7 +187,7 @@ export default function GuruIndex({
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-primary text-white">
+                            <tr className="bg-navy text-white">
                                 <th className="px-4 py-3 text-left text-xs font-bold tracking-wide uppercase">
                                     Nama Guru
                                 </th>
@@ -230,17 +231,17 @@ export default function GuruIndex({
                                             </td>
                                             <td className="px-4 py-3">
                                                 {g.mengajar.length === 0 ? (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        Belum ada
+                                                    <span className="text-xs italic text-muted-foreground">
+                                                        Belum ada jadwal
                                                     </span>
                                                 ) : (
-                                                    <div>
-                                                        <div className="text-sm font-medium text-navy">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-navy">
                                                             {g.mengajar.length} mengajar
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            {kelasCount} kelas · {mapelCount} mapel
-                                                        </div>
+                                                        </span>
+                                                        <span className="text-[11px] text-muted-foreground">
+                                                            {kelasCount} kelas, {mapelCount} mapel
+                                                        </span>
                                                     </div>
                                                 )}
                                             </td>

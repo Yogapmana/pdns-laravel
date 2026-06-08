@@ -111,7 +111,7 @@ export default function KelasIndex({ kelas, search }: Props) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-primary text-white">
+                            <tr className="bg-navy text-white">
                                 <th className="w-12 px-4 py-3 text-left text-xs font-bold tracking-wide uppercase">
                                     No
                                 </th>

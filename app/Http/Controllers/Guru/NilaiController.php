@@ -78,7 +78,7 @@ class NilaiController extends Controller
         $statusValidasiGlobal = null;
         $hasMengajar = $guru->mengajar()->exists();
 
-        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId($kelasId, $mapelId)) {
+        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId((int) $kelasId, (int) $mapelId)) {
             $siswa = Siswa::where('kelas_id', $kelasId)
                 ->orderBy('nis')
                 ->get();
@@ -144,7 +144,7 @@ class NilaiController extends Controller
             'nilai.*.nilai_uas' => ['nullable', 'numeric', 'between:0,100'],
         ]);
 
-        if (! $guru->mengajarDiKelasMapelId($validated['kelas_id'], $validated['mata_pelajaran_id'])) {
+        if (! $guru->mengajarDiKelasMapelId((int) $validated['kelas_id'], (int) $validated['mata_pelajaran_id'])) {
             abort(403, 'Anda tidak mengajar kombinasi kelas dan mata pelajaran ini.');
         }
 
@@ -209,7 +209,7 @@ class NilaiController extends Controller
             'mata_pelajaran_id' => ['required', 'integer', 'exists:mata_pelajaran,id'],
         ]);
 
-        if (! $guru->mengajarDiKelasMapelId($validated['kelas_id'], $validated['mata_pelajaran_id'])) {
+        if (! $guru->mengajarDiKelasMapelId((int) $validated['kelas_id'], (int) $validated['mata_pelajaran_id'])) {
             abort(403);
         }
 
@@ -306,7 +306,7 @@ class NilaiController extends Controller
         $rows = collect();
         $stats = ['lulus' => 0, 'tidak_lulus' => 0, 'belum' => 0];
 
-        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId($kelasId, $mapelId)) {
+        if ($kelasId && $mapelId && $hasMengajar && $guru->mengajarDiKelasMapelId((int) $kelasId, (int) $mapelId)) {
             $siswaList = Siswa::where('kelas_id', $kelasId)->orderBy('nis')->get();
             $nilaiList = Nilai::where('id_guru', $guru->id)
                 ->where('kelas_id', $kelasId)

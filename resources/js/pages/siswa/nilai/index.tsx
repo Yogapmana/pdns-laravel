@@ -16,7 +16,7 @@ type Guru = { id: number; nama_guru: string };
 type Nilai = {
     id: number;
     kelas: { id: number; nama: string } | null;
-    mataPelajaran: { id: number; nama: string } | null;
+    mata_pelajaran: { id: number; nama: string } | null;
     nilai_tugas: number | null;
     nilai_uts: number | null;
     nilai_uas: number | null;
@@ -70,8 +70,8 @@ export default function SiswaNilai({ nilai, mapel_list, guru_map }: Props) {
                 </div>
             ) : (
                 mapel_list.map((mapel) => {
-                    const entries = Object.entries(nilai).filter(([key]) =>
-                        key.endsWith(`|${mapel}`),
+                    const entries = Object.entries(nilai).filter(([, list]) =>
+                        list[0]?.mata_pelajaran?.nama === mapel,
                     );
 
                     return entries.map(([key, list]) => {

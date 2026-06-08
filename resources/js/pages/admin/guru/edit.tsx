@@ -27,7 +27,7 @@ type Props = {
     guru: Guru;
     daftar_kelas: { id: number; nama: string }[];
     daftar_mapel: { id: number; nama: string }[];
-    mapel_by_kelas: Record<string, number[]>;
+    mapel_by_kelas: Record<string, { id: number; nama: string }[]>;
 };
 
 type MengajarRow = {
@@ -59,7 +59,7 @@ export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_ke
         setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
     }
 
-    function mapelForKelas(kelasId: string): number[] {
+    function mapelForKelas(kelasId: string): { id: number; nama: string }[] {
         return mapel_by_kelas[kelasId] ?? [];
     }
 
@@ -67,11 +67,7 @@ export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_ke
         return daftar_kelas.find((k) => String(k.id) === kelasId)?.nama ?? '';
     }
 
-    const mengajarSummary = guru.mengajar.length > 0
-        ? guru.mengajar
-              .map((m) => `${m.kelas?.nama ?? '—'} — ${m.mata_pelajaran?.nama ?? '—'}`)
-              .join(' | ')
-        : 'Belum ada';
+
 
     const emptyKelas = daftar_kelas.filter((k) => mapelForKelas(String(k.id)).length === 0);
 
@@ -113,9 +109,6 @@ export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_ke
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
                                             <h3 className="text-sm font-bold text-secondary">Mengajar</h3>
-                                            <p className="text-xs text-muted-foreground mt-0.5">
-                                                Saat ini: <span className="font-medium">{mengajarSummary}</span>
-                                            </p>
                                         </div>
                                         <Button type="button" variant="outline" size="sm" onClick={addRow}>
                                             <Plus className="h-4 w-4" />
@@ -169,12 +162,9 @@ export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_ke
                                                             <option value="" disabled>
                                                                 {!row.kelas_id ? 'Pilih kelas dulu' : allowedMapel.length === 0 ? 'Tidak ada mapel diizinkan' : 'Pilih mata pelajaran'}
                                                             </option>
-                                                            {allowedMapel.map((mId) => {
-                                                                const m = daftar_mapel.find((x) => x.id === mId);
-                                                                return (
-                                                                    <option key={mId} value={mId}>{m?.nama ?? `#${mId}`}</option>
-                                                                );
-                                                            })}
+                                                            {allowedMapel.map((m) => (
+                                                                <option key={m.id} value={m.id}>{m.nama}</option>
+                                                            ))}
                                                         </Select>
                                                         {kelasHasMapel && (
                                                             <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
@@ -209,11 +199,7 @@ export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_ke
                                     )}
                                 </div>
 
-                                {hasAccount && (
-                                    <Alert variant="info">
-                                        Akun login tersedia. Kelola password dan status melalui <Link href="/admin/akun" className="underline font-medium">Manajemen Akun</Link>.
-                                    </Alert>
-                                )}
+
 
                                 <div className="flex gap-2 pt-4 border-t border-border">
                                     <Button type="submit" disabled={processing}>

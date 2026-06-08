@@ -245,7 +245,7 @@ export default function RekapIndex({
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[800px] text-sm">
                                 <thead>
-                                    <tr className="bg-primary text-white">
+                                    <tr className="bg-navy text-white">
                                         <th className="px-3 py-3 text-left text-xs font-bold tracking-wide uppercase">
                                             NIS
                                         </th>

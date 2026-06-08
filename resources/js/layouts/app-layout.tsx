@@ -300,18 +300,28 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                                 </button>
                             </div>
                         ) : (
-                            <>
-                                <p className="text-sm font-medium truncate">{user.name ?? user.username}</p>
-                                <p className="text-xs text-navy-300 capitalize">{roleLabel}</p>
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-primary text-white text-[15px] font-bold flex items-center justify-center shrink-0 shadow-sm border border-navy-light">
+                                    {userInitial}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[14px] font-semibold text-white truncate leading-tight">
+                                        {user.name ?? user.username}
+                                    </p>
+                                    <p className="text-[12px] text-navy-300 capitalize mt-0.5 truncate">
+                                        {roleLabel}
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={logout}
-                                    className="w-full text-left text-sm font-medium text-red-400 hover:text-red-300 transition mt-3 flex items-center gap-2 p-2 -ml-2 rounded hover:bg-red-500/10"
+                                    title="Keluar"
+                                    className="text-red-400 hover:text-white hover:bg-red-500 transition-colors p-2 rounded-lg shrink-0 flex items-center justify-center"
+                                    aria-label="Keluar"
                                 >
                                     <LogOut className="h-4 w-4" />
-                                    Keluar
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </aside>

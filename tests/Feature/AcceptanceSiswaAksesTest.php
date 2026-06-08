@@ -43,8 +43,6 @@ test('AC-07: Siswa login hanya melihat nilai milik sendiri', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('siswa/nilai/index')
-        ->where('siswa.nis', '00001')
-        ->where('siswa.nama_siswa', 'Siswa A')
         ->has('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika'), 1)
         ->where('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika').'.0.nilai_akhir', '81.00')
     );
@@ -107,4 +105,37 @@ test('Siswa tidak bisa akses endpoint nilai guru (POST save)', function () {
             'nilai' => [['nis' => '00001', 'nilai_tugas' => 100, 'nilai_uts' => 100, 'nilai_uas' => 100]],
         ])
         ->assertForbidden();
+});
+
+test('TC-21: Siswa mencoba memanipulasi query parameter untuk melihat nilai siswa lain', function () {
+    $userSiswaA = User::factory()->siswa()->create();
+    $userSiswaB = User::factory()->siswa()->create();
+    $userGuru = User::factory()->guru()->create();
+
+    $siswaA = Siswa::create(['nis' => '00001', 'user_id' => $userSiswaA->id, 'nama_siswa' => 'Siswa A', 'kelas_id' => $this->kelasId('X-A')]);
+    $siswaB = Siswa::create(['nis' => '00002', 'user_id' => $userSiswaB->id, 'nama_siswa' => 'Siswa B', 'kelas_id' => $this->kelasId('X-A')]);
+
+    $guru = Guru::create(['user_id' => $userGuru->id, 'nama_guru' => 'Ibu Sari']);
+
+    Nilai::create([
+        'nis' => $siswaA->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nilai_tugas' => 80, 'nilai_uts' => 70, 'nilai_uas' => 90, 'nilai_akhir' => 81, 'status_lulus' => 'Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
+    ]);
+    Nilai::create([
+        'nis' => $siswaB->nis, 'id_guru' => $guru->id, 'kelas_id' => $this->kelasId('X-A'), 'mata_pelajaran_id' => $this->mapelId('Matematika'),
+        'nilai_tugas' => 50, 'nilai_uts' => 60, 'nilai_uas' => 65, 'nilai_akhir' => 59, 'status_lulus' => 'Tidak Lulus',
+        'status_validasi' => Nilai::STATUS_FINAL,
+    ]);
+
+    // Siswa A mencoba mengakses nilai dengan memanipulasi query parameter 'nis', 'siswa_id', atau 'id'
+    $response = $this->actingAs($userSiswaA)->get('/siswa/nilai?nis=00002&siswa_id='.$siswaB->id.'&id='.$siswaB->id);
+
+    $response->assertOk();
+    // Memastikan data yang dirender tetap data Siswa A (nilai_akhir = 81), bukan Siswa B (nilai_akhir = 59)
+    $response->assertInertia(fn ($page) => $page
+        ->component('siswa/nilai/index')
+        ->has('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika'), 1)
+        ->where('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika').'.0.nilai_akhir', '81.00')
+    );
 });

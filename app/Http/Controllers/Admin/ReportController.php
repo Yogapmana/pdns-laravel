@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\GuruMengajar;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use App\Models\Nilai;
@@ -277,7 +278,7 @@ class ReportController extends Controller
 
         $sections = $siswaList->groupBy(fn ($s) => $s->kelas?->nama ?? '?')
             ->sortKeys()
-            ->map(function ($siswaInKelas, $kelasNama) use ($nilai) {
+            ->map(function ($siswaInKelas, $kelasNama) use ($nilai, $payload) {
                 $rows = $siswaInKelas->map(function ($siswa) use ($nilai) {
                     $rowNilai = [];
                     $totalAkhir = 0;
@@ -285,7 +286,8 @@ class ReportController extends Controller
 
                     foreach ($nilai->get($siswa->nis, collect()) as $mapelId => $items) {
                         $item = $items->first();
-                        $rowNilai[$mapelId] = $item;
+                        $mapelName = $item?->mataPelajaran?->nama ?? $mapelId;
+                        $rowNilai[$mapelName] = $item;
                         if ($item && $item->nilai_akhir !== null) {
                             $totalAkhir += (float) $item->nilai_akhir;
                             $jumlahMapel++;
@@ -301,9 +303,21 @@ class ReportController extends Controller
                     ];
                 })->values();
 
+                $kelasId = $siswaInKelas->first()->kelas_id;
+                $mapelDiKelas = GuruMengajar::where('kelas_id', $kelasId)
+                    ->with('mataPelajaran:id,nama')
+                    ->get()
+                    ->pluck('mataPelajaran.nama')
+                    ->all();
+
+                $sectionMapelNames = array_flip($mapelDiKelas);
+
                 $lulus = 0;
                 $tidakLulus = 0;
                 foreach ($rows as $r) {
+                    foreach (array_keys($r['nilai_per_mapel']) as $m) {
+                        $sectionMapelNames[$m] = true;
+                    }
                     foreach ($r['nilai_per_mapel'] as $n) {
                         if (! $n) {
                             continue;
@@ -316,8 +330,15 @@ class ReportController extends Controller
                     }
                 }
 
+                $sectionMapelList = array_keys($sectionMapelNames);
+                sort($sectionMapelList);
+                if (! empty($payload['mapel_names'])) {
+                    $sectionMapelList = array_values(array_intersect($sectionMapelList, $payload['mapel_names']));
+                }
+
                 return [
                     'kelas' => $kelasNama,
+                    'mapel_list' => $sectionMapelList,
                     'rows' => $rows,
                     'stats' => [
                         'jumlah_siswa' => $siswaInKelas->count(),
@@ -373,24 +394,27 @@ class ReportController extends Controller
      */
     private function flattenRowsForExport(array $data): array
     {
-        $header = ['Kelas', 'NIS', 'Nama Siswa'];
-        foreach ($data['mapel_list'] as $m) {
-            $header[] = $m.' (Tgs)';
-            $header[] = $m.' (UTS)';
-            $header[] = $m.' (UAS)';
-            $header[] = $m.' (Akhir)';
-        }
-        $header[] = 'Rata-rata';
-
-        $rows = [$header];
+        $rows = [];
         foreach ($data['sections'] as $section) {
+            // Write a header row for each section because columns vary by class
+            $header = ['Kelas', 'NIS', 'Nama Siswa'];
+            foreach ($section['mapel_list'] as $m) {
+                $header[] = $m.' (Tgs)';
+                $header[] = $m.' (UTS)';
+                $header[] = $m.' (UAS)';
+                $header[] = $m.' (Akhir)';
+            }
+            $header[] = 'Rata-rata';
+            $rows[] = $header;
+
             foreach ($section['rows'] as $row) {
                 $flat = [
                     $section['kelas'],
                     $row['siswa']->nis,
                     $row['siswa']->nama_siswa,
                 ];
-                foreach ($row['nilai_per_mapel'] as $n) {
+                foreach ($section['mapel_list'] as $m) {
+                    $n = $row['nilai_per_mapel'][$m] ?? null;
                     $flat[] = $n?->nilai_tugas;
                     $flat[] = $n?->nilai_uts;
                     $flat[] = $n?->nilai_uas;

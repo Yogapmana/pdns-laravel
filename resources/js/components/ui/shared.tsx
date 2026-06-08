@@ -6,7 +6,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
     return (
         <div
-            className={cn('bg-white rounded-xl shadow-sm border border-border p-6', className)}
+            className={cn('bg-white rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-200/80 overflow-hidden', className)}
             {...props}
         >
             {children}
@@ -16,8 +16,8 @@ export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivEl
 
 export function CardHeader({ children, action, className }: { children: ReactNode; action?: ReactNode; className?: string }) {
     return (
-        <div className={cn('flex items-center justify-between px-6 py-4 border-b border-border', className)}>
-            <h2 className="text-lg font-semibold text-navy">{children}</h2>
+        <div className={cn('flex items-center justify-between px-6 pt-6 pb-4 border-b border-border', className)}>
+            <h2 className="text-lg font-bold text-slate-800">{children}</h2>
             {action}
         </div>
     );

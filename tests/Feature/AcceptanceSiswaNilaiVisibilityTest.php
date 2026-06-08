@@ -46,7 +46,7 @@ test('Siswa nilai page HANYA menampilkan nilai yang berstatus Final (Draft terse
     );
 });
 
-test('Siswa nilai page menampilkan chart_data hanya untuk nilai Final', function () {
+test('Siswa statistik page menampilkan chart_data hanya untuk nilai Final', function () {
     $userSiswa = User::factory()->siswa()->create();
     $userGuru = User::factory()->guru()->create();
     $siswa = Siswa::create(['nis' => '00001', 'user_id' => $userSiswa->id, 'nama_siswa' => 'Ahmad', 'kelas_id' => $this->kelasId('X-A')]);
@@ -65,10 +65,10 @@ test('Siswa nilai page menampilkan chart_data hanya untuk nilai Final', function
         'status_validasi' => Nilai::STATUS_DRAFT,
     ]);
 
-    $response = $this->actingAs($userSiswa)->get('/siswa/nilai');
+    $response = $this->actingAs($userSiswa)->get('/siswa/statistik');
 
     $response->assertInertia(fn ($page) => $page
-        ->where('chart_data.overall.count', 1)
+        ->component('siswa/statistik/index')
         ->where('chart_data.stats.total_mapel', 1)
         ->where('chart_data.stats.lulus', 1)
         ->where('chart_data.stats.tidak_lulus', 0)
@@ -152,7 +152,6 @@ test('Siswa hanya melihat nilai Final miliknya sendiri, bukan Draft siswa lain',
     $response = $this->actingAs($userSiswaA)->get('/siswa/nilai');
 
     $response->assertInertia(fn ($page) => $page
-        ->where('siswa.nis', '00001')
         ->has('nilai', 1)
         ->where('nilai.'.$this->kelasId('X-A').'|'.$this->mapelId('Matematika').'.0.nilai_akhir', '81.00')
     );

@@ -19,7 +19,7 @@ import { InputError, PageHeader, Container } from '@/components/ui/shared';
 type Props = {
     daftar_kelas: { id: number; nama: string }[];
     daftar_mapel: { id: number; nama: string }[];
-    mapel_by_kelas: Record<string, number[]>;
+    mapel_by_kelas: Record<string, { id: number; nama: string }[]>;
 };
 
 type MengajarRow = {
@@ -46,7 +46,7 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel, mapel_by_kelas 
         );
     }
 
-    function mapelForKelas(kelasId: string): number[] {
+    function mapelForKelas(kelasId: string): { id: number; nama: string }[] {
         return mapel_by_kelas[kelasId] ?? [];
     }
 
@@ -260,26 +260,14 @@ export default function GuruCreate({ daftar_kelas, daftar_mapel, mapel_by_kelas 
                                                                       : 'Pilih mata pelajaran'}
                                                             </option>
                                                             {allowedMapel.map(
-                                                                (mId) => {
-                                                                    const m = daftar_mapel.find(
-                                                                        (x) =>
-                                                                            x.id ===
-                                                                            mId,
-                                                                    );
-                                                                    return (
-                                                                        <option
-                                                                            key={
-                                                                                mId
-                                                                            }
-                                                                            value={
-                                                                                mId
-                                                                            }
-                                                                        >
-                                                                            {m?.nama ??
-                                                                                `#${mId}`}
-                                                                        </option>
-                                                                    );
-                                                                },
+                                                                (m) => (
+                                                                    <option
+                                                                        key={m.id}
+                                                                        value={m.id}
+                                                                    >
+                                                                        {m.nama}
+                                                                    </option>
+                                                                ),
                                                             )}
                                                         </Select>
                                                         {kelasHasMapel && (
