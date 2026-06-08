@@ -176,6 +176,8 @@ class ReportController extends Controller
             'kelas.*' => ['string', Rule::in($validKelas)],
             'mata_pelajaran' => ['nullable', 'array'],
             'mata_pelajaran.*' => ['string', Rule::in($validMapel)],
+            'sort' => ['nullable', 'string', Rule::in(['abjad', 'ranking', 'perhatian'])],
+            'sort_type' => ['nullable', 'string', Rule::in(['per_kelas', 'paralel'])],
         ]);
 
         $kelasNames = array_values(array_unique(array_map('strval', $validated['kelas'])));
@@ -196,6 +198,8 @@ class ReportController extends Controller
             'kelas_names' => $kelasNames,
             'mata_pelajaran' => $mapelIds,
             'mapel_names' => $mapelNames,
+            'sort' => $validated['sort'] ?? 'abjad',
+            'sort_type' => $validated['sort_type'] ?? 'per_kelas',
         ];
     }
 
@@ -256,6 +260,8 @@ class ReportController extends Controller
         $kelasIds = $payload['kelas'];
         $kelasNames = $payload['kelas_names'];
         $mapelIds = $payload['mata_pelajaran'];
+        $sort = $payload['sort'];
+        $sortType = $payload['sort_type'];
 
         $siswaList = Siswa::with('kelas:id,nama')
             ->whereIn('kelas_id', $kelasIds)
@@ -276,9 +282,9 @@ class ReportController extends Controller
             ? MataPelajaran::whereIn('id', $nilaiQuery->clone()->distinct()->pluck('mata_pelajaran_id'))->orderBy('nama')->pluck('nama')->all()
             : $payload['mapel_names'];
 
-        $sections = $siswaList->groupBy(fn ($s) => $s->kelas?->nama ?? '?')
+        $sections = $siswaList->groupBy(fn ($s) => $sortType === 'paralel' ? 'Semua Kelas (Paralel)' : ($s->kelas?->nama ?? '?'))
             ->sortKeys()
-            ->map(function ($siswaInKelas, $kelasNama) use ($nilai, $payload) {
+            ->map(function ($siswaInKelas, $kelasNama) use ($nilai, $payload, $sort, $sortType) {
                 $rows = $siswaInKelas->map(function ($siswa) use ($nilai) {
                     $rowNilai = [];
                     $totalAkhir = 0;
@@ -301,14 +307,32 @@ class ReportController extends Controller
                         'nilai_per_mapel' => $rowNilai,
                         'rata_rata' => $rataRata,
                     ];
-                })->values();
+                });
 
-                $kelasId = $siswaInKelas->first()->kelas_id;
-                $mapelDiKelas = GuruMengajar::where('kelas_id', $kelasId)
-                    ->with('mataPelajaran:id,nama')
-                    ->get()
-                    ->pluck('mataPelajaran.nama')
-                    ->all();
+                if ($sort === 'ranking') {
+                    $rows = $rows->sortByDesc('rata_rata')->values();
+                } elseif ($sort === 'perhatian') {
+                    $rows = $rows->sortBy(fn ($r) => $r['rata_rata'] ?? 999)->values();
+                } else {
+                    $rows = $rows->sortBy(fn ($r) => $r['siswa']->nama_siswa)->values();
+                }
+
+                if ($sortType === 'paralel') {
+                    $mapelDiKelas = GuruMengajar::whereIn('kelas_id', $payload['kelas'])
+                        ->with('mataPelajaran:id,nama')
+                        ->get()
+                        ->pluck('mataPelajaran.nama')
+                        ->unique()
+                        ->all();
+                } else {
+                    $kelasId = $siswaInKelas->first()->kelas_id;
+                    $mapelDiKelas = GuruMengajar::where('kelas_id', $kelasId)
+                        ->with('mataPelajaran:id,nama')
+                        ->get()
+                        ->pluck('mataPelajaran.nama')
+                        ->unique()
+                        ->all();
+                }
 
                 $sectionMapelNames = array_flip($mapelDiKelas);
 

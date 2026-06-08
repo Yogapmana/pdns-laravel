@@ -107,7 +107,7 @@ test('Admin: rekap per kelas berisi jumlah siswa, lulus, tidak lulus, dan persen
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('rekap_per_kelas', 2)
-            ->where('rekap_per_kelas.0.kelas', 'X-A')
+            ->dump()->where('rekap_per_kelas.0.kelas', 'X-A')
             ->where('rekap_per_kelas.0.jumlah_siswa', 2)
             ->where('rekap_per_kelas.0.lulus', 1)
             ->where('rekap_per_kelas.0.tidak_lulus', 1)

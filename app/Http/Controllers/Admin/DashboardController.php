@@ -163,9 +163,7 @@ class DashboardController extends Controller
             ];
         }
 
-        usort($rekap, function ($a, $b) {
-            return $a['persentase_lulus'] <=> $b['persentase_lulus'];
-        });
+
 
         return $rekap;
     }
@@ -220,7 +218,7 @@ class DashboardController extends Controller
                     'persentase_lulus' => $persentase,
                 ];
             })
-            ->sortBy('rata_rata')
+            ->sortByDesc('rata_rata')
             ->take(5)
             ->values()
             ->all();

@@ -9,6 +9,7 @@ import {
     Trophy,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
 import { ActionChecklist } from '@/components/dashboard/action-checklist';
@@ -173,10 +174,10 @@ export default function AdminDashboard({
                     <CardHeader
                         action={
                             <Link
-                                href="#"
-                                className="text-xs text-primary hover:underline"
+                                href="/admin/laporan?kelas=all&sort=ranking&sort_type=paralel"
+                                className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
                             >
-                                Selengkapnya
+                                Selengkapnya <ChevronRight className="h-3 w-3" />
                             </Link>
                         }
                     >
@@ -199,10 +200,10 @@ export default function AdminDashboard({
                     <CardHeader
                         action={
                             <Link
-                                href="#"
-                                className="text-xs text-primary hover:underline"
+                                href="/admin/laporan?kelas=all&sort=perhatian&sort_type=paralel"
+                                className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
                             >
-                                Selengkapnya
+                                Selengkapnya <ChevronRight className="h-3 w-3" />
                             </Link>
                         }
                     >
