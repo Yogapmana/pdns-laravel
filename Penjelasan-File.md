@@ -1,6 +1,6 @@
-# Panduan Struktur Folder dan Berkas Aplikasi
+# Panduan Struktur Folder, Berkas, dan Diagram Aplikasi
 
-Dokumen ini menjelaskan fungsi dan kegunaan dari setiap folder dan berkas utama yang terdapat di dalam folder `app/` dan `resources/` pada aplikasi PDNS (Penginputan Data & Nilai Siswa) berbasis Laravel + Inertia (React).
+Dokumen ini menjelaskan fungsi dan kegunaan dari setiap folder dan berkas utama di dalam folder `app/` dan `resources/`, serta menyajikan analisis lengkap terhadap **Diagram Kelas (UML Class Diagram)** dan **Diagram Hubungan Entitas (Entity Relationship Diagram - ERD)** pada sistem PDNS (Penginputan Data & Nilai Siswa) berbasis Laravel + Inertia.
 
 ---
 
@@ -119,3 +119,87 @@ Template server-side Laravel.
     *   `html.blade.php`: Kerangka preview laporan berbasis web.
     *   `pdf.blade.php`: Kerangka laporan PDF yang akan diekspor (seperti laporan rekap kelas). Didesain agar kompatibel dengan mesin cetak *DomPDF*.
     *   `rapor-pdf.blade.php`: Template desain halaman rapor PDF resmi siswa lengkap dengan kop surat sekolah, tabel nilai detail, nilai akhir huruf, predikat kelulusan, dan kolom tanda tangan wali kelas.
+
+---
+
+## 📊 Analisis & Penjelasan Diagram Sistem
+
+Aplikasi ini didesain menggunakan pendekatan Object-Oriented di tingkat kode dan pemodelan relasional di tingkat database. Berikut adalah penjelasan lengkap untuk kedua diagram arsitektur sistem:
+
+### 1. Diagram Kelas (UML Class Diagram)
+Diagram Kelas menggambarkan struktur logis kode program dari sisi Object-Oriented Programming (OOP) di Laravel. Setiap kotak merepresentasikan kelas model Laravel yang memetakan data beserta fungsinya (*attributes* & *methods*) serta hubungan multiplisitasnya.
+
+#### A. Penjelasan Kelas dan Tanggung Jawabnya:
+*   **`User`**:
+    *   **Atribut**: `id`, `username`, `name`, `role`, `is_active`, `password`.
+    *   **Metode**:
+        *   `hasRole()`: Mengecek kecocokan hak akses pengguna.
+        *   `isAdmin()`, `isGuru()`, `isSiswa()`: Fungsi pembantu (helper) instan untuk validasi otorisasi cepat.
+        *   `siswa()`, `guru()`: Hubungan ke entitas profil terkait.
+*   **`Siswa`**:
+    *   **Atribut**: `nis` (Nomor Induk Siswa), `user_id`, `kelas_id`, `nama_siswa`.
+    *   **Metode**: `user()`, `kelas()`, `nilai()` mendefinisikan relasi objek navigasi.
+*   **`Guru`**:
+    *   **Atribut**: `id`, `user_id`, `nama_guru`.
+    *   **Metode**: `user()`, `mengajar()`, `nilai()` mendefinisikan relasi guru ke akun, data mengajar, dan nilai yang diinput.
+*   **`Kelas`**:
+    *   **Atribut**: `id`, `nama`.
+    *   **Metode**: Mengembalikan daftar `siswa()`, `mataPelajaran()`, `guruMengajar()` yang ditugaskan, dan data `nilai()`.
+*   **`MataPelajaran`**:
+    *   **Atribut**: `id`, `nama`.
+    *   **Metode**: Mengelola relasi ke tabel `kelas()`, pivot `guruMengajar()`, dan `nilai()`.
+*   **`Nilai`**:
+    *   **Atribut**: `id`, `nis`, `id_guru`, `kelas_id`, `mapel_id`, `nilai_tugas`, `nilai_uts`, `nilai_uas`, `nilai_akhir`.
+    *   **Metode**:
+        *   `hitungNilaiAkhir()`: Logika bisnis untuk menghitung nilai akhir dengan bobot persentase khusus (30% Tugas, 30% UTS, 40% UAS).
+        *   `tentukanKelulusan()`: Mengevaluasi apakah nilai akhir memenuhi atau melampaui KKM (Kriteria Ketuntasan Minimal).
+        *   `validasiNilai()`: Fungsi untuk mengunci nilai agar tidak bisa diubah guru tanpa persetujuan admin.
+*   **`GuruMengajar`**: Kelas pivot yang mengaitkan `Guru` dengan kombinasi `Kelas` dan `MataPelajaran` yang diajar.
+*   **`NilaiUnlockLog`**: Mencatat riwayat audit ketika kelas nilai dibuka kuncinya oleh admin atas permintaan guru.
+
+#### B. Hubungan Multiplisitas (Kardinalitas Objek):
+*   **`User` ke `Siswa`/`Guru` (`1` ke `0..1`)**: Satu akun pengguna (*User*) maksimal hanya terhubung ke satu profil `Siswa` atau satu profil `Guru` (atau tidak sama sekali jika akun tersebut adalah Admin).
+*   **`Kelas` ke `Siswa` (`1` ke `*`)**: Satu kelas dapat memiliki banyak siswa (`*`), namun seorang siswa hanya terdaftar di satu kelas (`1`).
+*   **`Siswa` ke `Nilai` (`1` ke `*`)**: Seorang siswa memiliki banyak catatan nilai mata pelajaran (`*`).
+*   **`Guru` ke `Nilai` (`1` ke `*`)**: Seorang guru dapat menginput banyak data nilai siswa (`*`).
+*   **`MataPelajaran` ke `Nilai` (`1` ke `*`)**: Satu mata pelajaran dapat memiliki banyak data nilai siswa (`*`).
+
+---
+
+### 2. Diagram Hubungan Entitas (Entity Relationship Diagram - ERD)
+ERD menggambarkan struktur fisik tabel-tabel di database PostgreSQL/MySQL beserta kolom, tipe data, dan konstrain hubungan kunci (*foreign key*) yang menghubungkannya menggunakan notasi *Crow's Foot*.
+
+#### A. Detail Tabel dan Kolom Database:
+*   **`USERS`**: Menyimpan kredensial sistem.
+    *   `id` (PK, bigint) -> Kunci utama unik.
+    *   `role` (enum) -> Membatasi nilai hanya pada opsi role sistem ('admin', 'guru', 'siswa').
+    *   `is_active` (boolean) -> Status aktifasi akun untuk pembatasan login.
+*   **`SISWA`**: Profil fisik siswa.
+    *   `nis` (PK, varchar) -> Menggunakan Nomor Induk Siswa sebagai kunci utama (Primary Key) bertipe string.
+    *   `user_id` (FK, bigint) -> Relasi ke tabel `USERS`.
+    *   `kelas_id` (FK, bigint) -> Relasi ke tabel `KELAS` (menunjukkan penempatan kelas siswa).
+*   **`GURU`**: Profil fisik guru.
+    *   `id` (PK, bigint) & `user_id` (FK, bigint).
+*   **`KELAS`** & **`MATA_PELAJARAN`**: Tabel master data untuk menyimpan nama kelas dan nama pelajaran.
+*   **`KELAS_MATA_PELAJARAN`**: Tabel pivot pembatas.
+    *   Menghubungkan `kelas_id` dan `mapel_id` untuk menentukan mata pelajaran apa saja yang aktif/tersedia untuk kelas tertentu.
+*   **`GURU_MENAJAR`**: Tabel pivot penugasan guru.
+    *   Menghubungkan `id_guru`, `kelas_id`, dan `mapel_id` untuk memetakan guru pengajar spesifik pada kelas dan mata pelajaran tertentu.
+*   **`NILAI`**: Tabel transaksi penilaian siswa.
+    *   Menghubungkan `nis` (Siswa), `id_guru` (Guru penginput), `kelas_id`, dan `mapel_id`.
+    *   Menyimpan data desimal (`decimal`) untuk presisi nilai angka tugas, UTS, UAS, dan nilai akhir.
+    *   `status_lulus` (enum) dan `status_validasi` (enum) untuk melacak kelulusan akademik dan status penguncian nilai.
+*   **`NILAI_UNLOCK_LOG`**: Tabel log audit.
+    *   Menyimpan `id_admin` (FK ke `USERS`), `id_guru`, `kelas_id`, `mapel_id`, jumlah baris yang terpengaruh (`affected_rows`), dan alasan pembukaan kunci (`reason` bertipe text).
+
+#### B. Hubungan Relasional (*Crow's Foot Notation*):
+*   **One-to-One (`||` ke `o|`)**: Terjadi antara `USERS` dengan `SISWA` atau `GURU`. Simbol garis tegak ganda mewakili keharusan satu baris di satu sisi, dan lingkaran kecil mewakili opsionalitas di sisi lainnya (seorang pengguna belum tentu memiliki profil siswa/guru jika dia adalah admin).
+*   **One-to-Many (`||` ke `|<`)**: Terjadi antara tabel master (seperti `KELAS` atau `SISWA`) ke tabel transaksi `NILAI`. Simbol kaki gagak (`<`) menunjukkan bahwa satu data kelas atau siswa dapat terhubung ke banyak baris transaksi penilaian.
+*   **Many-to-Many via Pivot**: Hubungan banyak-ke-banyak dimediasi oleh tabel pivot seperti `KELAS_MATA_PELAJARAN` dan `GURU_MENAJAR` untuk menormalisasi relasi database dan mencegah redundansi data.
+
+---
+
+### 3. Korelasi Antara UML Class Diagram & ERD
+*   **Model vs Tabel**: Setiap Class Model di UML (seperti `User`, `Siswa`, `Nilai`) berkorespondensi langsung dengan tabel fisik database di ERD (`USERS`, `SISWA`, `NILAI`).
+*   **Relasi Eloquent vs Foreign Key**: Garis hubungan asosiasi di UML diimplementasikan menggunakan konstrain *Foreign Key* (FK) di ERD, yang kemudian dideklarasikan di kelas Model menggunakan fungsi `belongsTo`, `hasMany`, `hasOne`, atau `belongsToMany`.
+*   **Logika Bisnis**: Atribut angka di ERD (`nilai_tugas`, `nilai_uts`, `nilai_uas`) diolah secara otomatis oleh metode enkapsulasi logika bisnis di Class diagram (`hitungNilaiAkhir()` dan `tentukanKelulusan()`) sebelum disimpan kembali ke dalam database.
