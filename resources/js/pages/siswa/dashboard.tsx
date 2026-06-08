@@ -1,5 +1,4 @@
 import { BookOpenCheck, Hash, Printer, School, User } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import {
     Container,
     PageHeader,

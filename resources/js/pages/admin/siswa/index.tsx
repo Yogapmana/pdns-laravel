@@ -75,10 +75,13 @@ export default function SiswaIndex({ siswa, daftar_kelas, filters }: Props) {
         if (!iso) {
             return '—';
         }
+
         const d = new Date(iso);
+
         if (Number.isNaN(d.getTime())) {
             return '—';
         }
+
         return DATE_FORMATTER.format(d);
     }
 

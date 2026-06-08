@@ -13,6 +13,7 @@ export function formatAvg(v: number | null | undefined): string {
     if (v === null || v === undefined) {
         return '—';
     }
+
     return Number(v).toFixed(2);
 }
 

@@ -35,7 +35,7 @@ type MengajarRow = {
     mata_pelajaran_id: string;
 };
 
-export default function GuruEdit({ guru, daftar_kelas, daftar_mapel, mapel_by_kelas }: Props) {
+export default function GuruEdit({ guru, daftar_kelas, mapel_by_kelas }: Props) {
     const hasAccount = guru.user !== null;
 
     const initialRows: MengajarRow[] = guru.mengajar.length > 0

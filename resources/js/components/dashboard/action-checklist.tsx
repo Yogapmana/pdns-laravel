@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Info, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { TindakanItem } from '@/pages/admin/dashboard';
 
 export function ActionChecklist({ items }: { items: TindakanItem[] }) {

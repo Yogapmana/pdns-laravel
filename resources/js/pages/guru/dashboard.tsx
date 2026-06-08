@@ -49,7 +49,6 @@ type PerCombo = {
 type Props = {
     guru: Guru;
     stats: Stats;
-    mengajar: Mengajar[];
     per_combo_stats: PerCombo[];
 };
 
@@ -87,10 +86,6 @@ export default function GuruDashboard({
     per_combo_stats,
 }: Props) {
     useFlashToast();
-
-    const mengajar = guru.mengajar ?? [];
-    const totalKelas = new Set(mengajar.map((m) => m.kelas)).size;
-    const totalMapel = new Set(mengajar.map((m) => m.mata_pelajaran)).size;
 
     const comboFinal = per_combo_stats.filter(
         (c) => c.jumlah_siswa > 0 && c.jumlah_final === c.jumlah_siswa,

@@ -5,14 +5,20 @@ import {
     BookOpen,
     CheckCircle,
     AlertTriangle,
-    Filter,
     BarChart3,
     Trophy,
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Alert } from '@/components/ui/alert';
+import { ActionChecklist } from '@/components/dashboard/action-checklist';
+import {
+    KelasBarChart
+    
+} from '@/components/dashboard/kelas-bar-chart';
+import type {RekapKelas} from '@/components/dashboard/kelas-bar-chart';
+import { SiswaList  } from '@/components/dashboard/siswa-list';
+import type {SiswaEntry} from '@/components/dashboard/siswa-list';
 import {
     Card,
     CardHeader,
@@ -22,12 +28,6 @@ import {
     Container,
 } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
-import { ActionChecklist } from '@/components/dashboard/action-checklist';
-import {
-    KelasBarChart,
-    type RekapKelas,
-} from '@/components/dashboard/kelas-bar-chart';
-import { SiswaList, type SiswaEntry } from '@/components/dashboard/siswa-list';
 
 type Stats = {
     total_siswa: number;

@@ -5,7 +5,6 @@ import {
     Plus,
     Trash2,
     AlertTriangle,
-    Info,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
@@ -27,7 +26,7 @@ type MengajarRow = {
     mata_pelajaran_id: string;
 };
 
-export default function GuruCreate({ daftar_kelas, daftar_mapel, mapel_by_kelas }: Props) {
+export default function GuruCreate({ daftar_kelas, mapel_by_kelas }: Props) {
     const [rows, setRows] = useState<MengajarRow[]>([
         { kelas_id: '', mata_pelajaran_id: '' },
     ]);

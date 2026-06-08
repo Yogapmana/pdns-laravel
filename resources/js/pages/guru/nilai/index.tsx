@@ -13,9 +13,9 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Container, DataTable, PageHeader } from '@/components/ui/shared';
-import { Modal } from '@/components/ui/modal';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { calculateNilaiAkhir, calculateStatusLulus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -53,12 +53,9 @@ type Props = {
 };
 
 export default function NilaiIndex({
-    guru,
     daftar_kelas,
     mapel_by_kelas,
-    kelas,
     kelas_id,
-    mata_pelajaran,
     mata_pelajaran_id,
     siswa,
     nilai_map,

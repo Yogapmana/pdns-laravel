@@ -6,7 +6,6 @@ import {
     Search,
     X,
     Loader2,
-    BookOpen,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -97,14 +96,19 @@ export default function GuruIndex({
         if (!selected) {
             return [];
         }
+
         const groups = new Map<string, string[]>();
+
         for (const m of selected.mengajar) {
             const kelasNama = m.kelas?.nama ?? '—';
+
             if (!groups.has(kelasNama)) {
                 groups.set(kelasNama, []);
             }
+
             groups.get(kelasNama)?.push(m.mata_pelajaran?.nama ?? '—');
         }
+
         return Array.from(groups.entries())
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([kelas, mapels]) => ({

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\Guru;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use Barryvdh\DomPDF\Facade\Pdf;

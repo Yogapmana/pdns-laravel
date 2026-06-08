@@ -1,6 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { useMemo } from 'react';
-import { ArrowUpDown } from 'lucide-react';
 import { formatAvg } from './mapel-bar-chart';
 
 export type SiswaEntry = {
@@ -42,11 +40,18 @@ export function SiswaList({
                         
                         // Rank colors
                         let circleBg = 'bg-slate-100 text-slate-500';
-                        if (i === 0) circleBg = 'bg-amber-100 text-amber-700 font-extrabold shadow-sm'; // Gold
-                        else if (i === 1) circleBg = 'bg-slate-200 text-slate-700 font-extrabold shadow-sm'; // Silver
-                        else if (i === 2) circleBg = 'bg-orange-100 text-orange-800 font-extrabold shadow-sm'; // Bronze
-                        else if (isDanger) circleBg = 'bg-rose-50 text-rose-600';
-                        else circleBg = 'bg-emerald-50 text-emerald-600';
+
+                        if (i === 0) {
+                            circleBg = 'bg-amber-100 text-amber-700 font-extrabold shadow-sm'; // Gold
+                        } else if (i === 1) {
+                            circleBg = 'bg-slate-200 text-slate-700 font-extrabold shadow-sm'; // Silver
+                        } else if (i === 2) {
+                            circleBg = 'bg-orange-100 text-orange-800 font-extrabold shadow-sm'; // Bronze
+                        } else if (isDanger) {
+                            circleBg = 'bg-rose-50 text-rose-600';
+                        } else {
+                            circleBg = 'bg-emerald-50 text-emerald-600';
+                        }
 
                         return (
                             <Link

@@ -6,7 +6,6 @@ import {
     BarChart3,
     CheckCircle,
     XCircle,
-    FileSpreadsheet,
     FileText,
     Maximize2,
     Minimize2,
@@ -52,7 +51,6 @@ type Section = {
 type Props = {
     kelas_list: string[];
     sections: Section[];
-    mapel_list: string[];
     stats: {
         jumlah_siswa: number;
         jumlah_lulus: number;
@@ -81,7 +79,6 @@ function buildExportUrl(
 export default function ReportsPreview({
     kelas_list,
     sections,
-    mapel_list,
     stats,
     tanggal_cetak,
 }: Props) {

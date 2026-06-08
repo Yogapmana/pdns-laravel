@@ -13,7 +13,6 @@ import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import {
     Container,
@@ -56,7 +55,6 @@ type Props = {
 };
 
 export default function RekapIndex({
-    guru,
     kelas,
     kelas_id,
     mata_pelajaran,

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
     CheckCircle,
     XCircle,
@@ -6,28 +5,12 @@ import {
     Filter,
     RotateCcw,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Container, PageHeader } from '@/components/ui/shared';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { cn } from '@/lib/utils';
-
-type Siswa = { nis: string; nama_siswa: string; kelas: string };
-type Guru = { id: number; nama_guru: string };
-
-type Nilai = {
-    id: number;
-    kelas: string;
-    mata_pelajaran: string;
-    nilai_tugas: number | null;
-    nilai_uts: number | null;
-    nilai_uas: number | null;
-    nilai_akhir: number | null;
-    status_lulus: string | null;
-    status_validasi: string;
-    id_guru: number;
-};
 
 type PerMapel = {
     mapel: string;
@@ -47,10 +30,7 @@ type ChartData = {
 };
 
 type Props = {
-    siswa: Siswa;
-    nilai: Record<string, Nilai[]>;
     mapel_list: string[];
-    guru_map: Record<string, Guru>;
     chart_data: ChartData;
 };
 
@@ -69,14 +49,6 @@ const COMPONENT_META: Record<
 };
 
 const Y_TICKS = [0, 25, 50, 75, 100] as const;
-
-function nilaiTextColor(v: number | null, kkm: number): string {
-    if (v === null) {
-        return 'text-muted-foreground';
-    }
-
-    return v >= kkm ? 'text-emerald-700' : 'text-rose-700';
-}
 
 function describeDataSelection(komponen: KomponenSet): string {
     const selected = (Object.keys(komponen) as KomponenKey[]).filter(
@@ -181,9 +153,11 @@ function BarChart({
                                 {components.map((comp, bi) => {
                                     const v =
                                         comp === 'akhir' ? d.akhir : d[comp];
+
                                     if (v === null) {
                                         return null;
                                     }
+
                                     const pass = v >= kkm;
                                     const barX =
                                         cx -
@@ -306,7 +280,7 @@ function FilterCheckboxRow({
 }: {
     label: string;
     checked: boolean;
-    onToggle: () => void;
+    onToggle?: () => void;
     onSelectAll?: () => void;
     isAll?: boolean;
 }) {
@@ -322,7 +296,7 @@ function FilterCheckboxRow({
             <input
                 type="checkbox"
                 checked={checked}
-                onChange={isAll ? onSelectAll : onToggle}
+                onChange={isAll && onSelectAll ? onSelectAll : onToggle}
                 className="h-3.5 w-3.5 cursor-pointer accent-navy"
             />
             {label}
@@ -343,6 +317,7 @@ function SegmentedControl<T extends string>({
         <div className="inline-flex overflow-hidden rounded-md border border-border">
             {options.map((opt) => {
                 const active = opt.value === value;
+
                 return (
                     <button
                         key={opt.value}
@@ -389,12 +364,15 @@ export default function SiswaStatistik({ mapel_list, chart_data }: Props) {
         if (statusFilter === 'lulus' && m.status !== 'Lulus') {
             return false;
         }
+
         if (statusFilter === 'tidak_lulus' && m.status !== 'Tidak Lulus') {
             return false;
         }
+
         if (!isMapelAll && !mapelSet.has(m.mapel)) {
             return false;
         }
+
         return true;
     });
 
@@ -409,11 +387,13 @@ export default function SiswaStatistik({ mapel_list, chart_data }: Props) {
     function toggleMapel(mapel: string) {
         setMapelSet((prev) => {
             const next = new Set(prev);
+
             if (next.has(mapel)) {
                 next.delete(mapel);
             } else {
                 next.add(mapel);
             }
+
             return next;
         });
     }
@@ -591,6 +571,7 @@ export default function SiswaStatistik({ mapel_list, chart_data }: Props) {
                                     </button>
                                     {mapel_list.map((m) => {
                                         const active = mapelSet.has(m);
+
                                         return (
                                             <button
                                                 key={m}
