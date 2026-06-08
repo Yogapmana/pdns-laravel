@@ -7,7 +7,7 @@ import {
     CheckSquare,
     Square,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Container, PageHeader } from '@/components/ui/shared';
@@ -40,31 +40,34 @@ function toggle(list: string[], setter: (v: string[]) => void, value: string) {
     );
 }
 
+function getInitialFilters() {
+    if (typeof window === 'undefined') {
+        return { kelas: [], mapel: [], sort: 'abjad', sortType: 'per_kelas' };
+    }
+
+    const search = new URLSearchParams(window.location.search);
+    const kelasNamaList: string[] = search.get('kelas') === 'all'
+        ? []
+        : [];
+
+    return {
+        kelas: kelasNamaList,
+        mapel: [],
+        sort: search.get('sort') ?? 'abjad',
+        sortType: search.get('sort_type') ?? 'per_kelas',
+    };
+}
+
 export default function ReportsIndex({ daftar_kelas, daftar_mapel }: Props) {
     useFlashToast();
-    const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
-    const [selectedMapel, setSelectedMapel] = useState<string[]>([]);
-    const [sort, setSort] = useState<string>('abjad');
-    const [sortType, setSortType] = useState<string>('per_kelas');
+    const initialFilters = getInitialFilters();
+    const [selectedKelas, setSelectedKelas] = useState<string[]>(initialFilters.kelas);
+    const [selectedMapel, setSelectedMapel] = useState<string[]>(initialFilters.mapel);
+    const [sort, setSort] = useState<string>(initialFilters.sort);
+    const [sortType, setSortType] = useState<string>(initialFilters.sortType);
 
     const kelasNamaList = daftar_kelas.map((k) => k.nama);
     const mapelNamaList = daftar_mapel.map((m) => m.nama);
-
-    useEffect(() => {
-        const search = new URLSearchParams(window.location.search);
-
-        if (search.get('kelas') === 'all') {
-            setSelectedKelas(kelasNamaList);
-        }
-
-        if (search.has('sort')) {
-setSort(search.get('sort')!);
-}
-
-        if (search.has('sort_type')) {
-setSortType(search.get('sort_type')!);
-}
-    }, []);
 
     function selectAllKelas() {
         setSelectedKelas(
