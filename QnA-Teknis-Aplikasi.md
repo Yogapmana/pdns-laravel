@@ -162,5 +162,8 @@ Dokumen ini berisi daftar pertanyaan yang sangat mungkin ditanyakan oleh penguji
 **Q20: Mengapa tabel-tabel esensial (seperti tabel Users atau tabel Nilai) memuat kolom dengan tipe data `ENUM`?**
 > **A:** Tipe data *ENUM* bertugas mengunci perbendaharaan masukan data agar hanya menerima sekumpulan kata kaku tertentu (misalnya pada tabel `users` dibatasi hanya boleh berisi string `'admin'`, `'guru'`, atau `'siswa'`). Jika hal ini tidak diterapkan, sistem rentan mengalami kesalahan ketik (_typo_) dari aplikasi ketiga yang dapat membingungkan _Middleware_ pembatas hak akses.
 
+**Q21: Bagaimana cara kerja (logika _backend_) di balik perhitungan metrik statistik yang tampil di halaman Dashboard Admin?**
+> **A:** Seluruh perhitungan statistik diolah di `DashboardController`. Alih-alih melakukan *looping* perhitungan menggunakan PHP biasa yang sangat membebani memori (memicu *N+1 Problem*), sistem mendelegasikannya langsung ke tataran *Database SQL*. Kita memadukan *Eloquent Raw Queries* (seperti `DB::raw('AVG(nilai)')` dan agregasi kondisional `SUM(CASE WHEN ...)`) yang dirangkai dengan klausa `groupBy()`. Melalui cara ini, sistem *database*-lah yang merangkumkan hasil rata-rata mapel, peringkat murid, dan rasio kelulusan secara kilat dalam satu eksekusi tunggal. Hasil mentah yang matang ini barulah disuntikkan (_inject_) sebagai JSON _Props_ ke antarmuka React via modul `Inertia`.
+
 ---
 _Dokumen ini dapat terus diperbarui jika terdapat modul baru dalam aplikasi._
